@@ -17,7 +17,9 @@ from .simulate import simulate
 from .visualize import visualize
 
 console = Console()
-ROOT = Path(__file__).resolve().parents[2]
+# Resolve repository root: this file lives at python/src/fleet/cli.py
+# parents[0]=.../fleet, [1]=.../src, [2]=.../python, [3]=repo root
+ROOT = Path(__file__).resolve().parents[3]
 OUTPUTS = ROOT / "outputs"
 HASKELL_BIN = ROOT / "haskell" / "bin"
 
