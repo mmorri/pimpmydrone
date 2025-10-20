@@ -1,0 +1,20 @@
+Metadata-Version: 2.4
+Name: fleet
+Version: 0.1.0
+Summary: Multi-drone coverage optimizer pipeline
+Author-email: Multi-drone Coverage Contributors <coverage@example.com>
+License: MIT
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: numpy>=1.26
+Requires-Dist: shapely>=2.0
+Requires-Dist: matplotlib>=3.8
+Requires-Dist: ortools>=9.8
+Requires-Dist: rich>=13.7
+Requires-Dist: click>=8.1
+Requires-Dist: networkx>=3.2
+Requires-Dist: pillow>=10.3
+
+# Fleet Python Package
+
+This folder hosts the Python tooling for the multi-drone coverage optimizer. See the project root `README.md` for the full documentation.

@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MissionParams",
+  "type": "object",
+  "required": ["v", "B", "takeoff_cost", "landing_cost", "max_drones"],
+  "properties": {
+    "v": {"type": "number", "minimum": 0},
+    "B": {"type": "number", "minimum": 0},
+    "takeoff_cost": {"type": "number", "minimum": 0},
+    "landing_cost": {"type": "number", "minimum": 0},
+    "max_drones": {"type": "integer", "minimum": 1}
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,8 @@
+numpy>=1.26
+shapely>=2.0
+matplotlib>=3.8
+ortools>=9.8
+rich>=13.7
+click>=8.1
+networkx>=3.2
+pillow>=10.3

@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Tours",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["drone_id", "waypoints", "segments", "recharge_stops", "cost"],
+    "properties": {
+      "drone_id": {"type": "integer", "minimum": 0},
+      "waypoints": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "required": ["x", "y", "t"],
+          "properties": {
+            "x": {"type": "integer"},
+            "y": {"type": "integer"},
+            "t": {"type": "number", "minimum": 0}
+          },
+          "additionalProperties": false
+        }
+      },
+      "segments": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["from", "to", "length", "turn_cost", "battery_used"],
+          "properties": {
+            "from": {"type": "integer", "minimum": 0},
+            "to": {"type": "integer", "minimum": 0},
+            "length": {"type": "number", "minimum": 0},
+            "turn_cost": {"type": "number", "minimum": 0},
+            "battery_used": {"type": "number", "minimum": 0}
+          },
+          "additionalProperties": false
+        }
+      },
+      "recharge_stops": {
+        "type": "array",
+        "items": {"type": "integer", "minimum": 0}
+      },
+      "cost": {
+        "type": "object",
+        "required": ["time", "turns", "length"],
+        "properties": {
+          "time": {"type": "number", "minimum": 0},
+          "turns": {"type": "integer", "minimum": 0},
+          "length": {"type": "number", "minimum": 0}
+        },
+        "additionalProperties": false
+      }
+    },
+    "additionalProperties": false
+  }
+}

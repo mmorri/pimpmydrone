@@ -1,0 +1,23 @@
+# Haskell
+.stack-work/
+dist/
+dist-newstyle/
+
+# Python
+__pycache__/
+*.pyc
+.python-version
+.venv/
+.uv/
+.poetry/
+
+# Build artifacts
+bin/
+outputs/
+*.png
+*.mp4
+
+# Editors
+.idea/
+.vscode/
+.DS_Store

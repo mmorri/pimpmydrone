@@ -1,0 +1,11 @@
+README.md
+pyproject.toml
+src/fleet/__init__.py
+src/fleet/__main__.py
+src/fleet/cli.py
+src/fleet.egg-info/PKG-INFO
+src/fleet.egg-info/SOURCES.txt
+src/fleet.egg-info/dependency_links.txt
+src/fleet.egg-info/requires.txt
+src/fleet.egg-info/top_level.txt
+tests/test_placeholder.py
