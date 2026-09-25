@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import heapq
+import math
 from collections import deque
 from dataclasses import dataclass
 from typing import Iterable, Iterator, List, Sequence, Tuple
@@ -116,6 +118,61 @@ def flood_fill(free: set[Cell], sources: Iterable[Cell]) -> set[Cell]:
                 seen.add(nxt)
                 queue.append(nxt)
     return seen
+
+
+def min_travel_cost(spec: "MapSpec", speed: float = 1.0) -> dict[Cell, float]:
+    """Cheapest flight time from any depot to every reachable free cell.
+
+    Unlike :func:`depot_distances` this pays the same turn penalty the planner
+    does (one time unit per heading change), so it is a true lower bound on
+    what any route to that cell can cost. States are (cell, heading) pairs;
+    the first time a cell is settled the cost is optimal over all headings.
+    """
+
+    free = spec.free_cells()
+    step = 1.0 / (speed or 1.0)
+    best: dict[Cell, float] = {}
+    # (cost, cell, heading); heading None means "not yet moving", so the first
+    # step out of a depot is never charged a turn.
+    queue = [(0.0, depot, None) for depot in spec.depots if depot in free]
+    heapq.heapify(queue)
+    settled: dict[tuple[Cell, object], float] = {}
+    while queue:
+        cost, cell, heading = heapq.heappop(queue)
+        if settled.get((cell, heading), math.inf) < cost:
+            continue
+        if cell not in best:
+            best[cell] = cost
+        for nxt in neighbors4(cell):
+            if nxt not in free:
+                continue
+            next_heading = (nxt[0] - cell[0], nxt[1] - cell[1])
+            turn = 1.0 if heading is not None and next_heading != heading else 0.0
+            next_cost = cost + step + turn
+            key = (nxt, next_heading)
+            if next_cost < settled.get(key, math.inf):
+                settled[key] = next_cost
+                heapq.heappush(queue, (next_cost, nxt, next_heading))
+    return best
+
+
+def depot_distances(spec: "MapSpec") -> dict[Cell, int]:
+    """Grid distance from the nearest depot to every reachable free cell."""
+
+    free = spec.free_cells()
+    distances: dict[Cell, int] = {}
+    queue = deque()
+    for depot in spec.depots:
+        if depot in free and depot not in distances:
+            distances[depot] = 0
+            queue.append(depot)
+    while queue:
+        cell = queue.popleft()
+        for nxt in neighbors4(cell):
+            if nxt in free and nxt not in distances:
+                distances[nxt] = distances[cell] + 1
+                queue.append(nxt)
+    return distances
 
 
 def is_inside(width: int, height: int, cell: Cell) -> bool:

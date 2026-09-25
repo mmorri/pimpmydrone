@@ -1,0 +1,42 @@
+{
+  "cluttered/boustro": {
+    "commute_steps": 100,
+    "covered_cells": 333,
+    "in_region_steps": 588,
+    "skipped": 0,
+    "sorties": 5,
+    "steps": 688
+  },
+  "cluttered/stc": {
+    "commute_steps": 243,
+    "covered_cells": 333,
+    "in_region_steps": 605,
+    "skipped": 0,
+    "sorties": 6,
+    "steps": 848
+  },
+  "open/boustro": {
+    "commute_steps": 84,
+    "covered_cells": 400,
+    "in_region_steps": 588,
+    "skipped": 0,
+    "sorties": 4,
+    "steps": 672
+  },
+  "open/stc": {
+    "commute_steps": 171,
+    "covered_cells": 400,
+    "in_region_steps": 787,
+    "skipped": 0,
+    "sorties": 6,
+    "steps": 958
+  },
+  "tight/boustro": {
+    "commute_steps": 1754,
+    "covered_cells": 318,
+    "in_region_steps": 428,
+    "skipped": 52,
+    "sorties": 52,
+    "steps": 2182
+  }
+}

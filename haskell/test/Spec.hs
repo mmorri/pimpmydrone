@@ -5,16 +5,17 @@ module Main (main) where
 import Control.Monad (unless)
 import qualified Data.HashMap.Strict as HM
 import qualified Data.HashSet as HS
+import qualified Data.Set as Set
 import System.Exit (exitFailure)
 import Test.QuickCheck
 
 import Algorithm.AStar (astarPath)
-import Algorithm.Flood (bfsDistances, depotField)
+import Algorithm.Flood (DepotField, bfsDistances, chainHome, depotField, fieldCells, fieldCost, fieldReturn)
 import Coverage.Boustro (planBoustro)
 import Coverage.Repair (AssignedDepot (..), BuildResult (..), buildPath, roundTripCost)
 import Coverage.STC (planSTC)
 import Cost.Evaluate (pathCells, validateBattery)
-import Domain.Cell (Cell (..), manhattan)
+import Domain.Cell (Cell (..), headingFromTo, manhattan)
 import Domain.Depot (Depot (..))
 import Domain.Drone (DroneSpec (..))
 import Domain.Map (GridMap (..), freeCells, freeNeighbors, isFree, reachableFree)
@@ -34,6 +35,7 @@ main = do
       , ("STC visits every cell of a disconnected region", property prop_stc_disconnected)
       , ("planned path avoids obstacles", property prop_planned_path_respects_obstacles)
       , ("battery invariant with recharges on a corridor", property prop_battery_corridor)
+      , ("depot field is cost optimal and self consistent", property prop_depot_field_optimal)
       , ("end-to-end coverage of reachable in-range cells", property prop_full_coverage)
       ]
   unless (and results) exitFailure
@@ -113,6 +115,75 @@ prop_astar_optimal (World gm depot) =
         | (cell, (_, d)) <- HM.toList dists
         ]
 
+-- The field must agree with an independent Dijkstra on the cost home, and the
+-- route it hands out must cost exactly what it charges. The second half is
+-- the safety property: the battery reserved for the trip home is computed
+-- from the cost, but the drone flies the route.
+prop_depot_field_optimal :: World -> Property
+prop_depot_field_optimal (World gm depot) =
+  let field = depotField (freeNeighbors gm) 1 depot
+      reference = referenceCosts gm depot
+   in conjoin $
+        -- Without this the properties below hold vacuously for an empty field.
+        counterexample
+          "field does not cover exactly the reachable cells"
+          (HS.fromList (fieldCells field) === reachableFree gm [depot])
+        : [ counterexample (show (cell, fieldCost field cell, HM.lookup cell reference)) $
+            fieldCost field cell === HM.lookup cell reference
+              .&&. counterexample "route costs more than the field charges" (routeMatches field cell)
+          | cell <- fieldCells field
+          ]
+
+-- | Flying home along the route the field returns must cost what it quoted,
+-- for every heading the drone might arrive with.
+routeMatches :: DepotField -> Cell -> Property
+routeMatches field cell =
+  conjoin
+    [ case fieldReturn field arrival cell of
+        Nothing -> counterexample "no route home" False
+        Just (quoted, heading) -> case chainHome field cell heading of
+          Nothing -> counterexample "no chain home" False
+          Just chain ->
+            -- A single-cell chain means the drone is already at the depot,
+            -- so no turn is paid to line up with a route home.
+            let turnIn = case arrival of
+                  Just a | length chain > 1 && a /= heading -> 1
+                  _ -> 0
+             in counterexample (show (arrival, quoted, chain)) $
+                  quoted === routeCost chain + turnIn
+    | arrival <- Nothing : fmap Just [0 .. 3]
+    ]
+
+-- | Steps plus heading changes along a route.
+routeCost :: [Cell] -> Double
+routeCost chain =
+  let headings = zipWith headingFromTo chain (drop 1 chain)
+      turns = length [() | (Just a, Just b) <- zip headings (drop 1 headings), a /= b]
+   in fromIntegral (length chain - 1) + fromIntegral turns
+
+-- | Dijkstra over (cell, heading) written independently of Algorithm.Flood.
+referenceCosts :: GridMap -> Cell -> HM.HashMap Cell Double
+referenceCosts gm depot = go (Set.singleton (0, depot, Nothing)) HM.empty HM.empty
+  where
+    go queue settled best = case Set.minView queue of
+      Nothing -> best
+      Just ((cost, cell, heading), rest)
+        | HM.lookupDefault (1 / 0) (cell, heading) settled <= cost -> go rest settled best
+        | otherwise ->
+            let settled' = HM.insert (cell, heading) cost settled
+                best' = HM.insertWith min cell cost best
+                next =
+                  [ (cost', n, Just h)
+                  | n <- freeNeighbors gm cell
+                  , Just h <- [headingFromTo n cell]
+                  , let turn = case heading of
+                          Just prev | prev /= h -> 1
+                          _ -> 0
+                  , let cost' = cost + 1 + turn
+                  , HM.lookupDefault (1 / 0) (n, Just h) settled' > cost'
+                  ]
+             in go (foldr Set.insert rest next) settled' best'
+
 -- * Coverage patterns
 
 prop_stc_disconnected :: Bool
@@ -141,7 +212,7 @@ prop_battery_corridor =
           drone = spec battery
           depot = AssignedDepot (Depot 0 (Cell 0 0)) (Cell 0 0)
           region = RegionAssignment 0 (Cell 0 0) (freeCells gm)
-          field = depotField (freeNeighbors gm) (Cell 0 0)
+          field = depotField (freeNeighbors gm) 1 (Cell 0 0)
           inRange c = maybe False (<= battery) (roundTripCost drone field c)
        in case buildPath gm drone depot (planSTC region) of
             Left err -> counterexample ("buildPath failed: " ++ err) False
@@ -164,7 +235,7 @@ prop_full_coverage (World gm depotCell) (Positive rawD) useStc =
         regions = Region.regionGrow gm depots (1 + rawD `mod` 4)
         planner = if useStc then planSTC else planBoustro
         depot = AssignedDepot (Depot 0 depotCell) depotCell
-        field = depotField (freeNeighbors gm) depotCell
+        field = depotField (freeNeighbors gm) 1 depotCell
         inRange c = maybe False (<= battery) (roundTripCost drone field c)
         expected = filter inRange (HS.toList (reachableFree gm [depotCell]))
         built = [buildPath gm drone depot (planner r) | r <- regions, not (null (raCells r))]

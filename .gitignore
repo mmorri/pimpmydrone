@@ -26,5 +26,6 @@ outputs/
 .DS_Store
 .claude/
 
-# Keep documentation figures
+# Keep documentation figures and stored benchmark baselines
 !docs/figures/*.png
+!benchmarks/

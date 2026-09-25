@@ -5,6 +5,7 @@ module IO.Json
   , writeRegions
   , readRegions
   , writeTours
+  , writeSkipped
   , encodeRegionsLazy
   ) where
 
@@ -92,3 +93,12 @@ readRegions path = do
 
 writeTours :: FilePath -> [Tour] -> IO ()
 writeTours = encodeFile
+
+-- | Report the cells the planner could not serve, so that downstream tools can
+-- tell "out of battery range" apart from "the planner missed it".
+writeSkipped :: FilePath -> [(Int, [Cell])] -> IO ()
+writeSkipped path regions =
+  encodeFile path $
+    A.object
+      [ "out_of_range" .= [A.object ["region" .= rid, "cells" .= cells] | (rid, cells) <- regions]
+      ]

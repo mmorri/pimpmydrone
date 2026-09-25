@@ -124,6 +124,7 @@ def plan(
     map_path, params_path = map_path.resolve(), params_path.resolve()
     output_path = output_path.resolve()
     regions_path = output_path.parent / "regions.json"
+    skipped_path = output_path.parent / "skipped.json"
     partitioner = HASKELL_BIN / "coverage-partitioner"
     planner = HASKELL_BIN / "coverage-planner"
     if not partitioner.exists() or not planner.exists():
@@ -157,6 +158,8 @@ def plan(
             str(output_path),
             "--coverage-algorithm",
             algorithm,
+            "--skipped",
+            str(skipped_path),
         ]
     )
     return output_path
@@ -196,12 +199,23 @@ def optimize_command(
 @click.option("--params", "params_path", type=PathArg, required=True)
 @click.option("--tours", "tours_path", type=PathArg, required=True)
 @click.option("--metrics", "metrics_path", type=PathArg, required=True)
+@click.option(
+    "--skipped",
+    "skipped_path",
+    type=PathArg,
+    default=None,
+    help="skipped.json from the planner, listing cells out of battery range.",
+)
 def simulate_command(
-    map_path: Path, params_path: Path, tours_path: Path, metrics_path: Path
+    map_path: Path,
+    params_path: Path,
+    tours_path: Path,
+    metrics_path: Path,
+    skipped_path: Optional[Path],
 ) -> None:
     """Run the discrete simulator and emit mission metrics."""
 
-    result = simulate(map_path, params_path, tours_path, metrics_path)
+    result = simulate(map_path, params_path, tours_path, metrics_path, skipped_path)
     print_summary(result, metrics_path.parent)
     fail_on_problems(result)
 
@@ -264,7 +278,13 @@ def run_command(
         deadline=deadline,
         time_limit=solver_time,
     )
-    result = simulate(map_path, params_path, optimized_tours_path, metrics_path)
+    result = simulate(
+        map_path,
+        params_path,
+        optimized_tours_path,
+        metrics_path,
+        skipped_path=out_dir / "skipped.json",
+    )
     visualize(map_path, optimized_tours_path, png_path, mp4_path)
 
     console.rule("Mission Summary")

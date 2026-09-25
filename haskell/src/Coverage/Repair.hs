@@ -1,15 +1,16 @@
 module Coverage.Repair
   ( AssignedDepot (..)
   , BuildResult (..)
+  , PlannerEnv
+  , prepareDepot
   , buildPath
+  , buildPathWith
   , roundTripCost
   ) where
 
 import Control.Monad (foldM)
-import Data.HashMap.Strict (HashMap)
-import qualified Data.HashMap.Strict as HM
 import Algorithm.AStar (astarPath)
-import Algorithm.Flood (FieldEntry (..), chainToDepot, depotField)
+import Algorithm.Flood (DepotField, chainHome, depotField, fieldCost, fieldReturn)
 import Domain.Cell (Cell (..), headingFromTo, manhattan)
 import Domain.Cost (CostBreakdown (..), addSegmentCost, emptyCost)
 import Domain.Depot (Depot (..))
@@ -39,8 +40,9 @@ data BuildResult = BuildResult
 data PlannerEnv = PlannerEnv
   { peMap :: !GridMap
   , peDrone :: !DroneSpec
-  , peField :: !(HashMap Cell FieldEntry)
-  -- ^ Shortest-path tree rooted at the depot, used for every return leg.
+  , peDepotCell :: !Cell
+  , peField :: !DepotField
+  -- ^ Cheapest routes home, used for every return leg and range check.
   }
 
 data PlannerState = PlannerState
@@ -66,13 +68,25 @@ epsilon = 1e-9
 -- it returns, recharges and resumes from the depot. Cells that cannot be
 -- reached and returned from on a single charge are reported in 'brSkipped'.
 buildPath :: GridMap -> DroneSpec -> AssignedDepot -> [Cell] -> Either String BuildResult
-buildPath gm drone (AssignedDepot _ depotCell) route
+buildPath gm drone depot route = do
+  env <- prepareDepot gm drone depot
+  buildPathWith env route
+
+-- | Precompute everything that depends only on the map, the drone and the
+-- depot. Building the cheapest-return field is the expensive part of planning,
+-- so regions served by the same depot should share one environment.
+prepareDepot :: GridMap -> DroneSpec -> AssignedDepot -> Either String PlannerEnv
+prepareDepot gm drone (AssignedDepot _ depotCell)
   | not (isFree gm depotCell) = Left ("Depot cell " ++ show depotCell ++ " is blocked")
   | dsSpeed drone <= 0 = Left "Drone speed must be positive"
   | dsTakeoffCost drone + dsLandingCost drone > dsBattery drone + epsilon =
       Left "Battery budget is smaller than takeoff plus landing cost"
-  | otherwise = do
-      let env = PlannerEnv gm drone (depotField (freeNeighbors gm) depotCell)
+  | otherwise =
+      Right (PlannerEnv gm drone depotCell (depotField (freeNeighbors gm) (dsSpeed drone) depotCell))
+
+buildPathWith :: PlannerEnv -> [Cell] -> Either String BuildResult
+buildPathWith env route = do
+      let depotCell = peDepotCell env
           (flyable, skipped) = partitionRange env route
       st <- foldM (moveAlong env) (initialState depotCell) flyable
       final <- finishAtDepot env st
@@ -109,26 +123,22 @@ partitionRange env = foldr classify ([], [])
       _ -> (ok, cell : bad)
 
 -- | Battery needed to take off, fly out to a cell along the depot's
--- shortest-path tree, turn around, fly back and land. 'Nothing' if the cell
--- is not reachable from the depot at all.
-roundTripCost :: DroneSpec -> HashMap Cell FieldEntry -> Cell -> Maybe Double
+-- cheapest-return tree, turn around, fly back and land. Turn costs are
+-- symmetric, so the outbound and inbound legs cost the same. 'Nothing' if the
+-- cell is not reachable from the depot at all.
+roundTripCost :: DroneSpec -> DepotField -> Cell -> Maybe Double
 roundTripCost DroneSpec {..} field cell = do
-  FieldEntry {..} <- HM.lookup cell field
-  let oneWay = fromIntegral feDistance / dsSpeed + fromIntegral feTurns
-      uTurn = if feDistance > 0 then 1 else 0
-  pure (dsTakeoffCost + 2 * oneWay + uTurn + dsLandingCost)
+  cost <- fieldCost field cell
+  let uTurn = if cost > 0 then 1 else 0
+  pure (dsTakeoffCost + 2 * cost + uTurn + dsLandingCost)
 
 -- | Battery needed to get from a cell back to the depot and land, given the
 -- heading the drone arrives with.
 returnCost :: PlannerEnv -> Cell -> Maybe Int -> Double
 returnCost PlannerEnv {peDrone = DroneSpec {..}, peField} cell arrival =
-  case HM.lookup cell peField of
+  case fieldReturn peField arrival cell of
     Nothing -> 1 / 0
-    Just FieldEntry {..} ->
-      let firstTurn = case (arrival, feHeading) of
-            (Just a, Just h) | a /= h -> 1
-            _ -> 0
-       in fromIntegral feDistance / dsSpeed + fromIntegral feTurns + firstTurn + dsLandingCost
+    Just (cost, _) -> cost + dsLandingCost
 
 turnPenalty :: Maybe Int -> Int -> Int
 turnPenalty previous heading = case previous of
@@ -172,8 +182,10 @@ step env st target = do
 -- construction for every cell that passed 'partitionRange'.
 flyFromDepot :: PlannerEnv -> PlannerState -> Cell -> Either String PlannerState
 flyFromDepot env st target = do
-  chain <- maybe (Left ("Cell " ++ show target ++ " is unreachable from the depot")) Right
-    (chainToDepot (peField env) target)
+  (_, heading) <- maybe (Left ("Cell " ++ show target ++ " is unreachable from the depot")) Right
+    (fieldReturn (peField env) Nothing target)
+  chain <- maybe (Left ("No route from the depot to " ++ show target)) Right
+    (chainHome (peField env) target heading)
   airborne <- ensureAirborne env st
   foldM (stepNoRecall env) airborne (tail (reverse chain))
 
@@ -241,8 +253,10 @@ returnToDepot :: Bool -> PlannerEnv -> PlannerState -> Either String PlannerStat
 returnToDepot recordRecharge env st
   | not (psAirborne st) = Right st
   | otherwise = do
-      chain <- maybe (Left ("No return path from " ++ show (psCurrent st))) Right
-        (chainToDepot (peField env) (psCurrent st))
+      (_, heading) <- maybe (Left ("No return path from " ++ show (psCurrent st))) Right
+        (fieldReturn (peField env) (psHeading st) (psCurrent st))
+      chain <- maybe (Left ("No route home from " ++ show (psCurrent st))) Right
+        (chainHome (peField env) (psCurrent st) heading)
       atDepot <- foldM (stepNoRecall env) st (tail chain)
       land recordRecharge env atDepot
 

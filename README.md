@@ -57,6 +57,25 @@ uv run python -m fleet visualize --map ../outputs/42/map.json --tours ../outputs
 
 Set `FLEET_ROOT`, `FLEET_OUTPUTS` or `FLEET_HASKELL_BIN` to relocate the repository root, the output directory or the Haskell binaries.
 
+## Measuring plan quality
+
+`make bench` runs a fixed matrix of missions and reports what the plans cost:
+
+```bash
+make bench                                  # print the table
+make bench ARGS="--compare benchmarks/baseline.json"   # diff against the baseline
+```
+
+The columns that matter are `length` (total flown steps), `commute` (the share
+of those steps spent travelling between a depot and the area being covered) and
+`steps/cell`. `benchmarks/baseline.md` holds the current numbers, and
+`docs/ROADMAP.md` argues from them. `metrics.json` carries the same breakdown
+per mission under `efficiency`.
+
+Golden tests in `python/tests/test_regression.py` pin the planner's output, so
+a change in plan quality shows up as a failing test rather than a silent
+regression; refresh them with `FLEET_UPDATE_GOLDEN=1 uv run pytest`.
+
 ## Scale
 
 Measured on a laptop, single depot, `--obstacle-density 0.01 --battery 5000`:
@@ -64,7 +83,24 @@ Measured on a laptop, single depot, `--obstacle-density 0.01 --battery 5000`:
 | Grid | Reachable cells | Partition | Plan | Optimize | Simulate | Peak RSS |
 | --- | --- | --- | --- | --- | --- | --- |
 | 100 x 100 | ~8k | < 1 s | < 1 s | ~2 s | < 1 s | small |
-| 1000 x 1000 | ~990k | 8 s | 34 s | 11 s | 10 s | ~3 GB |
+| 1000 x 1000 | ~990k | 8 s | 50 s | 11 s | 10 s | ~2.5 GB |
+
+Planning is dominated by building the cheapest-return field for each depot;
+`docs/ROADMAP.md` covers the flat-array representation that would shrink it.
+
+## Troubleshooting
+
+**`cannot find 'ld'` / `Couldn't figure out linker information` when building
+Haskell.** GHC ships configured for `ld.gold`, which recent binutils (2.44+)
+no longer provide. Point it at `ld.bfd` instead:
+
+```bash
+SETTINGS=~/.stack/programs/x86_64-linux/ghc-tinfo6-*/lib/ghc-*/lib/settings
+sed -i 's/-fuse-ld=gold/-fuse-ld=bfd/; s/"ld\.gold"/"ld.bfd"/g' $SETTINGS
+```
+
+**`Haskell binaries not found`.** Run `make build`, or set `FLEET_HASKELL_BIN`
+to the directory holding `coverage-partitioner` and `coverage-planner`.
 
 ## Design Notes
 
@@ -79,7 +115,8 @@ Measured on a laptop, single depot, `--obstacle-density 0.01 --battery 5000`:
 - `python/` – map generator, CP-SAT optimizer, simulator, visualizer and the `fleet` CLI.
 - `schema/` – JSON schemas for every artefact exchanged between stages.
 - `docs/` – algorithm overview and figures.
-- `tools/` – LOC reporting.
+- `tools/` – benchmark harness and LOC reporting.
+- `benchmarks/` – stored benchmark baselines.
 - `.github/workflows/` – Haskell, Python and end-to-end pipeline CI.
 
-See [docs/overview.md](docs/overview.md) for the algorithms and [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow.
+See [docs/overview.md](docs/overview.md) for the algorithms, [docs/ROADMAP.md](docs/ROADMAP.md) for what is planned next, and [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow.

@@ -20,10 +20,10 @@ Both partitioners first compute the free cells reachable from the depots with a 
 
 The route is a list of target cells; `buildPath` turns it into a timed, battery-feasible tour:
 
-1. A BFS tree rooted at the depot gives, for every cell, the distance home, the first step of the way back and the number of turns along it.
-2. Cells whose round trip (`takeoff + 2·(distance/v + turns) + 1 + landing`) exceeds `B` are dropped and reported.
+1. A Dijkstra search rooted at the depot over `(cell, heading)` states gives, for every cell, the cheapest route home and its cost. Keeping the heading in the state matters twice over: turns are part of the cost, so the shortest route home is often not the cheapest one, and the cost quoted for a cell always belongs to the route the planner hands out, so the reserve is never smaller than the trip actually costs.
+2. Cells whose round trip (`takeoff + 2·cost + 1 + landing`) exceeds `B` are dropped, reported on stderr and written to `skipped.json`, where the simulator independently re-derives the bound and rejects the claim if the cell was in fact servable.
 3. Consecutive route cells that are not adjacent are bridged with A* restricted to in-range cells.
-4. Before every single move the planner checks `battery + move + return_cost(target) ≤ B`. If it fails, the drone flies home along the tree, lands (a recharge stop), takes off and flies to the target along the tree, then resumes.
+4. Before every single move the planner checks `battery + move + return_cost(target) ≤ B`. If it fails, the drone flies home along the cheapest route, lands (a recharge stop), takes off and flies back out, then resumes.
 
 The invariant guarantees a recharge is always possible from anywhere the drone is allowed to be.
 
@@ -33,4 +33,4 @@ A CP-SAT model with one optional interval per (tour, drone). Constraints: each t
 
 ## Simulation (`python/src/fleet/simulate.py`)
 
-Replays every tour and checks continuity (consecutive waypoints identical or adjacent), obstacle avoidance, per-sortie battery accounting (reset at recharge stops) and coverage of all reachable cells. `metrics.json` records coverage, reachable/unreachable counts, makespan, total time and length, per-drone stats and the list of detected problems.
+Replays every tour and checks continuity (consecutive waypoints identical or adjacent), obstacle avoidance, per-sortie battery accounting (reset at recharge stops) and coverage of every reachable cell that is within battery range. The range bound is computed here from an independent turn-aware Dijkstra rather than taken from the planner, so a planner that gives up on servable cells is caught rather than believed. `metrics.json` records coverage, reachable/unreachable/out-of-range counts, makespan, total time and length, per-drone stats, the flight breakdown described in `fleet.analyze`, and the list of detected problems.

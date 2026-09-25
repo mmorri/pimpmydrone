@@ -9,6 +9,7 @@
     "total_time",
     "total_length",
     "per_drone",
+    "efficiency",
     "checks"
   ],
   "properties": {
@@ -18,6 +19,8 @@
         "percentage",
         "reachable_cells",
         "unreachable_cells",
+        "out_of_range_cells",
+        "expected_cells",
         "uncovered_cells"
       ],
       "properties": {
@@ -49,6 +52,14 @@
           "minimum": 0
         },
         "unreachable_cells": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "out_of_range_cells": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "expected_cells": {
           "type": "integer",
           "minimum": 0
         }
@@ -142,6 +153,101 @@
           "type": "array",
           "items": {
             "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "efficiency": {
+      "type": "object",
+      "required": [
+        "sorties",
+        "steps",
+        "commute_steps",
+        "in_region_steps",
+        "covered_cells",
+        "revisit_steps",
+        "commute_share",
+        "steps_per_cell",
+        "per_drone"
+      ],
+      "properties": {
+        "sorties": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "steps": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "commute_steps": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "in_region_steps": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "covered_cells": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "revisit_steps": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "commute_share": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "steps_per_cell": {
+          "type": "number",
+          "minimum": 0
+        },
+        "per_drone": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "drone_id",
+              "sorties",
+              "steps",
+              "commute_steps",
+              "in_region_steps",
+              "covered_cells",
+              "revisit_steps"
+            ],
+            "properties": {
+              "sorties": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "steps": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "commute_steps": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "in_region_steps": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "covered_cells": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "revisit_steps": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "drone_id": {
+                "type": "integer"
+              }
+            },
+            "additionalProperties": false
           }
         }
       },

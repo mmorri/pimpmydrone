@@ -1,4 +1,4 @@
-.PHONY: setup build haskell-build python-build test lint format run viz loc clean
+.PHONY: setup build haskell-build python-build test lint format run viz bench loc clean
 
 STACK ?= stack
 UV ?= uv
@@ -38,6 +38,11 @@ viz:
 		--map ../outputs/$(SEED)/map.json \
 		--tours ../outputs/$(SEED)/tours_optimized.json \
 		--png ../outputs/$(SEED)/path.png
+
+# Mission matrix reporting makespan, flight length and commute share.
+# ARGS is passed through, e.g. make bench ARGS="--compare benchmarks/baseline.json"
+bench:
+	cd python && $(UV) run python ../tools/bench.py $(ARGS)
 
 loc:
 	python3 tools/loc_count.py

@@ -99,6 +99,7 @@ executable coverage-planner
         bytestring,
         optparse-applicative,
         aeson,
+        containers,
         unordered-containers
     default-language: Haskell2010
     default-extensions:
@@ -119,5 +120,6 @@ test-suite coverage-core-test
         QuickCheck,
         aeson,
         bytestring,
+        containers,
         unordered-containers
     default-language: Haskell2010
