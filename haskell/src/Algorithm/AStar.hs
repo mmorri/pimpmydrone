@@ -1,69 +1,64 @@
 {-# LANGUAGE BangPatterns #-}
+
 module Algorithm.AStar
   ( astar
   , astarPath
   ) where
 
-import qualified Data.HashSet as HS
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Set as S
-import Domain.Cell (Cell(..), manhattan)
+import Domain.Cell (Cell (..), manhattan)
 
--- | Priority queue entry for A*
+-- | Priority queue entry. The ordering key is (f, g, cell) so that two
+-- distinct cells with the same f-score are never conflated by 'S.Set'.
 data Node = Node
-  { nCell :: !Cell
+  { nFScore :: !Int
   , nGScore :: !Int
-  , nFScore :: !Int
-  } deriving (Eq, Show)
+  , nCell :: !Cell
+  }
+  deriving (Eq, Ord, Show)
 
-instance Ord Node where
-  compare (Node _ _ f1) (Node _ _ f2) = compare f1 f2
-
--- | A* pathfinding algorithm
--- Returns path from start to goal, or Nothing if no path exists
-astar :: (Cell -> [Cell])        -- ^ Neighbor function
-      -> (Cell -> Cell -> Int)    -- ^ Heuristic function (e.g., manhattan)
-      -> Cell                     -- ^ Start
-      -> Cell                     -- ^ Goal
-      -> Maybe [Cell]
+-- | A* over a unit-cost grid. Returns the cell sequence from start to goal
+-- (inclusive) or 'Nothing' when the goal is unreachable.
+astar
+  :: (Cell -> [Cell])
+  -- ^ Neighbour function (must only return traversable cells)
+  -> (Cell -> Cell -> Int)
+  -- ^ Admissible heuristic, e.g. 'manhattan'
+  -> Cell
+  -> Cell
+  -> Maybe [Cell]
 astar getNeighbors heuristic start goal
   | start == goal = Just [start]
-  | otherwise = search initOpen initGScore initCameFrom
+  | otherwise = search (S.singleton (Node (heuristic start goal) 0 start)) (HM.singleton start 0) HM.empty
   where
-    initOpen = S.singleton (Node start 0 (heuristic start goal))
-    initGScore = HM.singleton start 0
-    initCameFrom = HM.empty
-
     search !open !gScore !cameFrom
       | S.null open = Nothing
-      | current == goal = Just (reconstructPath cameFrom current)
-      | otherwise = search open' gScore' cameFrom'
+      | current == goal = Just (reconstruct cameFrom current [])
+      -- Stale entry: a cheaper path to this cell was already expanded.
+      | currentG > HM.lookupDefault maxBound current gScore = search openRest gScore cameFrom
+      | otherwise =
+          let (open', gScore', cameFrom') =
+                foldr (relax current currentG) (openRest, gScore, cameFrom) (getNeighbors current)
+           in search open' gScore' cameFrom'
       where
-        (Node current currentG _, openRest) = S.deleteFindMin open
-        neighbors = getNeighbors current
+        (Node _ currentG current, openRest) = S.deleteFindMin open
 
-        (open', gScore', cameFrom') =
-          foldr (processNeighbor current currentG)
-                (openRest, gScore, cameFrom)
-                neighbors
+    relax current currentG neighbor (!openAcc, !gAcc, !cameAcc) =
+      let tentativeG = currentG + 1
+       in if tentativeG < HM.lookupDefault maxBound neighbor gAcc
+            then
+              ( S.insert (Node (tentativeG + heuristic neighbor goal) tentativeG neighbor) openAcc
+              , HM.insert neighbor tentativeG gAcc
+              , HM.insert neighbor current cameAcc
+              )
+            else (openAcc, gAcc, cameAcc)
 
-    processNeighbor current currentG neighbor (openAcc, gScoreAcc, cameFromAcc) =
-      let tentativeG = currentG + 1  -- Cost between adjacent cells is 1
-          neighborG = HM.lookupDefault maxBound neighbor gScoreAcc
-      in if tentativeG < neighborG
-         then let f = tentativeG + heuristic neighbor goal
-                  newNode = Node neighbor tentativeG f
-                  openAcc' = S.insert newNode openAcc
-                  gScoreAcc' = HM.insert neighbor tentativeG gScoreAcc
-                  cameFromAcc' = HM.insert neighbor current cameFromAcc
-              in (openAcc', gScoreAcc', cameFromAcc')
-         else (openAcc, gScoreAcc, cameFromAcc)
+    reconstruct cameFrom cell acc =
+      case HM.lookup cell cameFrom of
+        Nothing -> cell : acc
+        Just prev -> reconstruct cameFrom prev (cell : acc)
 
-    reconstructPath cameFrom current =
-      case HM.lookup current cameFrom of
-        Nothing -> [current]
-        Just prev -> reconstructPath cameFrom prev ++ [current]
-
--- | Convenience function for pathfinding with manhattan distance heuristic
+-- | A* with the Manhattan heuristic.
 astarPath :: (Cell -> [Cell]) -> Cell -> Cell -> Maybe [Cell]
 astarPath getNeighbors = astar getNeighbors manhattan

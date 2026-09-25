@@ -1,22 +1,26 @@
 module Main (main) where
 
+import Control.Monad (forM, unless)
 import Data.Aeson (encode)
 import qualified Data.ByteString.Lazy.Char8 as BL
 import Data.Function (on)
+import qualified Data.HashMap.Strict as HM
 import Data.List (minimumBy)
+import Data.Maybe (mapMaybe)
 import Options.Applicative
-import Algorithm.AStar (astarPath)
+import System.Exit (die)
+import System.IO (hPutStrLn, stderr)
+import Algorithm.Flood (bfsDistances)
 import Coverage.Boustro (planBoustro)
-import Coverage.Repair (AssignedDepot (..), buildPath)
+import Coverage.Repair (AssignedDepot (..), BuildResult (..), buildPath)
 import Coverage.STC (planSTC)
-import Domain.Cell (Cell (..), manhattan, neighbors4)
+import Domain.Cell (Cell (..))
 import Domain.Depot (Depot (..))
 import Domain.Drone (DroneSpec)
-import Domain.Map (isFree)
+import Domain.Map (GridMap, freeNeighbors, isFree)
 import Domain.Tour (Tour, mkTour)
 import IO.Json (MapContext (..), readMapContext, readParams, readRegions, writeTours)
 import Partition.Common (RegionAssignment (..))
-
 
 data CoverageAlgorithm = AlgoSTC | AlgoBoustro deriving (Eq, Show)
 
@@ -53,51 +57,53 @@ optionsParser =
 main :: IO ()
 main = do
   Options {..} <- execParser opts
-  mapCtxEither <- readMapContext optMap
-  paramsEither <- readParams optParams
-  regionsEither <- readRegions optRegions
-  case (mapCtxEither, paramsEither, regionsEither) of
-    (Left err, _, _) -> fail err
-    (_, Left err, _) -> fail err
-    (_, _, Left err) -> fail err
-    (Right mapCtx, Right params, Right regions) -> do
-      let reachableRegions = filter (isReachable mapCtx) regions
-      tours <- mapM (planRegion mapCtx params optAlgorithm) reachableRegions
-      case optOutput of
-        Nothing -> BL.putStrLn (encode tours)
-        Just outPath -> writeTours outPath tours
+  mapCtx <- either (die . ("map: " ++)) pure =<< readMapContext optMap
+  params <- either (die . ("params: " ++)) pure =<< readParams optParams
+  regions <- either (die . ("regions: " ++)) pure =<< readRegions optRegions
+  let gm = mcMap mapCtx
+      depots = filter (isFree gm . depotCell) (mcDepots mapCtx)
+  unless (null (mcDepots mapCtx) || not (null depots)) $
+    die "Every depot lies on a blocked cell"
+  -- Label every free cell with the depot that reaches it first, so regions are
+  -- always served by a depot that can actually fly to them.
+  let depotIndex = bfsDistances (freeNeighbors gm) (fmap depotCell depots)
+      nonEmpty = filter (not . null . raCells) regions
+      unreachable = filter (not . (`HM.member` depotIndex) . raSeed) nonEmpty
+  unless (null unreachable) $
+    warn ("Skipping " ++ show (length unreachable) ++ " region(s) that no depot can reach")
+  tours <- forM (mapMaybe (assignDepot depots depotIndex) nonEmpty) $ \(region, depot) ->
+    planRegion gm params optAlgorithm region depot
+  case optOutput of
+    Nothing -> BL.putStrLn (encode tours)
+    Just outPath -> writeTours outPath tours
 
-isReachable :: MapContext -> RegionAssignment -> Bool
-isReachable mapCtx region =
-  let depot = assignDepot (mcDepots mapCtx) region
-      depotCell = adCell depot
-      seedCell = raSeed region
-      neighborsFn c = filter (isFree (mcMap mapCtx)) (neighbors4 c)
-  in case astarPath neighborsFn seedCell depotCell of
-       Nothing -> False
-       Just _ -> True
+warn :: String -> IO ()
+warn = hPutStrLn stderr . ("coverage-planner: " ++)
 
-planRegion :: MapContext -> DroneSpec -> CoverageAlgorithm -> RegionAssignment -> IO Tour
-planRegion mapCtx params algo region =
-  case buildPath (mcMap mapCtx) params depot route of
-    Left err -> fail err
-    Right (path, recharges, cost) -> pure (mkTour (raDroneId region) path recharges cost)
-  where
-    route = selectAlgorithm algo region
-    depot = assignDepot (mcDepots mapCtx) region
+planRegion :: GridMap -> DroneSpec -> CoverageAlgorithm -> RegionAssignment -> AssignedDepot -> IO Tour
+planRegion gm params algo region depot =
+  case buildPath gm params depot (selectAlgorithm algo region) of
+    Left err -> die ("region " ++ show (raDroneId region) ++ ": " ++ err)
+    Right BuildResult {..} -> do
+      unless (null brSkipped) $
+        warn
+          ( "region " ++ show (raDroneId region) ++ ": " ++ show (length brSkipped)
+              ++ " cell(s) exceed the battery round-trip range and were skipped"
+          )
+      pure (mkTour (raDroneId region) brPath brRechargeStops brCost)
 
 selectAlgorithm :: CoverageAlgorithm -> RegionAssignment -> [Cell]
 selectAlgorithm AlgoSTC = planSTC
 selectAlgorithm AlgoBoustro = planBoustro
 
-assignDepot :: [Depot] -> RegionAssignment -> AssignedDepot
-assignDepot [] region =
-  let fallback = Depot 0 (raSeed region)
-   in AssignedDepot fallback (raSeed region)
-assignDepot depots region = AssignedDepot chosen (depotCell chosen)
-  where
-    chosen = minimumBy (compare `on` dist) depots
-    dist depot = manhattan (depotCell depot) (raSeed region)
+-- | Serve a region from the depot nearest (by grid distance) to its seed.
+-- With no depots at all the seed doubles as a depot.
+assignDepot :: [Depot] -> HM.HashMap Cell (Int, Int) -> RegionAssignment -> Maybe (RegionAssignment, AssignedDepot)
+assignDepot [] _ region = Just (region, AssignedDepot (Depot 0 (raSeed region)) (raSeed region))
+assignDepot depots depotIndex region = do
+  (label, _) <- HM.lookup (raSeed region) depotIndex
+  let depot = minimumBy (compare `on` depotId) [d | (i, d) <- zip [0 ..] depots, i == label]
+  pure (region, AssignedDepot depot (depotCell depot))
 
 opts :: ParserInfo Options
 opts =

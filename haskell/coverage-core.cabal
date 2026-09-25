@@ -19,6 +19,7 @@ library
         src
     exposed-modules:
         Algorithm.AStar,
+        Algorithm.Flood,
         Domain.Cell,
         Domain.Map,
         Domain.Obstacle,
@@ -37,7 +38,6 @@ library
         Coverage.Boustro,
         Coverage.Repair,
         Cost.Evaluate
-    other-modules:
     build-depends:
         base >=4.14 && <5,
         aeson >=2.1,
@@ -71,6 +71,7 @@ executable coverage-partitioner
     hs-source-dirs:
         app
     ghc-options:
+        -Wall
         -threaded
         -rtsopts
     build-depends:
@@ -81,13 +82,15 @@ executable coverage-partitioner
         aeson
     default-language: Haskell2010
     default-extensions:
-        RecordWildCards
+        RecordWildCards,
+        NamedFieldPuns
 
 executable coverage-planner
     main-is: Planner.hs
     hs-source-dirs:
         app
     ghc-options:
+        -Wall
         -threaded
         -rtsopts
     build-depends:
@@ -95,10 +98,12 @@ executable coverage-planner
         coverage-core,
         bytestring,
         optparse-applicative,
-        aeson
+        aeson,
+        unordered-containers
     default-language: Haskell2010
     default-extensions:
-        RecordWildCards
+        RecordWildCards,
+        NamedFieldPuns
 
 test-suite coverage-core-test
     type: exitcode-stdio-1.0
@@ -106,6 +111,7 @@ test-suite coverage-core-test
     hs-source-dirs:
         test
     ghc-options:
+        -Wall
         -threaded
     build-depends:
         base,

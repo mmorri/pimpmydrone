@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+from collections import deque
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Iterable, Iterator, List, Sequence, Tuple
 
 import numpy as np
-from shapely.geometry import Point, Polygon
+from shapely import contains_xy
+from shapely.geometry import MultiPolygon, Polygon
 
 Cell = Tuple[int, int]
 
@@ -25,7 +26,10 @@ class MapSpec:
 
     @classmethod
     def from_json(cls, data: dict) -> "MapSpec":
-        polys = [Polygon([(v["x"], v["y"]) for v in poly["vertices"]]).buffer(0) for poly in data.get("no_fly", [])]
+        polys = [
+            Polygon([(v["x"], v["y"]) for v in poly["vertices"]]).buffer(0)
+            for poly in data.get("no_fly", [])
+        ]
         return cls(
             width=data["width"],
             height=data["height"],
@@ -43,6 +47,12 @@ class MapSpec:
     def free_cells(self) -> set[Cell]:
         return set(all_cells(self.width, self.height)) - self.blocked_cells()
 
+    def reachable_cells(self) -> set[Cell]:
+        """Free cells that some depot can fly to (4-connected flood fill)."""
+
+        free = self.free_cells()
+        return flood_fill(free, [d for d in self.depots if d in free])
+
 
 def all_cells(width: int, height: int) -> Iterator[Cell]:
     """Yield every integer grid coordinate within the workspace."""
@@ -53,17 +63,59 @@ def all_cells(width: int, height: int) -> Iterator[Cell]:
 
 
 def rasterize_no_fly(polygons: Sequence[Polygon], width: int, height: int) -> set[Cell]:
-    """Return the set of cells whose centers fall inside any polygon."""
+    """Return the set of cells whose centres fall inside any polygon.
+
+    Only the cells inside each polygon's bounding box are tested, and the test
+    itself is vectorised, so large maps stay cheap.
+    """
 
     blocked: set[Cell] = set()
-    if not polygons:
-        return blocked
-    for x in range(width):
-        for y in range(height):
-            center = Point(x + 0.5, y + 0.5)
-            if any(poly.contains(center) for poly in polygons):
-                blocked.add((x, y))
+    for poly in polygons:
+        if poly.is_empty:
+            continue
+        minx, miny, maxx, maxy = poly.bounds
+        x0, x1 = max(0, int(np.floor(minx))), min(width - 1, int(np.ceil(maxx)))
+        y0, y1 = max(0, int(np.floor(miny))), min(height - 1, int(np.ceil(maxy)))
+        if x1 < x0 or y1 < y0:
+            continue
+        xs, ys = np.meshgrid(np.arange(x0, x1 + 1), np.arange(y0, y1 + 1))
+        inside = contains_xy(poly, xs.ravel() + 0.5, ys.ravel() + 0.5)
+        blocked.update(
+            (int(x), int(y))
+            for x, y in zip(xs.ravel()[inside], ys.ravel()[inside], strict=True)
+        )
     return blocked
+
+
+def polygon_rings(poly: Polygon | MultiPolygon) -> List[List[Tuple[float, float]]]:
+    """Exterior rings of a (multi)polygon, without the closing vertex."""
+
+    parts = poly.geoms if isinstance(poly, MultiPolygon) else [poly]
+    rings = []
+    for part in parts:
+        coords = list(part.exterior.coords)
+        if len(coords) > 1 and coords[0] == coords[-1]:
+            coords = coords[:-1]
+        rings.append(coords)
+    return rings
+
+
+def flood_fill(free: set[Cell], sources: Iterable[Cell]) -> set[Cell]:
+    """All cells of ``free`` connected (4-neighbourhood) to any source."""
+
+    seen: set[Cell] = set()
+    queue = deque()
+    for source in sources:
+        if source in free and source not in seen:
+            seen.add(source)
+            queue.append(source)
+    while queue:
+        cell = queue.popleft()
+        for nxt in neighbors4(cell):
+            if nxt in free and nxt not in seen:
+                seen.add(nxt)
+                queue.append(nxt)
+    return seen
 
 
 def is_inside(width: int, height: int, cell: Cell) -> bool:

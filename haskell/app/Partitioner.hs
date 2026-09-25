@@ -2,6 +2,7 @@ module Main (main) where
 
 import qualified Data.ByteString.Lazy.Char8 as BL
 import Options.Applicative
+import System.Exit (die)
 import Domain.Drone (DroneSpec (..))
 import Domain.Map (GridMap)
 import Domain.Depot (Depot)
@@ -45,17 +46,13 @@ optionsParser =
 main :: IO ()
 main = do
   Options {..} <- execParser opts
-  mapCtxEither <- readMapContext optMap
-  paramsEither <- readParams optParams
-  case (mapCtxEither, paramsEither) of
-    (Left err, _) -> error err
-    (_, Left err) -> error err
-    (Right mapCtx, Right params) -> do
-      let droneCount = max 1 $ maybe (dsMaxDrones params) id optDrones
-          regions = selectMethod optMethod (mcMap mapCtx) (mcDepots mapCtx) droneCount
-      case optOutput of
-        Nothing -> BL.putStrLn (encodeRegionsLazy regions)
-        Just outPath -> writeRegions outPath regions
+  mapCtx <- either (die . ("map: " ++)) pure =<< readMapContext optMap
+  params <- either (die . ("params: " ++)) pure =<< readParams optParams
+  let droneCount = max 1 (maybe (dsMaxDrones params) id optDrones)
+      regions = selectMethod optMethod (mcMap mapCtx) (mcDepots mapCtx) droneCount
+  case optOutput of
+    Nothing -> BL.putStrLn (encodeRegionsLazy regions)
+    Just outPath -> writeRegions outPath regions
 
 selectMethod :: PartitionMethod -> GridMap -> [Depot] -> Int -> [RegionAssignment]
 selectMethod RegionGrowMethod = Region.regionGrow

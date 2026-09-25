@@ -5,14 +5,15 @@ Thanks for your interest in improving the multi-drone coverage optimizer! Please
 ## Getting Started
 
 1. Fork the repository and create a branch named after the feature or bugfix.
-2. Run `make setup` to install dependencies for both Haskell and Python components.
-3. Before submitting a pull request, ensure `make test` passes locally.
+2. Run `make setup` to install dependencies for both Haskell and Python components, then `make build`.
+3. Before submitting a pull request, ensure `make test` and `make lint` pass locally. The end-to-end
+   Python tests exercise the Haskell binaries, so build them first.
 
 ## Code Style
 
-- Haskell: follow the defaults enforced by `ormolu` and keep functions pure when possible. Document all public functions with Haddock comments.
-- Python: run `ruff` and `black` in check mode. Add type hints for public functions and keep docstrings concise.
-- Write unit tests or property tests for new functionality.
+- Haskell: the library and executables build with `-Wall`; keep them warning free. Prefer pure functions and document public functions with Haddock comments.
+- Python: `make format` runs `black` and `ruff --fix`. Add type hints for public functions and keep docstrings concise.
+- Write unit tests or property tests for new functionality. Changes to the JSON contracts must update `schema/` as well.
 
 ## Commit Messages
 

@@ -1,0 +1,39 @@
+name: End-to-end pipeline
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: haskell-actions/setup@v2
+        with:
+          enable-stack: true
+          stack-version: latest
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.stack
+            haskell/.stack-work
+          key: stack-${{ runner.os }}-${{ hashFiles('haskell/stack.yaml.lock', 'haskell/coverage-core.cabal') }}
+          restore-keys: stack-${{ runner.os }}-
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Build
+        run: make build
+      - name: Integration tests
+        run: cd python && uv run pytest tests/test_pipeline.py -v
+      - name: Sample mission
+        run: make run SEED=1337 ARGS="--width 40 --height 40 --battery 150"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mission-1337
+          path: outputs/1337

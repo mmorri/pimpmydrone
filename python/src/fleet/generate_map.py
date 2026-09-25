@@ -5,13 +5,13 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, List, Tuple
+from typing import List, Tuple
 
 import numpy as np
-from shapely.geometry import Point, Polygon
+from shapely.geometry import Polygon
 
 from . import io
-from .map_utils import MapSpec, all_cells, manhattan, numpy_rng, rasterize_no_fly
+from .map_utils import all_cells, numpy_rng, polygon_rings, rasterize_no_fly
 
 Cell = Tuple[int, int]
 
@@ -48,14 +48,15 @@ def generate_workspace(config: GeneratorConfig) -> tuple[dict, dict]:
 
     obstacle_cells = sample_obstacles(rng, width, height, config.obstacle_density)
     no_fly_polys = build_no_fly_zones(rng, width, height, config.no_fly_count)
-    no_fly_cells = rasterize_no_fly(no_fly_polys, width, height)
+    blocked = set(obstacle_cells) | rasterize_no_fly(no_fly_polys, width, height)
 
-    available_cells = [cell for cell in all_cells(width, height) if cell not in obstacle_cells and cell not in no_fly_cells]
+    available_cells = [cell for cell in all_cells(width, height) if cell not in blocked]
     if not available_cells:
-        raise RuntimeError("Random generation produced a fully blocked map; try reducing density")
+        raise RuntimeError(
+            "Random generation produced a fully blocked map; try reducing density"
+        )
 
     depot_cells = choose_depots(rng, available_cells, config.depot_count)
-    obstacle_cells = [cell for cell in obstacle_cells if cell not in depot_cells]
 
     map_payload = {
         "width": width,
@@ -84,7 +85,9 @@ def generate_workspace(config: GeneratorConfig) -> tuple[dict, dict]:
     return map_payload, params_payload
 
 
-def write_workspace(map_path: Path, params_path: Path, config: GeneratorConfig) -> tuple[dict, dict]:
+def write_workspace(
+    map_path: Path, params_path: Path, config: GeneratorConfig
+) -> tuple[dict, dict]:
     """Generate and persist a workspace, returning the JSON data."""
 
     map_payload, params_payload = generate_workspace(config)
@@ -93,17 +96,16 @@ def write_workspace(map_path: Path, params_path: Path, config: GeneratorConfig) 
     return map_payload, params_payload
 
 
-def sample_obstacles(rng: np.random.Generator, width: int, height: int, density: float) -> List[Cell]:
+def sample_obstacles(
+    rng: np.random.Generator, width: int, height: int, density: float
+) -> List[Cell]:
     mask = rng.random((height, width)) < density
-    cells: List[Cell] = []
-    for y in range(height):
-        for x in range(width):
-            if mask[y, x]:
-                cells.append((x, y))
-    return cells
+    return [(int(x), int(y)) for y, x in np.argwhere(mask)]
 
 
-def build_no_fly_zones(rng: np.random.Generator, width: int, height: int, count: int) -> List[Polygon]:
+def build_no_fly_zones(
+    rng: np.random.Generator, width: int, height: int, count: int
+) -> List[Polygon]:
     polygons: List[Polygon] = []
     attempts = 0
     while len(polygons) < count and attempts < count * 10:
@@ -130,12 +132,16 @@ def random_polygon(rng: np.random.Generator, width: int, height: int) -> Polygon
         y = min(max(y, 0.5), height - 0.5)
         points.append((x, y))
     polygon = Polygon(points).buffer(0)
-    if not polygon.is_valid:
+    # Vertices are sorted by angle around a centre, so the result is a simple
+    # polygon; anything else means the geometry degenerated.
+    if not polygon.is_valid or polygon.geom_type != "Polygon":
         return None
     return polygon
 
 
-def choose_depots(rng: np.random.Generator, candidates: List[Cell], count: int) -> List[Cell]:
+def choose_depots(
+    rng: np.random.Generator, candidates: List[Cell], count: int
+) -> List[Cell]:
     if len(candidates) < count:
         raise RuntimeError("Not enough free cells to place requested depots")
     indices = rng.choice(len(candidates), size=count, replace=False)
@@ -148,9 +154,7 @@ def cell_to_json(cell: Cell) -> dict:
 
 
 def polygon_to_json(poly: Polygon) -> dict:
-    coords = list(poly.exterior.coords)
-    if len(coords) > 1 and coords[0] == coords[-1]:
-        coords = coords[:-1]
+    coords = polygon_rings(poly)[0]
     vertices = [{"x": float(round(x, 3)), "y": float(round(y, 3))} for x, y in coords]
     return {"vertices": vertices}
 
