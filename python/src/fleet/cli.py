@@ -103,7 +103,9 @@ def generate_command(output_dir: Optional[Path], **config_kwargs) -> None:
 @click.option("--map", "map_path", type=PathArg, required=True)
 @click.option("--params", "params_path", type=PathArg, required=True)
 @click.option("--output", "output_path", type=PathArg, required=True)
-@click.option("--algorithm", type=click.Choice(["stc", "boustro"]), default="stc")
+@click.option(
+    "--algorithm", type=click.Choice(["stc", "boustro", "auto"]), default="auto"
+)
 @click.option("--partition", type=click.Choice(["region", "strip"]), default="region")
 def plan_command(
     map_path: Path, params_path: Path, output_path: Path, algorithm: str, partition: str
@@ -118,7 +120,7 @@ def plan(
     map_path: Path,
     params_path: Path,
     output_path: Path,
-    algorithm: str = "stc",
+    algorithm: str = "auto",
     partition: str = "region",
 ) -> Path:
     map_path, params_path = map_path.resolve(), params_path.resolve()
@@ -240,7 +242,10 @@ def visualize_command(
 @workspace_options
 @optimizer_options
 @click.option(
-    "--coverage-algorithm", type=click.Choice(["stc", "boustro"]), default="stc"
+    "--coverage-algorithm",
+    type=click.Choice(["stc", "boustro", "auto"]),
+    default="auto",
+    show_default=True,
 )
 @click.option("--partition", type=click.Choice(["region", "strip"]), default="region")
 @click.option("--mp4/--no-mp4", default=False)

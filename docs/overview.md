@@ -15,6 +15,7 @@ Both partitioners first compute the free cells reachable from the depots with a 
 
 - **STC** (`--coverage-algorithm stc`) walks a depth-first spanning tree of the region and traverses every edge twice, so the walk ends where it started. Every connected component of the region gets its own walk.
 - **Boustrophedon** (`--coverage-algorithm boustro`) sweeps rows in alternating directions and joins non-adjacent consecutive cells with a BFS shortest path inside the region. It produces fewer turns and shorter routes on open areas.
+- **Auto** (`--coverage-algorithm auto`, the default) plans each region with both patterns and keeps the faster tour. Which pattern wins depends on how cluttered the region is, and that varies between regions of the same map, so the choice is made per region rather than per mission.
 
 ## Tour building (`Coverage.Repair`)
 

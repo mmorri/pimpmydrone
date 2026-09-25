@@ -35,6 +35,12 @@ The pipeline could not complete a mission end to end. All three reported cases
 
 ### Added
 
+- `--coverage-algorithm auto`, now the default: each region is planned with
+  both coverage patterns and the faster tour is kept. The patterns suit
+  different terrain and the crossover happens within a single map, so mixing
+  them per region beats either one. Across the benchmark matrix this is 13.9%
+  less flight and 15.5% less makespan than the previous STC default, and 4.3%
+  less flight than always choosing the better single pattern.
 - Battery-range reporting: the planner writes `skipped.json`, and the simulator
   verifies each claim against an independently computed lower bound.
 - Simulator checks for path continuity and per-sortie battery use.

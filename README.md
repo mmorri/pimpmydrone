@@ -20,7 +20,7 @@ generate ──► partition ──► plan ──► optimize ──► simulat
 | --- | --- | --- |
 | generate | `python/src/fleet/generate_map.py` | Random obstacles, star-shaped no-fly polygons, depots on free cells; writes `map.json` + `params.json`. |
 | partition | `haskell/src/Partition/` | Splits the cells **reachable from the depots** into one connected region per drone. `region` (default) grows regions round-robin from the depots and farthest-point seeds so sizes stay balanced; `strip` cuts vertical strips. |
-| plan | `haskell/src/Coverage/` | Builds a coverage route per region (`stc`: spanning-tree walk, `boustro`: lawnmower sweep) and turns it into a timed tour with `Coverage.Repair`, which keeps enough battery to fly back to the depot along a precomputed shortest-path tree, inserts recharge stops, and skips cells whose round trip cannot fit one charge. |
+| plan | `haskell/src/Coverage/` | Builds a coverage route per region (`stc`: spanning-tree walk, `boustro`: lawnmower sweep, `auto`: both, keeping the faster -- the default, since which one wins varies region by region) and turns it into a timed tour with `Coverage.Repair`, which keeps enough battery to fly back to the depot along a precomputed shortest-path tree, inserts recharge stops, and skips cells whose round trip cannot fit one charge. |
 | optimize | `python/src/fleet/optimize.py` | CP-SAT model assigning tours to physical drones (a drone may fly several tours back to back after recharging), never mixing depots. Objective: `makespan + drone_cost · drones`, or drones-first under `--deadline`. |
 | simulate | `python/src/fleet/simulate.py` | Replays the tours and checks continuity, obstacle avoidance, per-sortie battery budget and coverage of every reachable cell. Unreachable pockets are reported, not counted as gaps. |
 | visualize | `python/src/fleet/visualize.py` | PNG of the workspace and tours, optional MP4 (needs ffmpeg). |
@@ -106,6 +106,11 @@ to the directory holding `coverage-partitioner` and `coverage-planner`.
 
 - **Reachability first.** Partitioning, planning and the coverage metric all work on the set of free cells reachable from a depot. Pockets sealed off by obstacles or no-fly zones are neither assigned nor counted.
 - **Battery invariant.** While airborne the drone always holds `battery_used + return_cost(current) ≤ B`, where `return_cost` follows the depot's BFS tree (distance, turns and landing included). A move that would break the invariant triggers a recharge first. Cells whose round trip exceeds `B` are reported on stderr and skipped rather than failing the mission.
+- **Pattern choice is per region, not per mission.** The lawnmower sweep is
+  cheaper on open ground and the spanning-tree walk on cluttered ground, and a
+  single map usually contains both. Planning each region twice and keeping the
+  faster tour costs a little planning time and is worth about 14% of the
+  flight.
 - **Makespan vs fleet size.** Executing all tours on one drone is always feasible, so "minimise drones" alone is degenerate. The optimizer therefore minimises makespan and uses `--drone-cost` (seconds of makespan one extra drone is worth, default 1) to prefer smaller fleets on ties; `--deadline` flips the priority.
 - **Path length** is fixed once tours are planned (rearranging tours between drones does not change it), so it is reported but not optimised.
 

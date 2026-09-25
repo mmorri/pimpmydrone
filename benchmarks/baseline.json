@@ -1,5 +1,5 @@
 {
-  "commit": "cbc8927",
+  "commit": "7c08a3b",
   "generated": "2026-09-25",
   "platform": "Linux-7.0.0-31-generic-x86_64-with-glibc2.43",
   "rows": [
@@ -14,12 +14,12 @@
       "makespan": 3719.0,
       "out_of_range": 0,
       "partition": "region",
-      "plan_seconds": 0.08812356798443943,
+      "plan_seconds": 0.06750166392885149,
       "reachable": 1600,
       "seed": 1,
       "sorties": 52,
       "steps_per_cell": 4.09,
-      "total_seconds": 0.19278043799567968
+      "total_seconds": 0.16460762708447874
     },
     {
       "algorithm": "stc",
@@ -32,12 +32,12 @@
       "makespan": 4772.0,
       "out_of_range": 6,
       "partition": "region",
-      "plan_seconds": 0.09597392601426691,
+      "plan_seconds": 0.07561910396907479,
       "reachable": 1600,
       "seed": 2,
       "sorties": 62,
       "steps_per_cell": 5.020075282308658,
-      "total_seconds": 0.16095013404265046
+      "total_seconds": 0.1316815000027418
     },
     {
       "algorithm": "boustro",
@@ -50,12 +50,12 @@
       "makespan": 1891.0,
       "out_of_range": 0,
       "partition": "region",
-      "plan_seconds": 0.07596431998535991,
+      "plan_seconds": 0.05547021608799696,
       "reachable": 1600,
       "seed": 1,
       "sorties": 30,
       "steps_per_cell": 2.32625,
-      "total_seconds": 0.12832903396338224
+      "total_seconds": 0.10416830703616142
     },
     {
       "algorithm": "boustro",
@@ -68,12 +68,48 @@
       "makespan": 2687.0,
       "out_of_range": 6,
       "partition": "region",
-      "plan_seconds": 0.07568848808296025,
+      "plan_seconds": 0.06561786797828972,
       "reachable": 1600,
       "seed": 2,
       "sorties": 39,
       "steps_per_cell": 3.0890840652446676,
-      "total_seconds": 0.1525553660467267
+      "total_seconds": 0.14101063401903957
+    },
+    {
+      "algorithm": "auto",
+      "case": "open-40",
+      "commute_share": 0.4336378291241268,
+      "coverage": 100.0,
+      "drones": 3,
+      "key": "open-40/auto/region/1",
+      "length": 3722.0,
+      "makespan": 1891.0,
+      "out_of_range": 0,
+      "partition": "region",
+      "plan_seconds": 0.06554884801153094,
+      "reachable": 1600,
+      "seed": 1,
+      "sorties": 30,
+      "steps_per_cell": 2.32625,
+      "total_seconds": 0.11503094295039773
+    },
+    {
+      "algorithm": "auto",
+      "case": "open-40",
+      "commute_share": 0.536961819658814,
+      "coverage": 100.0,
+      "drones": 3,
+      "key": "open-40/auto/region/2",
+      "length": 4924.0,
+      "makespan": 2687.0,
+      "out_of_range": 6,
+      "partition": "region",
+      "plan_seconds": 0.06534127495251596,
+      "reachable": 1600,
+      "seed": 2,
+      "sorties": 39,
+      "steps_per_cell": 3.0890840652446676,
+      "total_seconds": 0.14020187396090478
     },
     {
       "algorithm": "stc",
@@ -86,12 +122,12 @@
       "makespan": 6417.0,
       "out_of_range": 4,
       "partition": "region",
-      "plan_seconds": 0.08521332405507565,
+      "plan_seconds": 0.07579376397188753,
       "reachable": 1439,
       "seed": 1,
       "sorties": 74,
       "steps_per_cell": 6.153310104529616,
-      "total_seconds": 0.14318842894863337
+      "total_seconds": 0.13314628298394382
     },
     {
       "algorithm": "stc",
@@ -104,12 +140,12 @@
       "makespan": 5813.0,
       "out_of_range": 0,
       "partition": "region",
-      "plan_seconds": 0.08563557302113622,
+      "plan_seconds": 0.07559371506795287,
       "reachable": 1436,
       "seed": 2,
       "sorties": 71,
       "steps_per_cell": 5.766016713091922,
-      "total_seconds": 0.13139425101689994
+      "total_seconds": 0.1232753429794684
     },
     {
       "algorithm": "boustro",
@@ -122,12 +158,12 @@
       "makespan": 4930.0,
       "out_of_range": 4,
       "partition": "region",
-      "plan_seconds": 0.0855384690221399,
+      "plan_seconds": 0.07551069802138954,
       "reachable": 1439,
       "seed": 1,
       "sorties": 58,
       "steps_per_cell": 4.801393728222997,
-      "total_seconds": 0.18971673399209976
+      "total_seconds": 0.18390622595325112
     },
     {
       "algorithm": "boustro",
@@ -140,12 +176,48 @@
       "makespan": 3376.0,
       "out_of_range": 0,
       "partition": "region",
-      "plan_seconds": 0.08596723002847284,
+      "plan_seconds": 0.06560886197257787,
       "reachable": 1436,
       "seed": 2,
       "sorties": 48,
       "steps_per_cell": 3.8565459610027855,
-      "total_seconds": 0.1631347859511152
+      "total_seconds": 0.13920806301757693
+    },
+    {
+      "algorithm": "auto",
+      "case": "sparse-40",
+      "commute_share": 0.662699564586357,
+      "coverage": 100.0,
+      "drones": 2,
+      "key": "sparse-40/auto/region/1",
+      "length": 6890.0,
+      "makespan": 4930.0,
+      "out_of_range": 4,
+      "partition": "region",
+      "plan_seconds": 0.07586766500025988,
+      "reachable": 1439,
+      "seed": 1,
+      "sorties": 58,
+      "steps_per_cell": 4.801393728222997,
+      "total_seconds": 0.17564828891772777
+    },
+    {
+      "algorithm": "auto",
+      "case": "sparse-40",
+      "commute_share": 0.5882990249187432,
+      "coverage": 100.0,
+      "drones": 3,
+      "key": "sparse-40/auto/region/2",
+      "length": 5538.0,
+      "makespan": 3376.0,
+      "out_of_range": 0,
+      "partition": "region",
+      "plan_seconds": 0.06537274504080415,
+      "reachable": 1436,
+      "seed": 2,
+      "sorties": 48,
+      "steps_per_cell": 3.8565459610027855,
+      "total_seconds": 0.1394105659564957
     },
     {
       "algorithm": "stc",
@@ -158,12 +230,12 @@
       "makespan": 5219.0,
       "out_of_range": 0,
       "partition": "region",
-      "plan_seconds": 0.07577683601994067,
+      "plan_seconds": 0.06569448299705982,
       "reachable": 1183,
       "seed": 1,
       "sorties": 68,
       "steps_per_cell": 6.008453085376162,
-      "total_seconds": 0.17359768599271774
+      "total_seconds": 0.1611455560196191
     },
     {
       "algorithm": "stc",
@@ -176,12 +248,12 @@
       "makespan": 6851.0,
       "out_of_range": 4,
       "partition": "region",
-      "plan_seconds": 0.07583613798487931,
+      "plan_seconds": 0.07554798002820462,
       "reachable": 1145,
       "seed": 2,
       "sorties": 83,
       "steps_per_cell": 7.6091148115688,
-      "total_seconds": 0.12993854796513915
+      "total_seconds": 0.12902511400170624
     },
     {
       "algorithm": "boustro",
@@ -194,12 +266,12 @@
       "makespan": 5796.0,
       "out_of_range": 0,
       "partition": "region",
-      "plan_seconds": 0.07516660203691572,
+      "plan_seconds": 0.07575821701902896,
       "reachable": 1183,
       "seed": 1,
       "sorties": 74,
       "steps_per_cell": 6.6390532544378695,
-      "total_seconds": 0.12265362904872745
+      "total_seconds": 0.1212778240442276
     },
     {
       "algorithm": "boustro",
@@ -212,12 +284,48 @@
       "makespan": 7886.0,
       "out_of_range": 4,
       "partition": "region",
-      "plan_seconds": 0.09644603007473052,
+      "plan_seconds": 0.08615530200768262,
       "reachable": 1145,
       "seed": 2,
       "sorties": 93,
       "steps_per_cell": 8.681858019281332,
-      "total_seconds": 0.16021910193376243
+      "total_seconds": 0.15608237509150058
+    },
+    {
+      "algorithm": "auto",
+      "case": "cluttered-40",
+      "commute_share": 0.6980866629150253,
+      "coverage": 100.0,
+      "drones": 2,
+      "key": "cluttered-40/auto/region/1",
+      "length": 7108.0,
+      "makespan": 5219.0,
+      "out_of_range": 0,
+      "partition": "region",
+      "plan_seconds": 0.0753912728978321,
+      "reachable": 1183,
+      "seed": 1,
+      "sorties": 68,
+      "steps_per_cell": 6.008453085376162,
+      "total_seconds": 0.17259543295949697
+    },
+    {
+      "algorithm": "auto",
+      "case": "cluttered-40",
+      "commute_share": 0.7722874913614375,
+      "coverage": 100.0,
+      "drones": 2,
+      "key": "cluttered-40/auto/region/2",
+      "length": 8682.0,
+      "makespan": 6851.0,
+      "out_of_range": 4,
+      "partition": "region",
+      "plan_seconds": 0.0864499791059643,
+      "reachable": 1145,
+      "seed": 2,
+      "sorties": 83,
+      "steps_per_cell": 7.6091148115688,
+      "total_seconds": 0.14112893806304783
     },
     {
       "algorithm": "stc",
@@ -230,12 +338,12 @@
       "makespan": 3351.0,
       "out_of_range": 0,
       "partition": "region",
-      "plan_seconds": 0.10619081207551062,
+      "plan_seconds": 0.08544287399854511,
       "reachable": 2160,
       "seed": 1,
       "sorties": 50,
       "steps_per_cell": 3.4518518518518517,
-      "total_seconds": 0.21130973589606583
+      "total_seconds": 0.18779826001264155
     },
     {
       "algorithm": "stc",
@@ -248,12 +356,12 @@
       "makespan": 2565.0,
       "out_of_range": 0,
       "partition": "region",
-      "plan_seconds": 0.10590969899203628,
+      "plan_seconds": 0.07540549000259489,
       "reachable": 2142,
       "seed": 2,
       "sorties": 43,
       "steps_per_cell": 2.880485527544351,
-      "total_seconds": 0.19301997206639498
+      "total_seconds": 0.1595539740519598
     },
     {
       "algorithm": "boustro",
@@ -266,12 +374,12 @@
       "makespan": 2354.0,
       "out_of_range": 0,
       "partition": "region",
-      "plan_seconds": 0.0958598309662193,
+      "plan_seconds": 0.07581963296979666,
       "reachable": 2160,
       "seed": 1,
       "sorties": 37,
       "steps_per_cell": 2.4814814814814814,
-      "total_seconds": 0.1732197420205921
+      "total_seconds": 0.1500291300471872
     },
     {
       "algorithm": "boustro",
@@ -284,12 +392,48 @@
       "makespan": 2168.0,
       "out_of_range": 0,
       "partition": "region",
-      "plan_seconds": 0.09618719096761197,
+      "plan_seconds": 0.07565928995609283,
       "reachable": 2142,
       "seed": 2,
       "sorties": 35,
       "steps_per_cell": 2.2791783380018673,
-      "total_seconds": 0.18079989892430604
+      "total_seconds": 0.14133556897286326
+    },
+    {
+      "algorithm": "auto",
+      "case": "twodepot-60",
+      "commute_share": 0.36828358208955225,
+      "coverage": 100.0,
+      "drones": 4,
+      "key": "twodepot-60/auto/region/1",
+      "length": 5360.0,
+      "makespan": 2354.0,
+      "out_of_range": 0,
+      "partition": "region",
+      "plan_seconds": 0.09580925991758704,
+      "reachable": 2160,
+      "seed": 1,
+      "sorties": 37,
+      "steps_per_cell": 2.4814814814814814,
+      "total_seconds": 0.17144406400620937
+    },
+    {
+      "algorithm": "auto",
+      "case": "twodepot-60",
+      "commute_share": 0.3049979516591561,
+      "coverage": 100.0,
+      "drones": 4,
+      "key": "twodepot-60/auto/region/2",
+      "length": 4882.0,
+      "makespan": 2168.0,
+      "out_of_range": 0,
+      "partition": "region",
+      "plan_seconds": 0.08631652593612671,
+      "reachable": 2142,
+      "seed": 2,
+      "sorties": 35,
+      "steps_per_cell": 2.2791783380018673,
+      "total_seconds": 0.15307464299257845
     },
     {
       "algorithm": "stc",
@@ -302,12 +446,12 @@
       "makespan": 7741.0,
       "out_of_range": 517,
       "partition": "region",
-      "plan_seconds": 0.10579803795553744,
+      "plan_seconds": 0.08557468303479254,
       "reachable": 1439,
       "seed": 1,
       "sorties": 178,
       "steps_per_cell": 13.596529284164859,
-      "total_seconds": 0.18931535503361374
+      "total_seconds": 0.1625388429965824
     },
     {
       "algorithm": "stc",
@@ -320,12 +464,12 @@
       "makespan": 7937.0,
       "out_of_range": 468,
       "partition": "region",
-      "plan_seconds": 0.10645735601428896,
+      "plan_seconds": 0.08596493199001998,
       "reachable": 1436,
       "seed": 2,
       "sorties": 181,
       "steps_per_cell": 12.99793388429752,
-      "total_seconds": 0.1952534270239994
+      "total_seconds": 0.16247341909911484
     },
     {
       "algorithm": "boustro",
@@ -338,12 +482,12 @@
       "makespan": 6863.0,
       "out_of_range": 517,
       "partition": "region",
-      "plan_seconds": 0.09622348891571164,
+      "plan_seconds": 0.08575430198106915,
       "reachable": 1439,
       "seed": 1,
       "sorties": 151,
       "steps_per_cell": 11.550976138828634,
-      "total_seconds": 0.16813687910325825
+      "total_seconds": 0.1517359899589792
     },
     {
       "algorithm": "boustro",
@@ -356,12 +500,48 @@
       "makespan": 6944.0,
       "out_of_range": 468,
       "partition": "region",
-      "plan_seconds": 0.09612678701523691,
+      "plan_seconds": 0.08616842597257346,
       "reachable": 1436,
       "seed": 2,
       "sorties": 136,
       "steps_per_cell": 9.739669421487603,
-      "total_seconds": 0.16667641594540328
+      "total_seconds": 0.14475500001572073
+    },
+    {
+      "algorithm": "auto",
+      "case": "tight-battery-40",
+      "commute_share": 0.8820657276995305,
+      "coverage": 100.0,
+      "drones": 2,
+      "key": "tight-battery-40/auto/region/1",
+      "length": 10650.0,
+      "makespan": 6863.0,
+      "out_of_range": 517,
+      "partition": "region",
+      "plan_seconds": 0.0960743019822985,
+      "reachable": 1439,
+      "seed": 1,
+      "sorties": 151,
+      "steps_per_cell": 11.550976138828634,
+      "total_seconds": 0.16521248104982078
+    },
+    {
+      "algorithm": "auto",
+      "case": "tight-battery-40",
+      "commute_share": 0.8635977938056852,
+      "coverage": 100.0,
+      "drones": 2,
+      "key": "tight-battery-40/auto/region/2",
+      "length": 9428.0,
+      "makespan": 6944.0,
+      "out_of_range": 468,
+      "partition": "region",
+      "plan_seconds": 0.086053058039397,
+      "reachable": 1436,
+      "seed": 2,
+      "sorties": 136,
+      "steps_per_cell": 9.739669421487603,
+      "total_seconds": 0.14543619903270155
     },
     {
       "algorithm": "stc",
@@ -374,12 +554,12 @@
       "makespan": 7437.0,
       "out_of_range": 0,
       "partition": "region",
-      "plan_seconds": 0.39739256794564426,
+      "plan_seconds": 0.2265754989348352,
       "reachable": 7624,
       "seed": 1,
       "sorties": 65,
       "steps_per_cell": 2.9703567681007343,
-      "total_seconds": 0.5489627819042653
+      "total_seconds": 0.3736550770699978
     },
     {
       "algorithm": "stc",
@@ -392,12 +572,12 @@
       "makespan": 9927.0,
       "out_of_range": 0,
       "partition": "region",
-      "plan_seconds": 0.42737993702758104,
+      "plan_seconds": 0.26696850499138236,
       "reachable": 7642,
       "seed": 2,
       "sorties": 83,
       "steps_per_cell": 3.9201779638838,
-      "total_seconds": 0.616579334018752
+      "total_seconds": 0.4725367520004511
     },
     {
       "algorithm": "boustro",
@@ -410,12 +590,12 @@
       "makespan": 8728.0,
       "out_of_range": 0,
       "partition": "region",
-      "plan_seconds": 0.4474118660436943,
+      "plan_seconds": 0.27732354996260256,
       "reachable": 7624,
       "seed": 1,
       "sorties": 71,
       "steps_per_cell": 3.2468520461699897,
-      "total_seconds": 0.5997271100059152
+      "total_seconds": 0.4326895490521565
     },
     {
       "algorithm": "boustro",
@@ -428,12 +608,48 @@
       "makespan": 10859.0,
       "out_of_range": 0,
       "partition": "region",
-      "plan_seconds": 0.4573435030179098,
+      "plan_seconds": 0.31712252099532634,
       "reachable": 7642,
       "seed": 2,
       "sorties": 84,
       "steps_per_cell": 4.055482857890604,
-      "total_seconds": 0.6399693459970877
+      "total_seconds": 0.5013099299976602
+    },
+    {
+      "algorithm": "auto",
+      "case": "large-100",
+      "commute_share": 0.3203499733522828,
+      "coverage": 100.0,
+      "drones": 5,
+      "key": "large-100/auto/region/1",
+      "length": 22516.0,
+      "makespan": 7437.0,
+      "out_of_range": 0,
+      "partition": "region",
+      "plan_seconds": 0.29712149302940816,
+      "reachable": 7624,
+      "seed": 1,
+      "sorties": 65,
+      "steps_per_cell": 2.953305351521511,
+      "total_seconds": 0.435255594085902
+    },
+    {
+      "algorithm": "auto",
+      "case": "large-100",
+      "commute_share": 0.46865972455492105,
+      "coverage": 100.0,
+      "drones": 5,
+      "key": "large-100/auto/region/2",
+      "length": 29770.0,
+      "makespan": 9927.0,
+      "out_of_range": 0,
+      "partition": "region",
+      "plan_seconds": 0.317060734028928,
+      "reachable": 7642,
+      "seed": 2,
+      "sorties": 82,
+      "steps_per_cell": 3.895577074064381,
+      "total_seconds": 0.4990146360360086
     }
   ]
 }

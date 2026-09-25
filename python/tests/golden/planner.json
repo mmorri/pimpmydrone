@@ -1,4 +1,12 @@
 {
+  "cluttered/auto": {
+    "commute_steps": 100,
+    "covered_cells": 333,
+    "in_region_steps": 588,
+    "skipped": 0,
+    "sorties": 5,
+    "steps": 688
+  },
   "cluttered/boustro": {
     "commute_steps": 100,
     "covered_cells": 333,

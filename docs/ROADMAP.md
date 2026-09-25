@@ -28,17 +28,40 @@ attack.
 
 ## Phase 1 — Cut the commute
 
-- **Sortie-first decomposition.** Today the route is a coverage pattern and the
-  drone recharges wherever the battery happens to run out, which is often deep
-  in the region. Split each region into battery-feasible sorties by distance
-  band from the depot first, then run the coverage pattern within each sortie.
-  Target: commute share below 35% on the tight-battery cases.
 - **Recharge at the nearest depot.** `Coverage.Repair` is built around a single
   depot field. Multi-depot maps already show the payoff: `twodepot-60` runs at
-  30-50% commute against 67-90% for single-depot cases of similar size.
+  30-50% commute against 67-90% for single-depot cases of similar size. This is
+  now the most promising item in the phase.
+- **Cover ground while commuting.** 87% of all flight on a tight-battery map is
+  over cells that have already been covered. The trip out and the trip home are
+  currently the cheapest route, chosen without reference to what still needs
+  covering; routing them through uncovered cells instead would convert commute
+  into work. This is an orienteering problem, so it wants a heuristic: bias the
+  route towards uncovered cells while keeping it inside the reserve.
 - **Cost-balanced partitioning.** Regions are balanced by cell count, but a
   distant region costs far more per cell. Weight cells by round-trip cost when
   growing regions.
+
+### Tried and rejected: sortie-first decomposition
+
+The idea was to split each region into battery-feasible clusters banded by
+distance from the depot, so a long trip out is paid once for a whole
+neighbourhood instead of once per interruption. Implemented and measured, it
+was worse in every case -- on `tight-battery-40` it raised flight from 8576 to
+22672 steps and sorties from 123 to 324.
+
+The reason is visible in the budget profile of that map. Of the 922 cells in
+range, 337 sit in the 30-39 distance band, where a round trip leaves about
+seven cells' worth of battery for actual work. Clusters are seeded at the
+furthest cell, so they inherit that near-zero budget and degenerate into
+hundreds of tiny sorties, while the direct strategy covers those same far cells
+opportunistically as it passes over them.
+
+The lesson generalises: where the commute has already eaten the charge, no
+regrouping of the work helps. Only shortening the commute (more depots) or
+making the commute productive (covering on the way) can. Hence the two items
+above. The implementation is in the history if it is worth revisiting for
+short-commute maps.
 
 ## Phase 2 — Cut the overlap
 
@@ -48,9 +71,7 @@ attack.
 - **Route shortcutting.** A cheap post-pass: where a route revisits cells,
   replace the detour with an A* leg when that is shorter. Applies to both
   patterns.
-- **Choose the pattern per region.** STC wins on cluttered regions, boustro on
-  open ones; the benchmark shows the crossover. Pick per region instead of
-  per mission.
+- **Per-region pattern choice** is done: see below.
 
 ## Phase 3 — Give the optimizer a real decision
 
@@ -79,6 +100,12 @@ fixed before it runs and the stage is really a scheduler.
 
 ## Done
 
+- **Per-region pattern choice.** The two coverage patterns win on different
+  terrain, and the crossover happens within a single map, not just between
+  maps. `--coverage-algorithm auto` (now the default) plans a region with both
+  and keeps the faster tour. Across the matrix that is 13.9% less flight and
+  15.5% less makespan than the previous STC default, and it beats the better
+  single pattern by 4.3% because it mixes them across regions.
 - **Phase 0 — measurement.** `make bench` over a fixed matrix with stored
   baselines, `fleet.analyze` breaking flight into commuting and useful work,
   golden tests pinning planner output, and the simulator independently

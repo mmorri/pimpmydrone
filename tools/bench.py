@@ -42,7 +42,7 @@ MATRIX = [
     ("large-100", 100, 100, 0.20, 3, 1, 500.0, 5),
 ]
 QUICK_MATRIX = [MATRIX[0], MATRIX[2]]
-ALGORITHMS = ["stc", "boustro"]
+ALGORITHMS = ["stc", "boustro", "auto"]
 PARTITIONS = ["region"]
 SEEDS = [1, 2]
 

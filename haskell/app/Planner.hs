@@ -5,8 +5,9 @@ import Data.Aeson (encode)
 import qualified Data.ByteString.Lazy.Char8 as BL
 import Data.Function (on)
 import qualified Data.HashMap.Strict as HM
-import Data.List (minimumBy)
 import qualified Data.Map.Strict as M
+import Data.Either (rights)
+import Data.List (minimumBy)
 import Data.Maybe (mapMaybe)
 import qualified Data.Set as S
 import Options.Applicative
@@ -20,11 +21,16 @@ import Domain.Cell (Cell (..))
 import Domain.Depot (Depot (..))
 import Domain.Drone (DroneSpec)
 import Domain.Map (GridMap, freeNeighbors, isFree)
-import Domain.Tour (Tour, mkTour)
+import Domain.Tour (Tour, TourCost (..), mkTour)
 import IO.Json (MapContext (..), readMapContext, readParams, readRegions, writeSkipped, writeTours)
 import Partition.Common (RegionAssignment (..))
 
-data CoverageAlgorithm = AlgoSTC | AlgoBoustro deriving (Eq, Show)
+-- | Which coverage pattern to run over a region. The two patterns suit
+-- different terrain -- the lawnmower sweep is cheaper on open ground, the
+-- spanning-tree walk on cluttered ground -- and which one wins varies from
+-- region to region within a single map, so 'AlgoAuto' plans both and keeps
+-- whichever tour is faster.
+data CoverageAlgorithm = AlgoSTC | AlgoBoustro | AlgoAuto deriving (Eq, Show)
 
 data Options = Options
   { optMap :: !FilePath
@@ -47,16 +53,18 @@ optionsParser =
       (eitherReader parseAlgo)
       ( long "coverage-algorithm"
           <> metavar "ALGO"
-          <> value AlgoSTC
+          <> value AlgoAuto
           <> showDefaultWith showAlgo
-          <> help "Coverage pattern: stc or boustro"
+          <> help "Coverage pattern: stc, boustro or auto (cheaper of the two per region)"
       )
   where
     parseAlgo "stc" = Right AlgoSTC
     parseAlgo "boustro" = Right AlgoBoustro
+    parseAlgo "auto" = Right AlgoAuto
     parseAlgo other = Left $ "Unsupported coverage algorithm: " <> other
     showAlgo AlgoSTC = "stc"
     showAlgo AlgoBoustro = "boustro"
+    showAlgo AlgoAuto = "auto"
 
 main :: IO ()
 main = do
@@ -109,9 +117,12 @@ envFor envs depot = envs M.! adCell depot
 
 planRegion :: PlannerEnv -> CoverageAlgorithm -> RegionAssignment -> IO (Tour, [Cell])
 planRegion env algo region =
-  case buildPathWith env (selectAlgorithm algo region) of
-    Left err -> die ("region " ++ show (raDroneId region) ++ ": " ++ err)
-    Right BuildResult {..} -> do
+  case candidates of
+    [] -> die ("region " ++ show (raDroneId region) ++ ": no coverage pattern succeeded")
+    results -> emit (minimumBy (compare `on` (tcTime . brCost)) results)
+  where
+    candidates = rights [buildPathWith env (pattern region) | pattern <- patternsFor algo]
+    emit BuildResult {..} = do
       unless (null brSkipped) $
         warn
           ( "region " ++ show (raDroneId region) ++ ": " ++ show (length brSkipped)
@@ -119,9 +130,10 @@ planRegion env algo region =
           )
       pure (mkTour (raDroneId region) brPath brRechargeStops brCost, brSkipped)
 
-selectAlgorithm :: CoverageAlgorithm -> RegionAssignment -> [Cell]
-selectAlgorithm AlgoSTC = planSTC
-selectAlgorithm AlgoBoustro = planBoustro
+patternsFor :: CoverageAlgorithm -> [RegionAssignment -> [Cell]]
+patternsFor AlgoSTC = [planSTC]
+patternsFor AlgoBoustro = [planBoustro]
+patternsFor AlgoAuto = [planSTC, planBoustro]
 
 -- | Serve a region from the depot nearest (by grid distance) to its seed.
 -- With no depots at all the seed doubles as a depot.
