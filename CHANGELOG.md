@@ -2,8 +2,15 @@
 
 ## Unreleased
 
+### Changed
+
+- Mid-tour battery recalls now recharge at the **nearest depot** (cheapest
+  turn-aware return) instead of always the region\'s home depot. Tours still
+  start and finish at the assigned home.
+
 ### Added
 
+- Hangar-glam website art, product gallery, favicon, cache-busted assets.
 - **Public website** (`website/`) with a mandatory liability gate, `/legal`, and
   `/donate`. Funding model is **donations only** — no subscriptions.
 - **Safety bundle** on every export: `SAFETY_REPORT.md`, `DISCLAIMER.txt`,

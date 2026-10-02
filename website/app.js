@@ -136,7 +136,7 @@
 
     const btn = document.getElementById("planBtn");
     btn.disabled = true;
-    btn.textContent = "Planning…";
+    btn.textContent = "Customizing…";
     try {
       const res = await fetch("/api/plan", {
         method: "POST",
@@ -154,7 +154,7 @@
       error.textContent = String(err.message || err);
     } finally {
       btn.disabled = false;
-      btn.textContent = "Plan coverage";
+        btn.textContent = "Customize mission";
     }
   };
 

@@ -28,10 +28,10 @@ attack.
 
 ## Phase 1 — Cut the commute
 
-- **Recharge at the nearest depot.** `Coverage.Repair` is built around a single
-  depot field. Multi-depot maps already show the payoff: `twodepot-60` runs at
-  30-50% commute against 67-90% for single-depot cases of similar size. This is
-  now the most promising item in the phase.
+- **Recharge at the nearest depot.** Done: mid-tour recalls divert to the
+  cheapest turn-aware depot; tours still start/finish at the assigned home.
+  Multi-depot maps already showed the payoff (`twodepot-60` at 30-50% commute
+  vs 67-90% single-depot); recharges can now exploit that mid-sortie.
 - **Cover ground while commuting.** 87% of all flight on a tight-battery map is
   over cells that have already been covered. The trip out and the trip home are
   currently the cheapest route, chosen without reference to what still needs

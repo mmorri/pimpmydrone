@@ -3,11 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PimpMyDrone — experimental multi-drone coverage planner</title>
-  <meta name="description" content="Free experimental multi-drone coverage planning. Donations welcome. We accept no responsibility for flights or damage." />
+  <title>PimpMyDrone — customize your multi-drone coverage plans</title>
+  <meta name="description" content="Free experimental multi-drone coverage planning with garage-glam energy. Donations welcome. We accept no responsibility for flights or damage. Not affiliated with any TV show." />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
-  <link rel="stylesheet" href="/assets/styles.css" />
+  <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/assets/styles.css?v=0.3.1" />
+  <meta property="og:title" content="PimpMyDrone — custom multi-drone coverage" />
+  <meta property="og:description" content="Free experimental multi-drone coverage planner. Donations welcome. Fly at your own risk." />
+  <meta property="og:image" content="/assets/img/hero-hangar.jpg" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
 </head>
 <body>
   <!-- GIANT DISCLAIMER GATE -->
@@ -33,10 +39,11 @@
   <header class="top">
     <div class="brand">
       <a href="/" class="logo">PimpMyDrone</a>
-      <span class="tag">experimental · donation-funded</span>
+      <span class="tag">hangar custom shop · donation-funded</span>
     </div>
     <nav>
       <a href="#planner">Planner</a>
+      <a href="#gallery">Gallery</a>
       <a href="/legal">Legal</a>
       <a href="/donate">Donate</a>
       <a id="navGithub" href="https://github.com/mmorri/pimpmydrone" target="_blank" rel="noopener">GitHub</a>
@@ -44,29 +51,66 @@
   </header>
 
   <main>
-    <section class="hero">
-      <div class="hero-copy">
-        <p class="eyebrow">Multi-drone area coverage</p>
-        <h1>Plan cooperative drone coverage.<br />Fly it yourself — carefully.</h1>
+    <section class="hero-bleed" aria-label="Hero">
+      <img
+        class="hero-bleed-img"
+        src="/assets/img/hero-hangar.jpg"
+        alt="Neon-lit drone hangar with quadcopters on a polished floor — original artwork"
+        width="1920"
+        height="1080"
+        fetchpriority="high"
+      />
+      <div class="hero-bleed-shade"></div>
+      <div class="hero-bleed-inner">
+        <p class="eyebrow">Fleet makeover lab</p>
+        <h1>Your coverage path<br /><span class="accent">just got a custom job.</span></h1>
         <p class="lede">
-          Draw a site, get battery-aware tours and QGroundControl exports.
-          The software is free forever. If it helps you, donate. If you fly the plans, you own the risk.
+          Roll a plain site polygon into the hangar. We partition, battery-tune, and
+          chrome out multi-drone tours you can export to QGroundControl.
+          Free forever. Donations keep the shop lights on. You fly it — you own the risk.
         </p>
         <div class="hero-actions">
-          <a class="btn" href="#planner">Open planner</a>
-          <a class="btn ghost" href="/donate">Donate</a>
+          <a class="btn" href="#planner">Customize my mission</a>
+          <a class="btn ghost" href="/donate">Tip the shop</a>
         </div>
       </div>
-      <aside class="hero-warning" aria-label="Disclaimer summary">
+    </section>
+
+    <aside class="hero-warning band" aria-label="Disclaimer summary">
+      <div>
         <h2>Giant disclaimer</h2>
         <p id="heroDisclaimer">Authors accept no responsibility for any damage, injury, regulatory violation, or loss arising from use of this software or its mission exports.</p>
-        <a href="/legal">Read the full legal text →</a>
-      </aside>
+        <p class="hint">Independent project. Not affiliated with MTV, any television program, or trademark holders of similarly named shows.</p>
+      </div>
+      <a class="btn ghost" href="/legal">Full legal text</a>
+    </aside>
+
+    <section id="gallery" class="gallery">
+      <h2>From the shop floor</h2>
+      <p class="lede">Real planner output + original hangar art. No stock TV stills.</p>
+      <div class="gallery-grid">
+        <figure>
+          <img src="/assets/img/sample-mission.png" alt="Sample multi-drone coverage mission over a solar site" width="800" height="600" loading="lazy" />
+          <figcaption>Sample solar-site mission (tool output)</figcaption>
+        </figure>
+        <figure>
+          <img src="/assets/img/coverage-boustro.png" alt="Boustrophedon lawnmower coverage pattern" width="800" height="600" loading="lazy" />
+          <figcaption>Boustrophedon sweep pattern</figcaption>
+        </figure>
+        <figure>
+          <img src="/assets/img/coverage-stc.png" alt="Spanning-tree coverage pattern" width="800" height="600" loading="lazy" />
+          <figcaption>Spanning-tree coverage pattern</figcaption>
+        </figure>
+        <figure>
+          <img src="/assets/img/hero-routes.jpg" alt="Stylized neon multi-drone route visualization" width="800" height="450" loading="lazy" />
+          <figcaption>Route vibes (original art)</figcaption>
+        </figure>
+      </div>
     </section>
 
     <section id="planner" class="planner">
       <div class="panel">
-        <h2>Site planner</h2>
+        <h2>Hangar planner</h2>
         <label for="vertical">Vertical preset</label>
         <select id="vertical"></select>
 
@@ -81,7 +125,7 @@
           <span>I re-confirm the disclaimer for this plan.</span>
         </label>
 
-        <button id="planBtn" class="btn">Plan coverage</button>
+        <button id="planBtn" class="btn">Customize mission</button>
         <button id="clearBtn" class="btn ghost" type="button">Clear drawing</button>
         <p class="hint">Draw a polygon on the map, or upload a boundary. Fair-use grid cap: <span id="maxCells">…</span> cells (keeps the demo honest, not a paywall).</p>
         <div id="error" class="error" hidden></div>
@@ -97,24 +141,24 @@
     </section>
 
     <section class="truth">
-      <h2>What this is / isn’t</h2>
+      <h2>Under the hood / under the bus</h2>
       <div class="truth-grid">
         <div>
-          <h3>Is</h3>
+          <h3>In the build</h3>
           <ul>
             <li>Open-source multi-drone coverage optimisation</li>
             <li>Battery-aware tours with a discrete simulator</li>
             <li>QGC / GeoJSON / CSV draft exports</li>
-            <li>Donation-funded — free to run locally or here</li>
+            <li>Donation-funded hangar — free to run locally or here</li>
           </ul>
         </div>
         <div>
-          <h3>Isn’t</h3>
+          <h3>Not in the build</h3>
           <ul>
             <li>A certified autopilot or UTM product</li>
             <li>Airspace, terrain, or obstacle clearance</li>
             <li>Spatial deconfliction between drones</li>
-            <li>A paid SLA, warranty, or insurance policy</li>
+            <li>A paid SLA, warranty, TV-show affiliation, or insurance</li>
           </ul>
         </div>
       </div>
@@ -122,11 +166,12 @@
   </main>
 
   <footer class="foot">
-    <p>© PimpMyDrone contributors · MIT license · <a href="/legal">No warranty / no liability</a> · <a href="/donate">Donate</a></p>
+    <p>© PimpMyDrone contributors · MIT · original hangar-glam design · <a href="/legal">No warranty / no liability</a> · <a href="/donate">Donate</a><br />
+    Not affiliated with MTV or any television program.</p>
   </footer>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <script src="/assets/app.js"></script>
+  <script src="/assets/app.js?v=0.3.1"></script>
 </body>
 </html>

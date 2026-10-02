@@ -3,12 +3,17 @@ module Coverage.Repair
   , BuildResult (..)
   , PlannerEnv
   , prepareDepot
+  , prepareDepots
   , buildPath
   , buildPathWith
   , roundTripCost
+  , minRoundTripCost
   ) where
 
 import Control.Monad (foldM)
+import Data.List (minimumBy)
+import Data.Function (on)
+import Data.Maybe (mapMaybe)
 import Algorithm.AStar (astarPath)
 import Algorithm.Flood (DepotField, chainHome, depotField, fieldCost, fieldReturn)
 import Domain.Cell (Cell (..), headingFromTo, manhattan)
@@ -32,17 +37,20 @@ data BuildResult = BuildResult
   , brRechargeStops :: ![Int]
   , brCost :: !TourCost
   , brSkipped :: ![Cell]
-  -- ^ Route cells dropped because no round trip from the depot fits the battery.
+  -- ^ Route cells dropped because no round trip from any depot fits the battery.
   }
   deriving (Show)
 
 -- | Planner environment required to convert cell routes into timed trajectories.
+--
+-- 'peHome' is where the tour starts and ends (the region\'s assigned depot).
+-- 'peFields' holds a cheapest-return field for every depot on the map so mid-tour
+-- recharges can divert to whichever depot is cheapest to reach from here.
 data PlannerEnv = PlannerEnv
   { peMap :: !GridMap
   , peDrone :: !DroneSpec
-  , peDepotCell :: !Cell
-  , peField :: !DepotField
-  -- ^ Cheapest routes home, used for every return leg and range check.
+  , peHome :: !Cell
+  , peFields :: ![(Cell, DepotField)]
   }
 
 data PlannerState = PlannerState
@@ -51,6 +59,8 @@ data PlannerState = PlannerState
   , psTime :: !Double
   , psBattery :: !Double
   , psAirborne :: !Bool
+  , psActiveDepot :: !Cell
+  -- ^ Depot the drone last took off from (or started at).
   , psNextIndex :: !Int
   , psWaypointsRev :: ![Waypoint]
   , psSegmentsRev :: ![Segment]
@@ -63,52 +73,64 @@ epsilon = 1e-9
 
 -- | Convert a target route into a full tour with timing and recharge stops.
 --
--- The drone always keeps enough battery to fly back to the depot along the
--- shortest-path tree and land; when the next move would break that invariant
--- it returns, recharges and resumes from the depot. Cells that cannot be
--- reached and returned from on a single charge are reported in 'brSkipped'.
+-- The drone always keeps enough battery to fly back to the *nearest* depot
+-- (cheapest turn-aware return) and land; when the next move would break that
+-- invariant it returns there, recharges and resumes. The tour still starts and
+-- finishes at the assigned home depot. Cells that no depot can serve on a
+-- single charge are reported in 'brSkipped'.
 buildPath :: GridMap -> DroneSpec -> AssignedDepot -> [Cell] -> Either String BuildResult
 buildPath gm drone depot route = do
   env <- prepareDepot gm drone depot
   buildPathWith env route
 
--- | Precompute everything that depends only on the map, the drone and the
--- depot. Building the cheapest-return field is the expensive part of planning,
--- so regions served by the same depot should share one environment.
+-- | Single-depot convenience: home field only.
 prepareDepot :: GridMap -> DroneSpec -> AssignedDepot -> Either String PlannerEnv
-prepareDepot gm drone (AssignedDepot _ depotCell)
-  | not (isFree gm depotCell) = Left ("Depot cell " ++ show depotCell ++ " is blocked")
+prepareDepot gm drone depot = prepareDepots gm drone depot [adCell depot]
+
+-- | Multi-depot environment: home plus every other free depot cell.
+prepareDepots :: GridMap -> DroneSpec -> AssignedDepot -> [Cell] -> Either String PlannerEnv
+prepareDepots gm drone (AssignedDepot _ home) depotCells
+  | not (isFree gm home) = Left ("Depot cell " ++ show home ++ " is blocked")
   | dsSpeed drone <= 0 = Left "Drone speed must be positive"
   | dsTakeoffCost drone + dsLandingCost drone > dsBattery drone + epsilon =
       Left "Battery budget is smaller than takeoff plus landing cost"
   | otherwise =
-      Right (PlannerEnv gm drone depotCell (depotField (freeNeighbors gm) (dsSpeed drone) depotCell))
+      let freeDepots = filter (isFree gm) (nubCells (home : depotCells))
+          fields =
+            [ (cell, depotField (freeNeighbors gm) (dsSpeed drone) cell)
+            | cell <- freeDepots
+            ]
+       in if null fields
+            then Left "No free depot cells"
+            else Right (PlannerEnv gm drone home fields)
+  where
+    nubCells = foldr (\c acc -> if c `elem` acc then acc else c : acc) []
 
 buildPathWith :: PlannerEnv -> [Cell] -> Either String BuildResult
 buildPathWith env route = do
-      let depotCell = peDepotCell env
-          (flyable, skipped) = partitionRange env route
-      st <- foldM (moveAlong env) (initialState depotCell) flyable
-      final <- finishAtDepot env st
-      let cost = psCost final
-      pure
-        BuildResult
-          { brPath = Path (reverse (psWaypointsRev final)) (reverse (psSegmentsRev final))
-          , brRechargeStops = reverse (psRechargeStops final)
-          , brCost = TourCost (cbTime cost) (cbTurns cost) (cbLength cost)
-          , brSkipped = skipped
-          }
+  let (flyable, skipped) = partitionRange env route
+  st <- foldM (moveAlong env) (initialState (peHome env)) flyable
+  final <- finishAtHome env st
+  let cost = psCost final
+  pure
+    BuildResult
+      { brPath = Path (reverse (psWaypointsRev final)) (reverse (psSegmentsRev final))
+      , brRechargeStops = reverse (psRechargeStops final)
+      , brCost = TourCost (cbTime cost) (cbTurns cost) (cbLength cost)
+      , brSkipped = skipped
+      }
 
 initialState :: Cell -> PlannerState
-initialState depotCell =
+initialState home =
   PlannerState
-    { psCurrent = depotCell
+    { psCurrent = home
     , psHeading = Nothing
     , psTime = 0
     , psBattery = 0
     , psAirborne = False
+    , psActiveDepot = home
     , psNextIndex = 0
-    , psWaypointsRev = [Waypoint 0 depotCell 0]
+    , psWaypointsRev = [Waypoint 0 home 0]
     , psSegmentsRev = []
     , psRechargeStops = []
     , psCost = emptyCost
@@ -118,36 +140,51 @@ partitionRange :: PlannerEnv -> [Cell] -> ([Cell], [Cell])
 partitionRange env = foldr classify ([], [])
   where
     budget = dsBattery (peDrone env) + epsilon
-    classify cell (ok, bad) = case roundTripCost (peDrone env) (peField env) cell of
+    classify cell (ok, bad) = case minRoundTripCost (peDrone env) (peFields env) cell of
       Just cost | cost <= budget -> (cell : ok, bad)
       _ -> (ok, cell : bad)
 
--- | Battery needed to take off, fly out to a cell along the depot's
--- cheapest-return tree, turn around, fly back and land. Turn costs are
--- symmetric, so the outbound and inbound legs cost the same. 'Nothing' if the
--- cell is not reachable from the depot at all.
+-- | Battery needed to take off, fly out to a cell along a depot\'s
+-- cheapest-return tree, turn around, fly back and land.
 roundTripCost :: DroneSpec -> DepotField -> Cell -> Maybe Double
 roundTripCost DroneSpec {..} field cell = do
   cost <- fieldCost field cell
   let uTurn = if cost > 0 then 1 else 0
   pure (dsTakeoffCost + 2 * cost + uTurn + dsLandingCost)
 
--- | Battery needed to get from a cell back to the depot and land, given the
--- heading the drone arrives with.
+-- | Cheapest round trip over any available depot.
+minRoundTripCost :: DroneSpec -> [(Cell, DepotField)] -> Cell -> Maybe Double
+minRoundTripCost drone fields cell =
+  case mapMaybe (\(_, field) -> roundTripCost drone field cell) fields of
+    [] -> Nothing
+    costs -> Just (minimum costs)
+
+-- | Best depot to return to from a cell (cheapest turn-aware return + landing).
+bestReturn :: PlannerEnv -> Cell -> Maybe Int -> Maybe (Cell, DepotField, Double, Int)
+bestReturn PlannerEnv {peDrone = DroneSpec {..}, peFields} cell arrival =
+  case mapMaybe option peFields of
+    [] -> Nothing
+    opts -> Just (minimumBy (compare `on` \(_, _, cost, _) -> cost) opts)
+  where
+    option (depot, field) = do
+      (cost, heading) <- fieldReturn field arrival cell
+      pure (depot, field, cost + dsLandingCost, heading)
+
+-- | Battery needed to get from a cell back to the nearest depot and land.
 returnCost :: PlannerEnv -> Cell -> Maybe Int -> Double
-returnCost PlannerEnv {peDrone = DroneSpec {..}, peField} cell arrival =
-  case fieldReturn peField arrival cell of
+returnCost env cell arrival =
+  case bestReturn env cell arrival of
     Nothing -> 1 / 0
-    Just (cost, _) -> cost + dsLandingCost
+    Just (_, _, cost, _) -> cost
 
 turnPenalty :: Maybe Int -> Int -> Int
 turnPenalty previous heading = case previous of
   Just prev | prev /= heading -> 1
   _ -> 0
 
--- | Fly to the next route cell, bridging non-adjacent cells with A*. The bridge
--- only uses cells within round-trip range so that a recharge is always
--- possible from anywhere along it; those cells are connected through the depot.
+fieldOf :: PlannerEnv -> Cell -> Maybe DepotField
+fieldOf env depot = lookup depot (peFields env)
+
 moveAlong :: PlannerEnv -> PlannerState -> Cell -> Either String PlannerState
 moveAlong env st target
   | psCurrent st == target = Right st
@@ -161,10 +198,8 @@ inRangeNeighbors :: PlannerEnv -> Cell -> [Cell]
 inRangeNeighbors env = filter inRange . freeNeighbors (peMap env)
   where
     budget = dsBattery (peDrone env) + epsilon
-    inRange c = maybe False (<= budget) (roundTripCost (peDrone env) (peField env) c)
+    inRange c = maybe False (<= budget) (minRoundTripCost (peDrone env) (peFields env) c)
 
--- | Move one cell, recharging at the depot first when the battery invariant
--- would otherwise be violated.
 step :: PlannerEnv -> PlannerState -> Cell -> Either String PlannerState
 step env st target = do
   airborne <- ensureAirborne env st
@@ -175,17 +210,18 @@ step env st target = do
   if needed <= dsBattery (peDrone env) + epsilon
     then applyMove env airborne target
     else do
-      recharged <- returnToDepot True env airborne
-      flyFromDepot env recharged target
+      recharged <- returnToNearestDepot True env airborne
+      flyFromActiveDepot env recharged target
 
--- | Fly from the depot to a cell along the shortest-path tree. Feasible by
--- construction for every cell that passed 'partitionRange'.
-flyFromDepot :: PlannerEnv -> PlannerState -> Cell -> Either String PlannerState
-flyFromDepot env st target = do
+-- | Fly from the active (last-landed) depot to a cell along that depot\'s tree.
+flyFromActiveDepot :: PlannerEnv -> PlannerState -> Cell -> Either String PlannerState
+flyFromActiveDepot env st target = do
+  field <- maybe (Left ("Missing field for depot " ++ show (psActiveDepot st))) Right
+    (fieldOf env (psActiveDepot st))
   (_, heading) <- maybe (Left ("Cell " ++ show target ++ " is unreachable from the depot")) Right
-    (fieldReturn (peField env) Nothing target)
+    (fieldReturn field Nothing target)
   chain <- maybe (Left ("No route from the depot to " ++ show target)) Right
-    (chainHome (peField env) target heading)
+    (chainHome field target heading)
   airborne <- ensureAirborne env st
   foldM (stepNoRecall env) airborne (tail (reverse chain))
 
@@ -247,18 +283,41 @@ applyMove env st target = do
       , psCost = addSegmentCost (psCost st) segmentCost penalty 1
       }
 
--- | Fly back along the shortest-path tree and land. When @recordRecharge@ is
--- set the landing is registered as a recharge stop.
-returnToDepot :: Bool -> PlannerEnv -> PlannerState -> Either String PlannerState
-returnToDepot recordRecharge env st
+-- | Fly back to the cheapest depot and land. Updates 'psActiveDepot'.
+returnToNearestDepot :: Bool -> PlannerEnv -> PlannerState -> Either String PlannerState
+returnToNearestDepot recordRecharge env st
   | not (psAirborne st) = Right st
   | otherwise = do
-      (_, heading) <- maybe (Left ("No return path from " ++ show (psCurrent st))) Right
-        (fieldReturn (peField env) (psHeading st) (psCurrent st))
+      (depot, field, _, heading) <-
+        maybe (Left ("No return path from " ++ show (psCurrent st))) Right
+          (bestReturn env (psCurrent st) (psHeading st))
       chain <- maybe (Left ("No route home from " ++ show (psCurrent st))) Right
-        (chainHome (peField env) (psCurrent st) heading)
+        (chainHome field (psCurrent st) heading)
       atDepot <- foldM (stepNoRecall env) st (tail chain)
-      land recordRecharge env atDepot
+      landed <- land recordRecharge env atDepot
+      pure landed {psActiveDepot = depot, psCurrent = depot}
+
+-- | End the tour at the assigned home depot (not necessarily the nearest).
+finishAtHome :: PlannerEnv -> PlannerState -> Either String PlannerState
+finishAtHome env st
+  | not (psAirborne st) && psCurrent st == peHome env = Right st
+  | not (psAirborne st) = do
+      airborne <- ensureAirborne env st {psActiveDepot = psCurrent st}
+      goHome env airborne
+  | psCurrent st == peHome env = land False env st
+  | otherwise = goHome env st
+
+goHome :: PlannerEnv -> PlannerState -> Either String PlannerState
+goHome env st = do
+  field <- maybe (Left "Missing home field") Right (fieldOf env (peHome env))
+  (_, heading) <-
+    maybe (Left ("No return path home from " ++ show (psCurrent st))) Right
+      (fieldReturn field (psHeading st) (psCurrent st))
+  chain <-
+    maybe (Left ("No route to home from " ++ show (psCurrent st))) Right
+      (chainHome field (psCurrent st) heading)
+  atHome <- foldM (stepNoRecall env) st (tail chain)
+  land False env atHome
 
 land :: Bool -> PlannerEnv -> PlannerState -> Either String PlannerState
 land recordRecharge PlannerEnv {peDrone = DroneSpec {..}} st =
@@ -275,11 +334,6 @@ land recordRecharge PlannerEnv {peDrone = DroneSpec {..}} st =
           , psRechargeStops = stops
           }
 
-finishAtDepot :: PlannerEnv -> PlannerState -> Either String PlannerState
-finishAtDepot = returnToDepot False
-
--- | Ground operations (takeoff, landing) update the time stamp of the waypoint
--- the drone is sitting on.
 retime :: Double -> [Waypoint] -> [Waypoint]
 retime _ [] = []
 retime t (wp : rest) = wp {wpTime = t} : rest

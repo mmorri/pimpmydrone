@@ -15,7 +15,7 @@ import System.Exit (die)
 import System.IO (hPutStrLn, stderr)
 import Algorithm.Flood (bfsDistances)
 import Coverage.Boustro (planBoustro)
-import Coverage.Repair (AssignedDepot (..), BuildResult (..), PlannerEnv, buildPathWith, prepareDepot)
+import Coverage.Repair (AssignedDepot (..), BuildResult (..), PlannerEnv, buildPathWith, prepareDepots)
 import Coverage.STC (planSTC)
 import Domain.Cell (Cell (..))
 import Domain.Depot (Depot (..))
@@ -101,14 +101,16 @@ main = do
 warn :: String -> IO ()
 warn = hPutStrLn stderr . ("coverage-planner: " ++)
 
--- | One planner environment per distinct depot cell.
+-- | One planner environment per distinct home depot. Every env shares fields
+-- for *all* depots so mid-tour recharges can divert to the nearest one.
 buildEnvs :: GridMap -> DroneSpec -> [AssignedDepot] -> IO (M.Map Cell PlannerEnv)
 buildEnvs gm params depots =
-  fmap M.fromList . forM (nubOrd (fmap adCell depots)) $ \cell -> do
-    let depot = head [d | d <- depots, adCell d == cell]
-    case prepareDepot gm params depot of
-      Left err -> die ("depot " ++ show cell ++ ": " ++ err)
-      Right env -> pure (cell, env)
+  let allCells = nubOrd (fmap adCell depots)
+   in fmap M.fromList . forM allCells $ \cell -> do
+        let depot = head [d | d <- depots, adCell d == cell]
+        case prepareDepots gm params depot allCells of
+          Left err -> die ("depot " ++ show cell ++ ": " ++ err)
+          Right env -> pure (cell, env)
   where
     nubOrd = S.toList . S.fromList
 
