@@ -1,0 +1,35 @@
+services:
+  web:
+    build: .
+    image: pimpmydrone-web:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8000"
+    environment:
+      FLEET_ROOT: /app
+      FLEET_HASKELL_BIN: /app/haskell/bin
+      FLEET_WEBSITE: /app/website
+      FLEET_JOBS: /tmp/fleet-jobs
+      FLEET_MAX_CELLS: "8000"
+      FLEET_DONATE_URL: ${FLEET_DONATE_URL:-https://github.com/sponsors/mmorri}
+      FLEET_GITHUB_URL: ${FLEET_GITHUB_URL:-https://github.com/mmorri/pimpmydrone}
+    volumes:
+      - fleet-jobs:/tmp/fleet-jobs
+    networks:
+      default:
+      jtdrpg_default:
+        aliases:
+          - pimpmydrone
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  fleet-jobs:
+
+networks:
+  jtdrpg_default:
+    external: true
