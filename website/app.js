@@ -135,8 +135,13 @@
     if (maxDrones) body.max_drones = Number(maxDrones);
 
     const btn = document.getElementById("planBtn");
+    const status = document.getElementById("planStatus");
     btn.disabled = true;
     btn.textContent = "Customizing…";
+    if (status) {
+      status.hidden = false;
+      status.textContent = "Partitioning the hangar floor and battery-tuning tours…";
+    }
     try {
       const res = await fetch("/api/plan", {
         method: "POST",
@@ -154,7 +159,8 @@
       error.textContent = String(err.message || err);
     } finally {
       btn.disabled = false;
-        btn.textContent = "Customize mission";
+      btn.textContent = "Customize mission";
+      if (status) status.hidden = true;
     }
   };
 

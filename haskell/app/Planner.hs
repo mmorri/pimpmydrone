@@ -86,7 +86,7 @@ main = do
   -- Building a depot's return field is the expensive part of planning, so it
   -- is done once per depot and shared by every region that depot serves.
   let assigned = mapMaybe (assignDepot depots depotIndex) nonEmpty
-  envs <- buildEnvs gm params (fmap snd assigned)
+  envs <- buildEnvs gm params (fmap snd assigned) (fmap depotCell depots)
   planned <- forM assigned $ \(region, depot) ->
     planRegion (envFor envs depot) optAlgorithm region
   let tours = fmap fst planned
@@ -102,13 +102,14 @@ warn :: String -> IO ()
 warn = hPutStrLn stderr . ("coverage-planner: " ++)
 
 -- | One planner environment per distinct home depot. Every env shares fields
--- for *all* depots so mid-tour recharges can divert to the nearest one.
-buildEnvs :: GridMap -> DroneSpec -> [AssignedDepot] -> IO (M.Map Cell PlannerEnv)
-buildEnvs gm params depots =
-  let allCells = nubOrd (fmap adCell depots)
-   in fmap M.fromList . forM allCells $ \cell -> do
+-- for every depot on the map so mid-tour recharges can divert to the nearest.
+buildEnvs :: GridMap -> DroneSpec -> [AssignedDepot] -> [Cell] -> IO (M.Map Cell PlannerEnv)
+buildEnvs gm params depots mapDepotCells =
+  let homes = nubOrd (fmap adCell depots)
+      fieldCells = nubOrd (homes ++ mapDepotCells)
+   in fmap M.fromList . forM homes $ \cell -> do
         let depot = head [d | d <- depots, adCell d == cell]
-        case prepareDepots gm params depot allCells of
+        case prepareDepots gm params depot fieldCells of
           Left err -> die ("depot " ++ show cell ++ ": " ++ err)
           Right env -> pure (cell, env)
   where

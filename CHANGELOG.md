@@ -8,6 +8,9 @@
   turn-aware return) instead of always the region\'s home depot. Tours still
   start and finish at the assigned home.
 
+- Depot commute legs **cover uncovered work cells on the way** (biased routing
+  with cheapest-tree fallback), and already-covered route cells are skipped.
+
 ### Added
 
 - Hangar-glam website art, product gallery, favicon, cache-busted assets.

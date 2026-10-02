@@ -329,6 +329,17 @@ select, input[type="number"], input[type="file"], input[type="text"], input[type
   box-shadow: 0 0 0 1px rgba(196, 77, 255, 0.15), 0 20px 60px rgba(0, 0, 0, 0.45);
 }
 .hint { color: var(--muted); font-size: 0.88rem; line-height: 1.45; margin-top: 0.8rem; }
+.plan-status {
+  margin: 0.75rem 0 0;
+  color: var(--gold);
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+  animation: plan-pulse 1.4s ease-in-out infinite;
+}
+@keyframes plan-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
 .error {
   margin-top: 0.8rem;
   color: #ffb4a4;

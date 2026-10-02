@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="/assets/styles.css?v=0.3.1" />
+  <link rel="stylesheet" href="/assets/styles.css?v=0.3.2" />
   <meta property="og:title" content="PimpMyDrone — custom multi-drone coverage" />
   <meta property="og:description" content="Free experimental multi-drone coverage planner. Donations welcome. Fly at your own risk." />
   <meta property="og:image" content="/assets/img/hero-hangar.jpg" />
@@ -127,6 +127,7 @@
 
         <button id="planBtn" class="btn">Customize mission</button>
         <button id="clearBtn" class="btn ghost" type="button">Clear drawing</button>
+        <p id="planStatus" class="plan-status" hidden></p>
         <p class="hint">Draw a polygon on the map, or upload a boundary. Fair-use grid cap: <span id="maxCells">…</span> cells (keeps the demo honest, not a paywall).</p>
         <div id="error" class="error" hidden></div>
         <div id="result" class="result" hidden>
@@ -172,6 +173,6 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <script src="/assets/app.js?v=0.3.1"></script>
+  <script src="/assets/app.js?v=0.3.2"></script>
 </body>
 </html>

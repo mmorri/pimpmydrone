@@ -32,12 +32,11 @@ attack.
   cheapest turn-aware depot; tours still start/finish at the assigned home.
   Multi-depot maps already showed the payoff (`twodepot-60` at 30-50% commute
   vs 67-90% single-depot); recharges can now exploit that mid-sortie.
-- **Cover ground while commuting.** 87% of all flight on a tight-battery map is
-  over cells that have already been covered. The trip out and the trip home are
-  currently the cheapest route, chosen without reference to what still needs
-  covering; routing them through uncovered cells instead would convert commute
-  into work. This is an orienteering problem, so it wants a heuristic: bias the
-  route towards uncovered cells while keeping it inside the reserve.
+- **Cover ground while commuting.** Done: depot legs (recall, outbound after
+  recharge, and the final home leg) run a turn-aware search that prefers still-
+  uncovered work cells, then fall back to the cheapest return tree if the biased
+  path would break the battery reserve. Route cells already flown over during a
+  commute are skipped so the work is not repeated.
 - **Cost-balanced partitioning.** Regions are balanced by cell count, but a
   distant region costs far more per cell. Weight cells by round-trip cost when
   growing regions.
