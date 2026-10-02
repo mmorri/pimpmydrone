@@ -1,4 +1,4 @@
-.PHONY: setup build haskell-build python-build test lint format run viz bench loc clean
+.PHONY: setup build haskell-build python-build test lint format run viz bench loc clean serve site
 
 STACK ?= stack
 UV ?= uv
@@ -46,6 +46,21 @@ bench:
 
 loc:
 	python3 tools/loc_count.py
+
+# Local product UI: draw/upload GeoJSON → plan → download QGC missions.
+serve:
+	cd python && $(UV) run python -m fleet serve --host 127.0.0.1 --port 8000
+
+# Example vertical site (solar by default). Override with e.g.
+#   make site GEO=examples/sites/security_perimeter.geojson VERTICAL=security
+GEO ?= examples/sites/solar_farm.geojson
+VERTICAL ?= solar
+SITE_OUT ?= outputs/site-$(VERTICAL)
+site:
+	cd python && $(UV) run python -m fleet from-geo \
+		--geojson ../$(GEO) \
+		--output-dir ../$(SITE_OUT) \
+		--vertical $(VERTICAL)
 
 clean:
 	rm -rf outputs haskell/bin

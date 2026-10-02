@@ -1,0 +1,30 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Demo solar farm",
+        "vertical": "solar"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-122.2550, 37.7720],
+          [-122.2485, 37.7720],
+          [-122.2485, 37.7765],
+          [-122.2550, 37.7765],
+          [-122.2550, 37.7720]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "depot": true, "role": "depot" },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-122.2546, 37.7724]
+      }
+    }
+  ]
+}

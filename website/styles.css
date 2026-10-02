@@ -1,0 +1,297 @@
+:root {
+  --bg: #10140f;
+  --bg-2: #171c16;
+  --panel: #1c241c;
+  --ink: #e7eee4;
+  --muted: #9aab98;
+  --line: #2c382c;
+  --accent: #d7b56d;
+  --go: #6fbf86;
+  --stop: #e07a5f;
+  --warn-bg: #2a1c14;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: "Source Serif 4", "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+  background:
+    radial-gradient(900px 500px at 0% -10%, #243222 0%, transparent 55%),
+    radial-gradient(700px 420px at 100% 0%, #3a2a18 0%, transparent 50%),
+    var(--bg);
+}
+body.doc { background: var(--bg); }
+
+a { color: var(--accent); }
+code { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.9em; }
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  z-index: 20;
+}
+.brand { display: flex; align-items: baseline; gap: 0.75rem; }
+.logo {
+  font-family: "Fraunces", "Source Serif 4", Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+.tag { color: var(--muted); font-size: 0.85rem; font-family: "IBM Plex Sans", system-ui, sans-serif; }
+nav { display: flex; gap: 1rem; flex-wrap: wrap; font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 0.95rem; }
+nav a { color: var(--ink); text-decoration: none; opacity: 0.85; }
+nav a:hover { opacity: 1; color: var(--accent); }
+
+.hero {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 1.25rem;
+  padding: 2rem 1.5rem 1rem;
+}
+@media (max-width: 900px) {
+  .hero, .planner, .truth-grid { grid-template-columns: 1fr; }
+}
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.75rem;
+  color: var(--go);
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+}
+.hero h1, .doc-card h1, .gate-card h1 {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 550;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin: 0.3rem 0 0.8rem;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+}
+.lede { color: var(--muted); font-size: 1.1rem; max-width: 40rem; }
+.hero-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; }
+
+.hero-warning {
+  background: var(--warn-bg);
+  border: 2px solid var(--stop);
+  border-radius: 16px;
+  padding: 1.1rem 1.2rem;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--stop) 18%, transparent);
+}
+.hero-warning h2 {
+  margin: 0 0 0.5rem;
+  color: var(--stop);
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border: none;
+  border-radius: 999px;
+  padding: 0.7rem 1.15rem;
+  background: linear-gradient(180deg, #e6c77f, var(--accent));
+  color: #1a1408;
+  font-weight: 650;
+  text-decoration: none;
+  cursor: pointer;
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+}
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn.ghost {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+.btn.danger {
+  width: 100%;
+  background: linear-gradient(180deg, #ef927c, var(--stop));
+  color: #1a0906;
+  margin-top: 0.85rem;
+}
+
+.planner {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) 1fr;
+  gap: 1rem;
+  padding: 1rem 1.5rem 2rem;
+}
+.panel, .doc-card {
+  background: color-mix(in srgb, var(--panel) 94%, black);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 1rem 1.1rem 1.2rem;
+}
+.panel h2 { margin: 0 0 0.5rem; font-size: 1.25rem; }
+label {
+  display: block;
+  margin: 0.8rem 0 0.3rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+}
+select, input[type="number"], input[type="file"], input[type="text"], input[type="password"] {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #121710;
+  color: var(--ink);
+  padding: 0.55rem 0.7rem;
+  font: inherit;
+}
+#map {
+  min-height: 560px;
+  height: min(70vh, 680px);
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.hint { color: var(--muted); font-size: 0.88rem; line-height: 1.45; margin-top: 0.8rem; }
+.error {
+  margin-top: 0.8rem;
+  color: #ffb4a4;
+  white-space: pre-wrap;
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  font-size: 0.92rem;
+}
+.result { margin-top: 1rem; }
+.metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+.metric {
+  background: #121710;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.55rem 0.65rem;
+}
+.metric b { display: block; font-size: 1.05rem; }
+.metric span { color: var(--muted); font-size: 0.75rem; font-family: "IBM Plex Sans", system-ui, sans-serif; }
+.warnings {
+  margin: 0.75rem 0;
+  padding: 0.7rem 0.8rem;
+  border-radius: 10px;
+  background: var(--warn-bg);
+  border: 1px solid var(--stop);
+  color: #ffd2c5;
+  font-size: 0.9rem;
+}
+.warnings:empty { display: none; }
+.preview {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  margin-top: 0.5rem;
+  background: #0b0f0a;
+}
+.downloads { margin-top: 0.6rem; font-family: "IBM Plex Sans", system-ui, sans-serif; }
+.downloads a { display: block; margin: 0.3rem 0; }
+.donate-nudge { color: var(--muted); font-size: 0.9rem; }
+
+.truth { padding: 0 1.5rem 3rem; }
+.truth h2 { font-size: 1.5rem; }
+.truth-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.truth-grid div {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  background: var(--bg-2);
+}
+.truth-grid h3 { margin-top: 0; }
+.truth-grid ul { margin: 0; padding-left: 1.1rem; color: var(--muted); }
+
+.foot {
+  border-top: 1px solid var(--line);
+  padding: 1.2rem 1.5rem 2rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+}
+
+/* Disclaimer gate */
+.gate {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background:
+    linear-gradient(180deg, rgba(8,10,7,0.92), rgba(8,10,7,0.97)),
+    repeating-linear-gradient(-45deg, transparent, transparent 12px, rgba(224,122,95,0.05) 12px, rgba(224,122,95,0.05) 24px);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+.gate[hidden] { display: none; }
+.gate-card {
+  width: min(720px, 100%);
+  background: #1a1512;
+  border: 3px solid var(--stop);
+  border-radius: 18px;
+  padding: 1.25rem 1.35rem 1.4rem;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.55), 0 0 0 8px rgba(224,122,95,0.12);
+}
+.gate-kicker {
+  margin: 0;
+  color: var(--stop);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.75rem;
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  font-weight: 700;
+}
+.gate-card h1 em { color: var(--stop); font-style: normal; }
+.gate-scroll {
+  max-height: min(40vh, 280px);
+  overflow: auto;
+  margin: 0.75rem 0 1rem;
+  padding-right: 0.4rem;
+  color: #f0e6df;
+  line-height: 1.45;
+}
+.gate-check {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+.gate-check.compact { margin-top: 0.9rem; font-size: 0.88rem; color: var(--muted); }
+.gate-check input { margin-top: 0.2rem; width: auto; accent-color: var(--stop); }
+.gate-donate, .gate-legal-link { color: var(--muted); font-size: 0.88rem; font-family: "IBM Plex Sans", system-ui, sans-serif; }
+
+.doc-card { margin: 1.5rem auto; width: min(860px, calc(100% - 2rem)); }
+.doc-card.warn-border { border: 2px solid var(--stop); }
+.legal-pre {
+  white-space: pre-wrap;
+  background: #121710;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1rem;
+  overflow: auto;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #dfe8da;
+}
+.donate-points { color: var(--muted); line-height: 1.5; }

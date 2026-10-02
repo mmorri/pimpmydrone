@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Donate — PimpMyDrone</title>
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body class="doc">
+  <header class="top">
+    <div class="brand"><a href="/" class="logo">PimpMyDrone</a></div>
+    <nav>
+      <a href="/#planner">Planner</a>
+      <a href="/legal">Legal</a>
+      <a id="navGithub" href="https://github.com/mmorri/pimpmydrone">GitHub</a>
+    </nav>
+  </header>
+  <article class="doc-card">
+    <p class="gate-kicker">Donations, not subscriptions</p>
+    <h1>Keep the planner free</h1>
+    <p class="lede">
+      There is no paid tier, no API subscription, and no warranty for sale.
+      If PimpMyDrone saved you an afternoon (or a sortie), chip in so development can continue.
+    </p>
+    <ul class="donate-points">
+      <li>Free to use locally and on this demo</li>
+      <li>MIT open source — fork it, audit it, host it yourself</li>
+      <li>Donations fund algorithms, safety docs, and hosting — not indemnity</li>
+    </ul>
+    <a id="donateBtn" class="btn" href="https://github.com/sponsors/mmorri" target="_blank" rel="noopener">Donate via GitHub Sponsors</a>
+    <p class="hint">Prefer another rail? Open an issue on GitHub and we’ll add it. A donation never buys a liability waiver — see <a href="/legal">/legal</a>.</p>
+  </article>
+  <script>
+    const cfg = window.FLEET_CONFIG || {};
+    if (cfg.github_url) document.getElementById("navGithub").href = cfg.github_url;
+    if (cfg.donate_url) document.getElementById("donateBtn").href = cfg.donate_url;
+  </script>
+</body>
+</html>

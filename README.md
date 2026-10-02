@@ -39,6 +39,17 @@ make run SEED=7 ARGS="--width 60 --height 60 --depots 2 --battery 400 --coverage
 make test                        # QuickCheck properties + pytest (incl. end-to-end runs)
 ```
 
+### Plan a real site (website + CLI)
+
+```bash
+make serve                       # http://127.0.0.1:8000 — disclaimer gate, then planner
+make site                        # examples/sites/solar_farm.geojson → outputs/site-solar/
+```
+
+The public site is **donation-funded** (no subscriptions). Authors **accept no
+responsibility** for flights or damage — see [LEGAL.md](LEGAL.md) and
+[docs/PRODUCT.md](docs/PRODUCT.md).
+
 Every stage is also available on its own:
 
 ```bash
@@ -124,4 +135,4 @@ to the directory holding `coverage-partitioner` and `coverage-planner`.
 - `benchmarks/` – stored benchmark baselines.
 - `.github/workflows/` – Haskell, Python and end-to-end pipeline CI.
 
-See [docs/overview.md](docs/overview.md) for the algorithms, [docs/ROADMAP.md](docs/ROADMAP.md) for what is planned next, and [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow.
+See [docs/overview.md](docs/overview.md) for the algorithms, [docs/ROADMAP.md](docs/ROADMAP.md) for what is planned next, [docs/PRODUCT.md](docs/PRODUCT.md) for the commercial product slice, and [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow.

@@ -12,9 +12,11 @@ from rich.console import Console
 from rich.table import Table
 
 from . import io
+from .export_mission import export_all
 from .generate_map import GeneratorConfig, write_workspace
 from .optimize import optimize_file
 from .simulate import SimulationResult, simulate
+from .site import VERTICALS, plan_site
 from .visualize import visualize
 
 console = Console()
@@ -295,6 +297,97 @@ def run_command(
     console.rule("Mission Summary")
     print_summary(result, out_dir)
     fail_on_problems(result)
+
+
+@run.command("from-geo")
+@click.option("--geojson", "geojson_path", type=PathArg, required=True)
+@click.option("--output-dir", type=PathArg, required=True)
+@click.option(
+    "--vertical",
+    type=click.Choice(sorted(VERTICALS)),
+    default="solar",
+    show_default=True,
+)
+@click.option("--cell-size", "cell_size_m", type=float, default=None)
+@click.option("--max-drones", type=int, default=None)
+@click.option("--battery", type=float, default=None)
+@click.option("--altitude", "altitude_m", type=float, default=None)
+@click.option(
+    "--coverage-algorithm",
+    type=click.Choice(["stc", "boustro", "auto"]),
+    default="auto",
+    show_default=True,
+)
+@click.option("--partition", type=click.Choice(["region", "strip"]), default="region")
+@optimizer_options
+def from_geo_command(
+    geojson_path: Path,
+    output_dir: Path,
+    vertical: str,
+    cell_size_m: Optional[float],
+    max_drones: Optional[int],
+    battery: Optional[float],
+    altitude_m: Optional[float],
+    coverage_algorithm: str,
+    partition: str,
+    drone_cost: float,
+    deadline: Optional[float],
+    solver_time: float,
+) -> None:
+    """Plan a real-world site from GeoJSON and export flyable missions."""
+
+    result = plan_site(
+        geojson_path,
+        output_dir,
+        vertical=vertical,
+        cell_size_m=cell_size_m,
+        max_drones=max_drones,
+        battery=battery,
+        altitude_m=altitude_m,
+        coverage_algorithm=coverage_algorithm,
+        partition=partition,
+        drone_cost=drone_cost,
+        deadline=deadline,
+        solver_time=solver_time,
+    )
+    console.rule(f"Site mission ({vertical})")
+    print_summary(result.simulation, output_dir)
+    console.print(f"Missions exported under [bold]{output_dir / 'missions'}[/bold]")
+    fail_on_problems(result.simulation)
+
+
+@run.command("export")
+@click.option("--tours", "tours_path", type=PathArg, required=True)
+@click.option("--geo", "geo_path", type=PathArg, required=True)
+@click.option("--output-dir", type=PathArg, required=True)
+@click.option("--full/--simplify", default=False, help="Keep every grid cell (large).")
+def export_command(
+    tours_path: Path, geo_path: Path, output_dir: Path, full: bool
+) -> None:
+    """Export tours to GeoJSON / CSV / QGroundControl .plan files."""
+
+    manifest = export_all(tours_path, geo_path, output_dir, simplify=not full)
+    console.print(f"Wrote mission bundle to [bold]{output_dir}[/bold]")
+    for key in ("geojson", "csv"):
+        console.print(f"  {key}: {manifest[key]}")
+    for plan in manifest["qgc_plans"]:
+        console.print(f"  qgc: {plan}")
+
+
+@run.command("serve")
+@click.option("--host", default="127.0.0.1", show_default=True)
+@click.option("--port", type=int, default=8000, show_default=True)
+def serve_command(host: str, port: int) -> None:
+    """Launch the local planner web UI / API."""
+
+    try:
+        import uvicorn
+    except ImportError as exc:  # pragma: no cover
+        raise click.ClickException(
+            "uvicorn is required for `fleet serve`. Run `uv sync` in python/."
+        ) from exc
+    console.print(f"Serving PimpMyDrone UI on http://{host}:{port}")
+    uvicorn.run("fleet.webapp:app", host=host, port=port, reload=False)
 
 
 def print_summary(result: SimulationResult, out_dir: Path) -> None:

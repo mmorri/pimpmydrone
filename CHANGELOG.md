@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+### Added
+
+- **Public website** (`website/`) with a mandatory liability gate, `/legal`, and
+  `/donate`. Funding model is **donations only** — no subscriptions.
+- **Safety bundle** on every export: `SAFETY_REPORT.md`, `DISCLAIMER.txt`,
+  `README_FLYING.md`, plus planner warnings in the API response.
+- API requires `accepted_disclaimer: true` before planning (`LEGAL.md`).
+- Product slice: GeoJSON site import, vertical presets, QGC/GeoJSON/CSV export,
+  `fleet from-geo` / `export` / `serve`.
+
+### Changed
+
+- Removed API-key / paid-tier framing. Demo grid caps are fair-use only.
+
+## Earlier
+
 ### Fixed
 
 The pipeline could not complete a mission end to end. All three reported cases

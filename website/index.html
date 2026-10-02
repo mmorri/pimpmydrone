@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PimpMyDrone — experimental multi-drone coverage planner</title>
+  <meta name="description" content="Free experimental multi-drone coverage planning. Donations welcome. We accept no responsibility for flights or damage." />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body>
+  <!-- GIANT DISCLAIMER GATE -->
+  <div id="gate" class="gate" role="dialog" aria-modal="true" aria-labelledby="gate-title">
+    <div class="gate-card">
+      <p class="gate-kicker">Stop — liability gate</p>
+      <h1 id="gate-title">We do <em>not</em> take responsibility for any damage</h1>
+      <div class="gate-scroll">
+        <p><strong>PimpMyDrone is experimental planning software only.</strong> It is not a certified flight system, not aviation advice, and not a substitute for a licensed remote pilot.</p>
+        <p>By continuing you agree that the authors, contributors, hosts, and donors accept <strong>no liability</strong> for crash, injury, death, property damage, airspace violation, privacy harm, fines, or any other loss — even if warned. Generated paths ignore wind, terrain, wires, buildings, birds, other aircraft, NOTAMs, and local law.</p>
+        <p>Multi-drone schedules are <strong>not spatially deconflicted</strong>. Exports are drafts for you to inspect in your own ground station before arming. If you cannot accept that, leave now.</p>
+        <p class="gate-legal-link">Full text: <a href="/legal">/legal</a> · also shipped inside every mission zip as <code>SAFETY_REPORT.md</code>.</p>
+      </div>
+      <label class="gate-check">
+        <input type="checkbox" id="gateAccept" />
+        <span>I have read this. I fly at my own risk. I will not hold the authors responsible.</span>
+      </label>
+      <button id="gateEnter" class="btn danger" disabled>Enter the planner</button>
+      <p class="gate-donate">This project is free. Support it with a <a id="gateDonate" href="/donate">donation</a> — not a subscription.</p>
+    </div>
+  </div>
+
+  <header class="top">
+    <div class="brand">
+      <a href="/" class="logo">PimpMyDrone</a>
+      <span class="tag">experimental · donation-funded</span>
+    </div>
+    <nav>
+      <a href="#planner">Planner</a>
+      <a href="/legal">Legal</a>
+      <a href="/donate">Donate</a>
+      <a id="navGithub" href="https://github.com/mmorri/pimpmydrone" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Multi-drone area coverage</p>
+        <h1>Plan cooperative drone coverage.<br />Fly it yourself — carefully.</h1>
+        <p class="lede">
+          Draw a site, get battery-aware tours and QGroundControl exports.
+          The software is free forever. If it helps you, donate. If you fly the plans, you own the risk.
+        </p>
+        <div class="hero-actions">
+          <a class="btn" href="#planner">Open planner</a>
+          <a class="btn ghost" href="/donate">Donate</a>
+        </div>
+      </div>
+      <aside class="hero-warning" aria-label="Disclaimer summary">
+        <h2>Giant disclaimer</h2>
+        <p id="heroDisclaimer">Authors accept no responsibility for any damage, injury, regulatory violation, or loss arising from use of this software or its mission exports.</p>
+        <a href="/legal">Read the full legal text →</a>
+      </aside>
+    </section>
+
+    <section id="planner" class="planner">
+      <div class="panel">
+        <h2>Site planner</h2>
+        <label for="vertical">Vertical preset</label>
+        <select id="vertical"></select>
+
+        <label for="maxDrones">Max drones (optional)</label>
+        <input id="maxDrones" type="number" min="1" max="12" placeholder="preset default" />
+
+        <label for="file">Upload GeoJSON</label>
+        <input id="file" type="file" accept=".json,.geojson,application/geo+json,application/json" />
+
+        <label class="gate-check compact">
+          <input type="checkbox" id="planAccept" />
+          <span>I re-confirm the disclaimer for this plan.</span>
+        </label>
+
+        <button id="planBtn" class="btn">Plan coverage</button>
+        <button id="clearBtn" class="btn ghost" type="button">Clear drawing</button>
+        <p class="hint">Draw a polygon on the map, or upload a boundary. Fair-use grid cap: <span id="maxCells">…</span> cells (keeps the demo honest, not a paywall).</p>
+        <div id="error" class="error" hidden></div>
+        <div id="result" class="result" hidden>
+          <div class="metrics" id="metrics"></div>
+          <div id="warnings" class="warnings"></div>
+          <img id="preview" class="preview" alt="Coverage preview" />
+          <div class="downloads" id="downloads"></div>
+          <p class="donate-nudge">Useful? <a id="resultDonate" href="/donate">Leave a donation</a> — no account, no subscription.</p>
+        </div>
+      </div>
+      <div id="map" aria-label="Site map"></div>
+    </section>
+
+    <section class="truth">
+      <h2>What this is / isn’t</h2>
+      <div class="truth-grid">
+        <div>
+          <h3>Is</h3>
+          <ul>
+            <li>Open-source multi-drone coverage optimisation</li>
+            <li>Battery-aware tours with a discrete simulator</li>
+            <li>QGC / GeoJSON / CSV draft exports</li>
+            <li>Donation-funded — free to run locally or here</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Isn’t</h3>
+          <ul>
+            <li>A certified autopilot or UTM product</li>
+            <li>Airspace, terrain, or obstacle clearance</li>
+            <li>Spatial deconfliction between drones</li>
+            <li>A paid SLA, warranty, or insurance policy</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p>© PimpMyDrone contributors · MIT license · <a href="/legal">No warranty / no liability</a> · <a href="/donate">Donate</a></p>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+  <script src="/assets/app.js"></script>
+</body>
+</html>

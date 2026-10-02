@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Legal disclaimer — PimpMyDrone</title>
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body class="doc">
+  <header class="top">
+    <div class="brand"><a href="/" class="logo">PimpMyDrone</a></div>
+    <nav>
+      <a href="/#planner">Planner</a>
+      <a href="/donate">Donate</a>
+      <a id="navGithub" href="https://github.com/mmorri/pimpmydrone">GitHub</a>
+    </nav>
+  </header>
+  <article class="doc-card warn-border">
+    <p class="gate-kicker">Binding disclaimer</p>
+    <h1>We accept no responsibility for any damage</h1>
+    <pre id="legalBody" class="legal-pre"></pre>
+    <p><a class="btn" href="/">Back to planner</a></p>
+  </article>
+  <script>
+    const cfg = window.FLEET_CONFIG || {};
+    if (cfg.github_url) document.getElementById("navGithub").href = cfg.github_url;
+    fetch("/api/disclaimer").then(r => r.text()).then(t => {
+      document.getElementById("legalBody").textContent = t;
+    });
+  </script>
+</body>
+</html>

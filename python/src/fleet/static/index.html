@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PimpMyDrone — Coverage Planner</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #1a222c;
+      --ink: #e8eef4;
+      --muted: #8b9aab;
+      --accent: #3d9b6e;
+      --accent-2: #c4a35a;
+      --line: #2a3542;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      background: radial-gradient(1200px 600px at 10% -10%, #1c3a2e 0%, transparent 55%),
+                  radial-gradient(900px 500px at 100% 0%, #2a2418 0%, transparent 50%),
+                  var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+    }
+    header {
+      padding: 1.25rem 1.5rem 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 1rem;
+    }
+    header h1 {
+      margin: 0;
+      font-family: "IBM Plex Serif", Georgia, serif;
+      font-weight: 600;
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      letter-spacing: -0.02em;
+    }
+    header p { margin: 0.25rem 0 0; color: var(--muted); font-size: 0.95rem; }
+    .badge {
+      border: 1px solid var(--line);
+      padding: 0.35rem 0.7rem;
+      border-radius: 999px;
+      color: var(--accent-2);
+      font-size: 0.8rem;
+      white-space: nowrap;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 360px) 1fr;
+      gap: 1rem;
+      padding: 1rem 1.5rem 2rem;
+    }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+    .panel {
+      background: color-mix(in srgb, var(--panel) 92%, black);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 1rem;
+    }
+    label { display: block; font-size: 0.8rem; color: var(--muted); margin: 0.75rem 0 0.3rem; }
+    select, input, button, textarea {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #12181f;
+      color: var(--ink);
+      padding: 0.55rem 0.7rem;
+      font: inherit;
+    }
+    button {
+      background: linear-gradient(180deg, #4aaa7a, var(--accent));
+      border: none;
+      color: #04140c;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+    button:disabled { opacity: 0.5; cursor: wait; }
+    button.secondary {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      margin-top: 0.5rem;
+    }
+    #map {
+      height: min(70vh, 640px);
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      overflow: hidden;
+    }
+    .hint { color: var(--muted); font-size: 0.85rem; margin-top: 0.75rem; line-height: 1.4; }
+    .result { margin-top: 1rem; display: none; }
+    .result.show { display: block; }
+    .metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin: 0.75rem 0;
+    }
+    .metric {
+      background: #12181f;
+      border-radius: 8px;
+      padding: 0.55rem 0.65rem;
+      border: 1px solid var(--line);
+    }
+    .metric b { display: block; font-size: 1.05rem; }
+    .metric span { color: var(--muted); font-size: 0.75rem; }
+    .downloads a {
+      display: block;
+      color: var(--accent-2);
+      margin: 0.35rem 0;
+      text-decoration: none;
+    }
+    .preview {
+      margin-top: 0.75rem;
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #0b1015;
+    }
+    .error { color: #ff8f8f; margin-top: 0.75rem; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>PimpMyDrone</h1>
+      <p>Draw a site. Get multi-drone coverage missions you can fly.</p>
+    </div>
+    <div class="badge">open-core · solar &amp; security</div>
+  </header>
+
+  <div class="layout">
+    <aside class="panel">
+      <label for="vertical">Vertical</label>
+      <select id="vertical"></select>
+
+      <label for="maxDrones">Max drones</label>
+      <input id="maxDrones" type="number" min="1" max="12" placeholder="preset default" />
+
+      <label for="apiKey">API key (pro tier)</label>
+      <input id="apiKey" type="password" placeholder="optional" />
+
+      <label for="file">Or upload GeoJSON</label>
+      <input id="file" type="file" accept=".json,.geojson,application/geo+json,application/json" />
+
+      <button id="planBtn">Plan coverage</button>
+      <button id="clearBtn" class="secondary" type="button">Clear drawing</button>
+      <p class="hint">
+        Draw a polygon on the map (or upload a site boundary). The planner
+        partitions the area, builds battery-aware tours, and exports QGroundControl plans.
+      </p>
+      <div id="error" class="error"></div>
+      <div id="result" class="result">
+        <div class="metrics" id="metrics"></div>
+        <img id="preview" class="preview" alt="Coverage preview" />
+        <div class="downloads" id="downloads"></div>
+      </div>
+    </aside>
+    <main>
+      <div id="map"></div>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+  <script>
+    const map = L.map("map").setView([37.77, -122.25], 14);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "&copy; OpenStreetMap",
+    }).addTo(map);
+
+    const drawn = new L.FeatureGroup();
+    map.addLayer(drawn);
+    const drawControl = new L.Control.Draw({
+      draw: {
+        polygon: { allowIntersection: false, showArea: true },
+        polyline: false, rectangle: true, circle: false, marker: false, circlemarker: false,
+      },
+      edit: { featureGroup: drawn },
+    });
+    map.addControl(drawControl);
+    map.on(L.Draw.Event.CREATED, (e) => {
+      drawn.clearLayers();
+      drawn.addLayer(e.layer);
+    });
+
+    let uploadedGeo = null;
+    document.getElementById("file").addEventListener("change", async (ev) => {
+      const file = ev.target.files[0];
+      if (!file) return;
+      uploadedGeo = JSON.parse(await file.text());
+      drawn.clearLayers();
+      const layer = L.geoJSON(uploadedGeo);
+      drawn.addLayer(layer);
+      map.fitBounds(layer.getBounds(), { padding: [24, 24] });
+    });
+
+    document.getElementById("clearBtn").onclick = () => {
+      drawn.clearLayers();
+      uploadedGeo = null;
+      document.getElementById("file").value = "";
+    };
+
+    async function loadVerticals() {
+      const res = await fetch("/api/verticals");
+      const data = await res.json();
+      const select = document.getElementById("vertical");
+      for (const [name, preset] of Object.entries(data)) {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = `${name} — ${preset.description}`;
+        if (name === "solar") opt.selected = true;
+        select.appendChild(opt);
+      }
+    }
+    loadVerticals();
+
+    function currentGeoJSON() {
+      if (uploadedGeo) return uploadedGeo;
+      const layers = drawn.getLayers();
+      if (!layers.length) return null;
+      return layers[0].toGeoJSON();
+    }
+
+    document.getElementById("planBtn").onclick = async () => {
+      const error = document.getElementById("error");
+      const result = document.getElementById("result");
+      error.textContent = "";
+      result.classList.remove("show");
+      const geojson = currentGeoJSON();
+      if (!geojson) {
+        error.textContent = "Draw or upload a site polygon first.";
+        return;
+      }
+      const body = {
+        geojson,
+        vertical: document.getElementById("vertical").value,
+        api_key: document.getElementById("apiKey").value || null,
+      };
+      const maxDrones = document.getElementById("maxDrones").value;
+      if (maxDrones) body.max_drones = Number(maxDrones);
+
+      const btn = document.getElementById("planBtn");
+      btn.disabled = true;
+      btn.textContent = "Planning…";
+      try {
+        const res = await fetch("/api/plan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || JSON.stringify(data));
+        showResult(data);
+      } catch (err) {
+        error.textContent = String(err.message || err);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Plan coverage";
+      }
+    };
+
+    function showResult(data) {
+      const result = document.getElementById("result");
+      result.classList.add("show");
+      document.getElementById("metrics").innerHTML = `
+        <div class="metric"><span>Coverage</span><b>${data.coverage_pct.toFixed(1)}%</b></div>
+        <div class="metric"><span>Makespan</span><b>${data.makespan.toFixed(0)} s</b></div>
+        <div class="metric"><span>Drones</span><b>${data.drones}</b></div>
+        <div class="metric"><span>Path length</span><b>${data.total_length.toFixed(0)}</b></div>
+      `;
+      document.getElementById("preview").src = data.png_url + "?t=" + Date.now();
+      const downloads = document.getElementById("downloads");
+      const qgc = (data.qgc_urls || [])
+        .map((u, i) => `<a href="${u}" download>QGC plan — drone ${i}</a>`)
+        .join("");
+      downloads.innerHTML = `
+        <a href="${data.missions_geojson_url}" download>Missions GeoJSON</a>
+        <a href="${data.waypoints_csv_url}" download>Waypoints CSV</a>
+        <a href="${data.bundle_url}" download>Full job zip</a>
+        ${qgc}
+      `;
+    }
+  </script>
+</body>
+</html>

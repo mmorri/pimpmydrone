@@ -1,0 +1,22 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Demo security perimeter",
+        "vertical": "security"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-122.2600, 37.7700],
+          [-122.2520, 37.7700],
+          [-122.2520, 37.7755],
+          [-122.2600, 37.7755],
+          [-122.2600, 37.7700]
+        ]]
+      }
+    }
+  ]
+}
