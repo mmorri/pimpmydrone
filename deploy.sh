@@ -26,7 +26,19 @@ echo "→ building & starting container"
 ssh "${USER}@${HOST}" "cd '${REMOTE_DIR}' && docker compose up -d --build"
 
 echo "→ health check"
-ssh "${USER}@${HOST}" "curl -fsS http://127.0.0.1:8080/api/health && echo"
+ok=0
+for _ in 1 2 3 4 5 6 7 8; do
+  if ssh "${USER}@${HOST}" "curl -fsS --max-time 3 http://127.0.0.1:8080/api/health"; then
+    echo
+    ok=1
+    break
+  fi
+  sleep 2
+done
+if [[ "$ok" -ne 1 ]]; then
+  echo "Health check failed after container start" >&2
+  exit 1
+fi
 
 echo "Live at: http://${HOST}:8080/"
 echo "Disclaimer gate is on the homepage. Donations: /donate"

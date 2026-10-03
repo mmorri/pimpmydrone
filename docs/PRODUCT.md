@@ -17,7 +17,7 @@ airspace violations, or any other loss.**
 
 ```bash
 make build
-make serve          # http://127.0.0.1:8000
+make serve          # http://127.0.0.1:8000 — load an example site in the hangar
 # Optional: pull OSM buildings as keep-outs before planning
 uv run python -m fleet from-geo --geojson ../examples/sites/solar_industrial.geojson \
   --output-dir ../outputs/site-industrial --vertical solar --osm-buildings
@@ -48,7 +48,7 @@ uv run python -m fleet from-geo --geojson ../examples/sites/solar_farm.geojson \
 uv run python -m fleet from-geo --geojson ../examples/sites/solar_farm.geojson \
   --output-dir ../outputs/site-solar-auto --vertical solar \
   --partition auto --schedule-mode columns
-# Same knobs in the hangar: Schedule mode + partition auto (default).
+# Same knobs in the hangar: example sites, schedule mode, partition auto, optional OSM.
 ```
 
 ## Perception / ML adapters

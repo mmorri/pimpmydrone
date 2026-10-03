@@ -71,13 +71,17 @@
       <ol class="guide-steps">
         <li>Open <a href="/#planner">Hangar planner</a>.</li>
         <li>Set <strong>Vertical preset</strong> to <code>solar</code> (≈5&nbsp;m cells, mid altitude).</li>
-        <li>Draw a polygon on the map, or upload a GeoJSON boundary
-          (sample in the repo: <code>examples/sites/solar_farm.geojson</code>).</li>
+        <li>Load <strong>Demo solar farm</strong> from Example site, draw a
+          polygon, or upload a GeoJSON boundary
+          (repo sample: <code>examples/sites/solar_farm.geojson</code>).</li>
         <li>Optional: add Point features with <code>"role": "depot"</code> or
           <code>"depot": true</code> for hangar placement.</li>
         <li>Leave <strong>Schedule mode</strong> on <code>sortie</code>, or pick
           <code>columns</code> to pack sorties via LP pricing + set-partitioning
           (slower; useful when recharge interleaving looks wasteful).</li>
+        <li>Optional: check <strong>Pull OSM buildings as keep-outs</strong> to
+          punch Overpass footprints out of the site (verify every polygon; a
+          failed fetch still plans without them).</li>
         <li>Check <em>I re-confirm the disclaimer</em> → <strong>Customize mission</strong>.</li>
         <li>Wait for metrics (coverage, makespan, drones, partition family, schedule) and the path preview.</li>
       </ol>
@@ -158,7 +162,7 @@ uv run python -m fleet perception plan-from-perception \
 uv run python -m fleet from-geo \
   --geojson ../examples/sites/solar_farm.geojson \
   --output-dir ../outputs/site-solar --vertical solar \
-  --partition auto --schedule-mode columns</pre>
+  --partition auto --schedule-mode columns --osm-buildings</pre>
       <p class="hint">
         Local UI: <code>make serve</code> → <code>http://127.0.0.1:8000</code>.
       </p>

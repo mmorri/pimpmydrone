@@ -164,6 +164,15 @@
         <label for="maxDrones">Max drones (optional)</label>
         <input id="maxDrones" type="number" min="1" max="12" placeholder="preset default" />
 
+        <label for="altitudeM">Altitude AGL m (optional)</label>
+        <input id="altitudeM" type="number" min="1" max="120" step="1" placeholder="preset default" />
+
+        <label for="exampleSite">Example site</label>
+        <select id="exampleSite">
+          <option value="">Draw or upload your own…</option>
+        </select>
+        <button id="loadExampleBtn" class="btn ghost" type="button">Load example on map</button>
+
         <label for="scheduleMode">Schedule mode</label>
         <select id="scheduleMode">
           <option value="sortie" selected>Sortie — interleave recharge legs (default)</option>
@@ -171,6 +180,11 @@
           <option value="tour">Tour — one planned region per drone</option>
         </select>
         <p class="hint">Columns is slower. Partition stays auto (region vs strip, keep the winner).</p>
+
+        <label class="gate-check compact">
+          <input type="checkbox" id="osmBuildings" />
+          <span>Pull OSM buildings as keep-outs (Overpass; verify every polygon)</span>
+        </label>
 
         <label for="file">Upload GeoJSON</label>
         <input id="file" type="file" accept=".json,.geojson,application/geo+json,application/json" />
@@ -183,7 +197,7 @@
         <button id="planBtn" class="btn">Customize mission</button>
         <button id="clearBtn" class="btn ghost" type="button">Clear drawing</button>
         <p id="planStatus" class="plan-status" hidden></p>
-        <p class="hint">Draw a polygon on the map, or upload a boundary. Fair-use grid cap: <span id="maxCells">…</span> cells (keeps the demo honest, not a paywall).</p>
+        <p class="hint">Draw a polygon, upload a boundary, or load a bundled example. Fair-use grid cap: <span id="maxCells">…</span> cells (keeps the demo honest, not a paywall).</p>
         <div id="error" class="error" hidden></div>
         <div id="result" class="result" hidden>
           <div class="metrics" id="metrics"></div>
@@ -205,6 +219,7 @@
             <li>Open-source multi-drone coverage optimisation</li>
             <li>Battery-aware tours with a discrete simulator</li>
             <li>Region vs strip partition auto-pick + optional column scheduling</li>
+            <li>Optional OSM building keep-outs via Overpass</li>
             <li>Discrete same-cell / same-time deconfliction (sim only)</li>
             <li>QGC / GeoJSON / CSV draft exports</li>
             <li>Donation-funded hangar — free to run locally or here</li>
@@ -231,6 +246,6 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <script src="/assets/app.js?v=0.5.8"></script>
+  <script src="/assets/app.js?v=0.5.9"></script>
 </body>
 </html>

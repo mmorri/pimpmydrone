@@ -17,7 +17,7 @@ from shapely.geometry import Polygon, mapping
 from shapely.ops import unary_union
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
-USER_AGENT = "PimpMyDrone/0.5 (experimental coverage planner; contact via GitHub mmorri/pimpmydrone)"
+USER_AGENT = "PimpMyDrone/0.5.9 (experimental coverage planner; contact via GitHub mmorri/pimpmydrone)"
 
 
 def site_bbox(
@@ -89,9 +89,14 @@ def enrich_geojson_with_osm_buildings(
     """Return (enriched FeatureCollection, report)."""
 
     south, west, north, east = site_bbox(geojson)
-    buildings = fetch_building_polygons(
-        south, west, north, east, timeout_s=timeout_s, endpoint=endpoint
-    )
+    error = None
+    try:
+        buildings = fetch_building_polygons(
+            south, west, north, east, timeout_s=timeout_s, endpoint=endpoint
+        )
+    except RuntimeError as exc:
+        buildings = []
+        error = str(exc)
     features = list(geojson.get("features") or [])
     if geojson.get("type") != "FeatureCollection":
         features = [
@@ -130,9 +135,16 @@ def enrich_geojson_with_osm_buildings(
         "bbox": {"south": south, "west": west, "north": north, "east": east},
         "buildings_added": added,
         "endpoint": endpoint,
+        "ok": error is None,
+        "warning": error,
         "note": (
             "OSM buildings were imported as avoid keep-outs. Verify every polygon "
             "before flight — Overpass data can be stale, incomplete, or wrong."
+            if error is None
+            else (
+                "OSM buildings were skipped after an Overpass failure; the plan "
+                "uses only the polygons you supplied."
+            )
         ),
     }
     return enriched, report

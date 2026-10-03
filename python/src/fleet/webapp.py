@@ -29,6 +29,27 @@ from .site import VERTICALS, plan_site
 
 ROOT = Path(__file__).resolve().parents[3]
 WEBSITE_DIR = Path(os.environ.get("FLEET_WEBSITE", ROOT / "website"))
+EXAMPLES_DIR = ROOT / "examples" / "sites"
+EXAMPLE_SITES = (
+    {
+        "id": "solar_farm",
+        "title": "Demo solar farm",
+        "vertical": "solar",
+        "description": "Small array with one depot — fastest hangar try.",
+    },
+    {
+        "id": "solar_industrial",
+        "title": "Industrial solar (case study)",
+        "vertical": "solar",
+        "description": "Dual-depot walkthrough with a substation keep-out.",
+    },
+    {
+        "id": "security_perimeter",
+        "title": "Security perimeter",
+        "vertical": "security",
+        "description": "Coarser patrol corridor.",
+    },
+)
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 JOBS_ROOT = Path(
     os.environ.get("FLEET_JOBS", Path(tempfile.gettempdir()) / "fleet-jobs")
@@ -46,6 +67,26 @@ _CORS = [
 ]
 SCHEDULE_MODES = ("sortie", "tour", "columns")
 ScheduleMode = Literal["sortie", "tour", "columns"]
+
+
+def list_example_sites() -> list[dict[str, str]]:
+    sites: list[dict[str, str]] = []
+    for meta in EXAMPLE_SITES:
+        path = EXAMPLES_DIR / f"{meta['id']}.geojson"
+        if path.is_file():
+            sites.append({**meta, "filename": path.name})
+    return sites
+
+
+def example_geojson(site_id: str) -> dict[str, Any]:
+    if not re.fullmatch(r"[a-z0-9_]+", site_id or ""):
+        raise HTTPException(404, "Unknown example site")
+    if site_id not in {meta["id"] for meta in EXAMPLE_SITES}:
+        raise HTTPException(404, "Unknown example site")
+    path = EXAMPLES_DIR / f"{site_id}.geojson"
+    if not path.is_file():
+        raise HTTPException(404, "Unknown example site")
+    return io.read_json(path)
 
 
 def parse_schedule_mode(value: Optional[str]) -> str:
@@ -66,6 +107,7 @@ class PlanRequest(BaseModel):
     battery: Optional[float] = Field(default=None, gt=0)
     altitude_m: Optional[float] = Field(default=None, gt=0, le=120)
     schedule_mode: ScheduleMode = "sortie"
+    osm_buildings: bool = False
     accepted_disclaimer: bool = False
 
 
@@ -110,6 +152,7 @@ class PlanFromPerceptionRequest(BaseModel):
     battery: Optional[float] = Field(default=None, gt=0)
     altitude_m: Optional[float] = Field(default=None, gt=0, le=120)
     schedule_mode: ScheduleMode = "sortie"
+    osm_buildings: bool = False
     accepted_disclaimer: bool = False
 
 
@@ -121,7 +164,7 @@ def create_app() -> FastAPI:
             "(YOLO / CNN / VLM / domain). Free forever. Donations welcome. "
             "Authors accept no responsibility for flights."
         ),
-        version="0.5.8",
+        version="0.5.9",
     )
     app.add_middleware(
         CORSMiddleware,
@@ -200,7 +243,7 @@ def create_app() -> FastAPI:
         return {
             "status": "ok",
             "product": "pimpmydrone",
-            "version": "0.5.8",
+            "version": "0.5.9",
             "monetization": "donations",
             "max_cells": MAX_CELLS,
             "perception": True,
@@ -220,6 +263,8 @@ def create_app() -> FastAPI:
             "partition_families": True,
             "hangar_partition": "auto",
             "hangar_schedule_mode": "sortie",
+            "hangar_osm_buildings": False,
+            "hangar_examples": True,
         }
 
     @app.get("/api/config")
@@ -237,6 +282,14 @@ def create_app() -> FastAPI:
     @app.get("/api/disclaimer", response_class=PlainTextResponse)
     def disclaimer_text() -> str:
         return DISCLAIMER_FULL
+
+    @app.get("/api/examples")
+    def examples() -> dict[str, Any]:
+        return {"sites": list_example_sites()}
+
+    @app.get("/api/examples/{site_id}")
+    def example_site(site_id: str) -> dict[str, Any]:
+        return example_geojson(site_id)
 
     @app.get("/api/verticals")
     def verticals() -> dict[str, Any]:
@@ -263,6 +316,7 @@ def create_app() -> FastAPI:
             battery=body.battery,
             altitude_m=body.altitude_m,
             schedule_mode=parse_schedule_mode(body.schedule_mode),
+            osm_buildings=body.osm_buildings,
         )
 
     @app.get("/api/perception/backends")
@@ -382,6 +436,7 @@ def create_app() -> FastAPI:
             battery=body.battery,
             altitude_m=body.altitude_m,
             schedule_mode=parse_schedule_mode(body.schedule_mode),
+            osm_buildings=body.osm_buildings,
             perception_report=compiled.report,
         )
         # Persist perception artefacts alongside the job.
@@ -401,6 +456,7 @@ def create_app() -> FastAPI:
         battery: Optional[float] = Form(None),
         altitude_m: Optional[float] = Form(None),
         schedule_mode: str = Form("sortie"),
+        osm_buildings: bool = Form(False),
         accepted_disclaimer: bool = Form(False),
     ) -> dict[str, Any]:
         _require_disclaimer(accepted_disclaimer)
@@ -419,6 +475,7 @@ def create_app() -> FastAPI:
             battery=battery,
             altitude_m=altitude_m,
             schedule_mode=parse_schedule_mode(schedule_mode),
+            osm_buildings=osm_buildings,
         )
 
     @app.get("/api/jobs/{job_id}/png")
@@ -444,6 +501,12 @@ def create_app() -> FastAPI:
     def job_csv(job_id: str) -> FileResponse:
         return _file_response(
             _job_dir(job_id) / "missions" / "waypoints.csv", "text/csv"
+        )
+
+    @app.get("/api/jobs/{job_id}/osm-buildings")
+    def job_osm_buildings(job_id: str) -> FileResponse:
+        return _file_response(
+            _job_dir(job_id) / "osm_buildings.json", "application/json"
         )
 
     @app.get("/api/jobs/{job_id}/safety")
@@ -535,6 +598,7 @@ def _run_job(
     battery: Optional[float],
     altitude_m: Optional[float],
     schedule_mode: str = "sortie",
+    osm_buildings: bool = False,
     perception_report: Optional[dict[str, Any]] = None,
 ) -> dict[str, Any]:
     if vertical not in VERTICALS:
@@ -561,6 +625,7 @@ def _run_job(
             altitude_m=altitude_m,
             partition="auto",
             schedule_mode=schedule_mode,
+            osm_buildings=osm_buildings,
         )
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(400, str(exc)) from exc
@@ -582,8 +647,19 @@ def _run_job(
     warnings = collect_warnings(
         metrics=metrics, geo=geo_payload, perception=perception_report
     )
+    osm_path = out_dir / "osm_buildings.json"
+    osm_report = io.read_json(osm_path) if osm_path.exists() else None
+    if osm_report:
+        if osm_report.get("warning"):
+            warnings.append(str(osm_report["note"]))
+        elif osm_report.get("buildings_added"):
+            warnings.append(str(osm_report["note"]))
+        else:
+            warnings.append(
+                "OSM buildings query returned no footprints in the site bbox."
+            )
     partition = metrics.get("partition") or {}
-    return {
+    payload = {
         "job_id": job_id,
         "vertical": vertical,
         "coverage_pct": metrics["coverage"]["percentage"],
@@ -592,6 +668,8 @@ def _run_job(
         "partition_family": partition.get("family"),
         "partition_scores": partition.get("scores"),
         "schedule_mode": schedule_mode,
+        "osm_buildings": None if osm_report is None else osm_report.get("buildings_added"),
+        "osm_ok": None if osm_report is None else osm_report.get("ok"),
         "makespan": metrics["makespan"],
         "drones": metrics["drones"]["used"],
         "total_length": metrics["total_length"],
@@ -612,6 +690,9 @@ def _run_job(
         ],
         "manifest": result.manifest,
     }
+    if osm_report is not None:
+        payload["osm_url"] = f"/api/jobs/{job_id}/osm-buildings"
+    return payload
 
 
 app = create_app()

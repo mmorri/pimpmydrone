@@ -10,6 +10,21 @@ from fleet.osm import site_bbox
 from fleet.visualize import render_coverage_age, render_sortie_gantt, visualize
 
 
+def test_enrich_osm_soft_fails_when_overpass_is_down() -> None:
+    from fleet import io
+    from fleet.osm import enrich_geojson_with_osm_buildings
+
+    root = Path(__file__).resolve().parents[2]
+    geo = io.read_json(root / "examples" / "sites" / "solar_farm.geojson")
+    enriched, report = enrich_geojson_with_osm_buildings(
+        geo, timeout_s=1.0, endpoint="http://127.0.0.1:1/overpass"
+    )
+    assert report["ok"] is False
+    assert report["buildings_added"] == 0
+    assert report["warning"]
+    assert enriched["type"] == "FeatureCollection"
+
+
 def test_site_bbox_from_solar_example() -> None:
     from fleet import io
 

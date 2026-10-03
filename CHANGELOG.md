@@ -4,6 +4,11 @@
 
 ### Added
 
+- **Hangar example sites** (`/api/examples`): load bundled solar / industrial /
+  security GeoJSON onto the map so a first plan does not require drawing.
+- **Hangar altitude AGL** override (optional; still capped at 120 m).
+- **Hangar OSM building keep-outs**: optional Overpass pull on `/api/plan`
+  (`osm_buildings`). Fetch failures are warnings, not plan crashes.
 - **Hangar schedule-mode picker** (`sortie` / `columns` / `tour`): the public
   planner and `/api/plan` accept `schedule_mode` so column set-partitioning is
   not CLI-only. Results show the mode next to the partition family.

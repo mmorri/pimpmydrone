@@ -140,10 +140,30 @@ def test_api_config_is_donation_funded() -> None:
     assert health["partition_families"] is True
     assert health["hangar_partition"] == "auto"
     assert health["hangar_schedule_mode"] == "sortie"
+    assert health["hangar_osm_buildings"] is False
+    assert health["hangar_examples"] is True
     assert "columns" in health["schedule_modes"]
     assert health["version"].startswith("0.5.")
     assert 'id="scheduleMode"' in home.text
+    assert 'id="osmBuildings"' in home.text
+    assert 'id="exampleSite"' in home.text
+    assert 'id="altitudeM"' in home.text
     assert "pack sorties" in home.text.lower()
+    assert "osm buildings" in home.text.lower()
+
+
+def test_api_lists_and_serves_example_sites() -> None:
+    client = TestClient(create_app())
+    listed = client.get("/api/examples").json()
+    ids = {site["id"] for site in listed["sites"]}
+    assert {"solar_farm", "solar_industrial", "security_perimeter"} <= ids
+    farm = client.get("/api/examples/solar_farm")
+    assert farm.status_code == 200
+    geo = farm.json()
+    assert geo["type"] == "FeatureCollection"
+    assert geo["features"]
+    assert client.get("/api/examples/../secret").status_code == 404
+    assert client.get("/api/examples/not_a_site").status_code == 404
 
 
 def test_api_rejects_unknown_schedule_mode() -> None:

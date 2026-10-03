@@ -497,6 +497,8 @@ def enrich_osm_command(geojson_path: Path, output_path: Path) -> None:
     io.write_json(output_path, enriched)
     report_path = output_path.with_suffix(".osm.json")
     io.write_json(report_path, report)
+    if report.get("warning"):
+        console.print(f"[yellow]{report['warning']}[/yellow]")
     console.print(
         f"Wrote {report['buildings_added']} OSM keep-outs to [bold]{output_path}[/bold]"
     )

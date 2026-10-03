@@ -83,6 +83,8 @@
     drawn.clearLayers();
     uploadedGeo = null;
     fileInput.value = "";
+    const example = document.getElementById("exampleSite");
+    if (example) example.value = "";
   };
 
   async function loadVerticals() {
@@ -97,7 +99,56 @@
       select.appendChild(opt);
     }
   }
+
+  async function loadExamples() {
+    const select = document.getElementById("exampleSite");
+    const btn = document.getElementById("loadExampleBtn");
+    if (!select) return;
+    try {
+      const res = await fetch("/api/examples");
+      const data = await res.json();
+      for (const site of data.sites || []) {
+        const opt = document.createElement("option");
+        opt.value = site.id;
+        opt.textContent = `${site.title} — ${site.description}`;
+        opt.dataset.vertical = site.vertical || "";
+        select.appendChild(opt);
+      }
+    } catch (_err) {
+      /* hangar still works by drawing / upload */
+    }
+    const applyExample = async () => {
+      const id = select.value;
+      if (!id) return;
+      const error = document.getElementById("error");
+      try {
+        const res = await fetch(`/api/examples/${encodeURIComponent(id)}`);
+        const geo = await res.json();
+        if (!res.ok) throw new Error(geo.detail || "Could not load example");
+        uploadedGeo = geo;
+        drawn.clearLayers();
+        const layer = L.geoJSON(geo);
+        drawn.addLayer(layer);
+        map.fitBounds(layer.getBounds(), { padding: [24, 24] });
+        fileInput.value = "";
+        const vertical = select.selectedOptions[0]?.dataset.vertical;
+        const vertSel = document.getElementById("vertical");
+        if (vertical && vertSel && [...vertSel.options].some((o) => o.value === vertical)) {
+          vertSel.value = vertical;
+        }
+        if (error) error.hidden = true;
+      } catch (err) {
+        if (error) {
+          error.hidden = false;
+          error.textContent = String(err.message || err);
+        }
+      }
+    };
+    select.addEventListener("change", applyExample);
+    if (btn) btn.addEventListener("click", applyExample);
+  }
   loadVerticals();
+  loadExamples();
 
   function currentGeoJSON() {
     if (uploadedGeo) return uploadedGeo;
@@ -130,10 +181,13 @@
       geojson,
       vertical: document.getElementById("vertical").value,
       schedule_mode: document.getElementById("scheduleMode")?.value || "sortie",
+      osm_buildings: Boolean(document.getElementById("osmBuildings")?.checked),
       accepted_disclaimer: true,
     };
     const maxDrones = document.getElementById("maxDrones").value;
     if (maxDrones) body.max_drones = Number(maxDrones);
+    const altitudeM = document.getElementById("altitudeM")?.value;
+    if (altitudeM) body.altitude_m = Number(altitudeM);
 
     const btn = document.getElementById("planBtn");
     const status = document.getElementById("planStatus");
@@ -174,12 +228,24 @@
         : `<div class="metric"><span>Inspection (approx)</span><b>${Number(
             data.inspection_pct
           ).toFixed(1)}%</b></div>`;
+    const scores = data.partition_scores || {};
+    const scoreHint = Object.keys(scores).length
+      ? ` <small>(${Object.entries(scores)
+          .map(([k, v]) => `${k} ${Number(v).toFixed(0)}`)
+          .join(" / ")})</small>`
+      : "";
     const partition = data.partition_family
-      ? `<div class="metric"><span>Partition</span><b>${data.partition_family}</b></div>`
+      ? `<div class="metric"><span>Partition</span><b>${data.partition_family}${scoreHint}</b></div>`
       : "";
     const schedule = data.schedule_mode
       ? `<div class="metric"><span>Schedule</span><b>${data.schedule_mode}</b></div>`
       : "";
+    const osm =
+      data.osm_buildings == null
+        ? ""
+        : `<div class="metric"><span>OSM keep-outs</span><b>${
+            data.osm_ok === false ? "skipped" : data.osm_buildings
+          }</b></div>`;
     const deconf =
       data.deconflicted == null
         ? ""
@@ -194,6 +260,7 @@
       <div class="metric"><span>Path length</span><b>${Number(data.total_length).toFixed(0)}</b></div>
       ${partition}
       ${schedule}
+      ${osm}
       ${deconf}
     `;
     const warnings = document.getElementById("warnings");
@@ -212,6 +279,9 @@
       extras.push(
         `<a href="${data.sortie_gantt_url}" target="_blank" rel="noopener">Sortie Gantt</a>`
       );
+    }
+    if (data.osm_url) {
+      extras.push(`<a href="${data.osm_url}" download>OSM buildings report</a>`);
     }
     const qgc = (data.qgc_urls || [])
       .map((u, i) => `<a href="${u}" download>QGC plan — drone ${i}</a>`)
@@ -409,6 +479,7 @@
             ontology: document.getElementById("percOntology").value,
             vertical: document.getElementById("vertical").value || "solar",
             schedule_mode: document.getElementById("scheduleMode")?.value || "sortie",
+            osm_buildings: Boolean(document.getElementById("osmBuildings")?.checked),
             accepted_disclaimer: true,
           }),
         });
