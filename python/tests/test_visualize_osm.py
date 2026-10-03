@@ -25,7 +25,9 @@ def test_heatmap_and_gantt_written(tmp_path: Path) -> None:
     write_workspace(
         map_path,
         params_path,
-        GeneratorConfig(width=6, height=6, seed=3, obstacle_density=0.0, no_fly_count=0),
+        GeneratorConfig(
+            width=6, height=6, seed=3, obstacle_density=0.0, no_fly_count=0
+        ),
     )
     tours = [
         {

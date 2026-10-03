@@ -128,9 +128,7 @@ def draw_tours(ax, spec: MapSpec, tours: List[dict]) -> None:
         ax.legend(loc="upper right")
 
 
-def render_coverage_age(
-    spec: MapSpec, tours: Sequence[dict], path: Path
-) -> Path:
+def render_coverage_age(spec: MapSpec, tours: Sequence[dict], path: Path) -> Path:
     """Heat map of first-visit time (early = cool, late = hot)."""
 
     age = np.full((spec.height, spec.width), np.nan, dtype=float)

@@ -53,3 +53,5 @@ line-length = 88
 
 [tool.ruff.lint]
 select = ["E", "F", "B"]
+# Black owns wrapping; FastAPI `File()`/`Form()` defaults are idiomatic.
+ignore = ["E501", "B008"]

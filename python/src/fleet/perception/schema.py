@@ -54,9 +54,7 @@ def validate_perception(payload: dict[str, Any]) -> list[str]:
             errors.append(f"{prefix}: properties.confidence must be in [0, 1]")
         role = props.get("role")
         if role not in ROLES:
-            errors.append(
-                f"{prefix}: properties.role must be one of {sorted(ROLES)}"
-            )
+            errors.append(f"{prefix}: properties.role must be one of {sorted(ROLES)}")
         source = props.get("source")
         if source not in SOURCES:
             errors.append(

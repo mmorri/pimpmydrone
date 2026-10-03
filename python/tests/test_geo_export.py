@@ -8,7 +8,9 @@ from fleet.export_mission import export_all, simplify_grid_path
 from fleet.geo import GeoTransform, write_site_workspace
 
 
-SOLAR = Path(__file__).resolve().parents[2] / "examples" / "sites" / "solar_farm.geojson"
+SOLAR = (
+    Path(__file__).resolve().parents[2] / "examples" / "sites" / "solar_farm.geojson"
+)
 
 
 def test_write_site_workspace_solar(tmp_path: Path) -> None:

@@ -16,7 +16,9 @@ def test_encode_decode_roundtrip_straight_and_turns():
             {"index": 4, "x": 2, "y": 2, "t": 4.0},
             {"index": 5, "x": 1, "y": 2, "t": 5.0},
         ],
-        "segments": [{"from": 0, "to": 1, "length": 1, "turn_cost": 0, "battery_used": 1}],
+        "segments": [
+            {"from": 0, "to": 1, "length": 1, "turn_cost": 0, "battery_used": 1}
+        ],
         "recharge_stops": [3],
         "cost": {"time": 5.0, "turns": 2, "length": 5.0},
     }

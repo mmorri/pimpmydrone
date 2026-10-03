@@ -162,8 +162,8 @@ def choose_cell_size(
 ) -> float:
     minx, miny, maxx, maxy = site.bounds
     mid_lat = (miny + maxy) / 2.0
-    width_m = (maxx - minx) * _METRES_PER_DEG_LAT * max(
-        0.2, math.cos(math.radians(mid_lat))
+    width_m = (
+        (maxx - minx) * _METRES_PER_DEG_LAT * max(0.2, math.cos(math.radians(mid_lat)))
     )
     height_m = (maxy - miny) * _METRES_PER_DEG_LAT
     side_w = max(width_m, 1.0)
@@ -177,6 +177,7 @@ def choose_cell_size(
     if estimated > max_cells:
         return max(cell_size_m, auto)
     return float(cell_size_m)
+
 
 def rasterize_site(
     site: Polygon,

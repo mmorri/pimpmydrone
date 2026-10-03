@@ -342,7 +342,9 @@ def export_all(
         "vertical": geo.vertical,
         "altitude_m": geo.altitude_m,
         "altitude_mode": geo_payload.get("altitude_mode", "AGL"),
-        "geofence_polygons": len(((_geofence_from_geo(geo_payload) or {}).get("polygons") or [])),
+        "geofence_polygons": len(
+            ((_geofence_from_geo(geo_payload) or {}).get("polygons") or [])
+        ),
         "simplified": simplify,
         "disclaimer": "See SAFETY_REPORT.md — authors accept no responsibility for flights.",
     }

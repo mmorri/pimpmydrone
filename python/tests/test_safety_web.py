@@ -16,14 +16,30 @@ from fleet import io
 def test_safety_report_contains_no_responsibility_language() -> None:
     text = build_safety_report(
         metrics={
-            "coverage": {"percentage": 100.0, "reachable_cells": 10, "unreachable_cells": 0},
+            "coverage": {
+                "percentage": 100.0,
+                "reachable_cells": 10,
+                "unreachable_cells": 0,
+            },
             "drones": {"used": 2},
             "makespan": 12,
             "total_length": 40,
             "checks": {"problems": []},
         },
-        geo={"origin_lon": 0, "origin_lat": 0, "cell_size_m": 25, "width": 4, "height": 4, "altitude_m": 40},
-        manifest={"geojson": "missions.geojson", "csv": "waypoints.csv", "qgc_plans": [], "simplified": True},
+        geo={
+            "origin_lon": 0,
+            "origin_lat": 0,
+            "cell_size_m": 25,
+            "width": 4,
+            "height": 4,
+            "altitude_m": 40,
+        },
+        manifest={
+            "geojson": "missions.geojson",
+            "csv": "waypoints.csv",
+            "qgc_plans": [],
+            "simplified": True,
+        },
         vertical="solar",
     )
     assert "no liability" in text.lower() or "no responsibility" in text.lower()
@@ -71,7 +87,11 @@ def test_export_writes_safety_files(tmp_path: Path) -> None:
         geo_path,
         tmp_path / "missions",
         metrics={
-            "coverage": {"percentage": 100.0, "reachable_cells": 3, "unreachable_cells": 0},
+            "coverage": {
+                "percentage": 100.0,
+                "reachable_cells": 3,
+                "unreachable_cells": 0,
+            },
             "drones": {"used": 1},
             "makespan": 4,
             "total_length": 2,
@@ -80,7 +100,9 @@ def test_export_writes_safety_files(tmp_path: Path) -> None:
     )
     assert (tmp_path / "missions" / "SAFETY_REPORT.md").exists()
     assert (tmp_path / "missions" / "DISCLAIMER.txt").exists()
-    assert "AS IS" in (tmp_path / "missions" / "DISCLAIMER.txt").read_text(encoding="utf-8")
+    assert "AS IS" in (tmp_path / "missions" / "DISCLAIMER.txt").read_text(
+        encoding="utf-8"
+    )
 
 
 def test_api_rejects_plan_without_disclaimer() -> None:
@@ -90,9 +112,9 @@ def test_api_rejects_plan_without_disclaimer() -> None:
         json={
             "geojson": {
                 "type": "Polygon",
-                "coordinates": [[
-                    [0, 0], [0.001, 0], [0.001, 0.001], [0, 0.001], [0, 0]
-                ]],
+                "coordinates": [
+                    [[0, 0], [0.001, 0], [0.001, 0.001], [0, 0.001], [0, 0]]
+                ],
             },
             "accepted_disclaimer": False,
         },
@@ -108,7 +130,10 @@ def test_api_config_is_donation_funded() -> None:
     assert "donate_url" in cfg
     home = client.get("/")
     assert home.status_code == 200
-    assert "do not take responsibility" in home.text.lower() or "not</em> take responsibility" in home.text.lower()
+    assert (
+        "do not take responsibility" in home.text.lower()
+        or "not</em> take responsibility" in home.text.lower()
+    )
     assert "not spatially deconflicted" not in home.text.lower()
     assert "discrete same-cell" in home.text.lower()
     health = client.get("/api/health").json()

@@ -10,23 +10,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Require planner binaries
-        run: |
-          test -x haskell/bin/coverage-planner
-          test -x haskell/bin/coverage-partitioner
+      - uses: haskell-actions/setup@v2
+        with:
+          enable-stack: true
+          stack-version: latest
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.stack
+            haskell/.stack-work
+          key: stack-${{ runner.os }}-${{ hashFiles('haskell/stack.yaml.lock', 'haskell/coverage-core.cabal') }}
+          restore-keys: stack-${{ runner.os }}-
+      - name: Build planner binaries
+        run: make haskell-build
       - name: Build image
         run: docker build -t pimpmydrone-web:ci .
       - name: Health check container
         run: |
           docker run -d --name pmd-ci -p 18080:8000 pimpmydrone-web:ci
-          for i in $(seq 1 30); do
+          for i in $(seq 1 40); do
             if curl -fsS http://127.0.0.1:18080/api/health; then
               echo
               curl -fsS http://127.0.0.1:18080/api/health | grep -q partition_families
               docker rm -f pmd-ci
               exit 0
             fi
-            sleep 2
+            sleep 3
           done
           docker logs pmd-ci || true
           docker rm -f pmd-ci || true

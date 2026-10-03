@@ -19,6 +19,8 @@
 - Hangar liability copy and “under the hood” list now match discrete
   deconfliction (sim-only, not certified separation). Plan results show
   partition family, inspection %, sim-deconflict flag, and heatmap/Gantt links.
+- CI: Docker workflow builds Haskell bins first; Python ruff ignores E501/B008
+  (Black owns wrapping); workflows run on `fix/coverage-pipeline`.
 - **Flat-array depot field** (`Algorithm.Flood.DepotField`): cheapest-return
   Dijkstra in unboxed vectors indexed by `y * width + x` (+ heading).
 - **Parallel region planning**: `coverage-planner` builds shared depot fields

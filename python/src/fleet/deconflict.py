@@ -103,7 +103,8 @@ def shift_tour(tour: dict[str, Any], delay: float) -> dict[str, Any]:
         return tour
     shifted = dict(tour)
     shifted["waypoints"] = [
-        {**wp, "t": float(wp.get("t", 0.0)) + delay} for wp in tour.get("waypoints") or []
+        {**wp, "t": float(wp.get("t", 0.0)) + delay}
+        for wp in tour.get("waypoints") or []
     ]
     cost = dict(tour.get("cost") or {})
     if "time" in cost:

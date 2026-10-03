@@ -114,7 +114,9 @@ def _resolve_image(inputs: PerceptionInput) -> Any:
 
         with urllib.request.urlopen(inputs.image_url, timeout=30) as resp:  # noqa: S310
             return resp.read()
-    raise ValueError("YOLO backend needs image_path, image_bytes, image_b64, or image_url")
+    raise ValueError(
+        "YOLO backend needs image_path, image_bytes, image_b64, or image_url"
+    )
 
 
 __all__ = ["YoloBackend"]

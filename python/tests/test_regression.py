@@ -52,7 +52,11 @@ CASES = [
         "boustro",
     ),
     ("tight", dict(width=20, height=20, obstacle_density=0.1, battery=60.0), "boustro"),
-    ("cluttered", dict(width=20, height=20, obstacle_density=0.2, no_fly_count=1), "auto"),
+    (
+        "cluttered",
+        dict(width=20, height=20, obstacle_density=0.2, no_fly_count=1),
+        "auto",
+    ),
 ]
 
 TRACKED = ("sorties", "steps", "commute_steps", "in_region_steps", "covered_cells")

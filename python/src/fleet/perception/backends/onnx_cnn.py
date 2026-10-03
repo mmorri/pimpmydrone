@@ -20,9 +20,7 @@ class OnnxCnnBackend:
             import onnxruntime  # noqa: F401
 
             installed = True
-            detail = (
-                f"onnxruntime available; model={model or '(set FLEET_ONNX_MODEL)'}"
-            )
+            detail = f"onnxruntime available; model={model or '(set FLEET_ONNX_MODEL)'}"
         except ImportError:
             installed = False
             detail = "pip/uv install onnxruntime (optional extra: onnx)"

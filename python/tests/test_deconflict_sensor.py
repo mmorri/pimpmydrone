@@ -27,7 +27,11 @@ def _tour(drone_id: int, cells: list[tuple[int, int]], t0: float = 0.0) -> dict:
         "waypoints": wps,
         "segments": segs,
         "recharge_stops": [],
-        "cost": {"time": float(len(cells) - 1), "turns": 0, "length": float(len(cells) - 1)},
+        "cost": {
+            "time": float(len(cells) - 1),
+            "turns": 0,
+            "length": float(len(cells) - 1),
+        },
     }
 
 

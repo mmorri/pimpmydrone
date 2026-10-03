@@ -13,14 +13,16 @@ import urllib.parse
 import urllib.request
 from typing import Any
 
-from shapely.geometry import Polygon, mapping, shape
+from shapely.geometry import Polygon, mapping
 from shapely.ops import unary_union
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 USER_AGENT = "PimpMyDrone/0.5 (experimental coverage planner; contact via GitHub mmorri/pimpmydrone)"
 
 
-def site_bbox(geojson: dict[str, Any], *, pad_deg: float = 0.0003) -> tuple[float, float, float, float]:
+def site_bbox(
+    geojson: dict[str, Any], *, pad_deg: float = 0.0003
+) -> tuple[float, float, float, float]:
     """Return (south, west, north, east) for Overpass from coverage polygons."""
 
     from .geo import extract_polygons
@@ -58,7 +60,10 @@ def fetch_building_polygons(
     req = urllib.request.Request(
         endpoint,
         data=data,
-        headers={"User-Agent": USER_AGENT, "Content-Type": "application/x-www-form-urlencoded"},
+        headers={
+            "User-Agent": USER_AGENT,
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
         method="POST",
     )
     try:
@@ -93,7 +98,11 @@ def enrich_geojson_with_osm_buildings(
             {
                 "type": "Feature",
                 "properties": {"role": "cover"},
-                "geometry": geojson if geojson.get("type") in {"Polygon", "MultiPolygon"} else None,
+                "geometry": (
+                    geojson
+                    if geojson.get("type") in {"Polygon", "MultiPolygon"}
+                    else None
+                ),
             }
         ]
         features = [f for f in features if f.get("geometry")]

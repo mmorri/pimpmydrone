@@ -28,12 +28,8 @@ def test_resolve_role_ontology_and_overrides():
     assert resolve_role("solar_panel", ontology="solar")["role"] == "cover"
     assert resolve_role("person", ontology="security")["role"] == "inspect"
     assert resolve_role("smoke", ontology="thermal")["role"] == "inspect"
-    assert (
-        resolve_role("whatever", explicit_role="avoid")["role"] == "avoid"
-    )
-    assert (
-        resolve_role("custom", role_map={"custom": "cover"})["role"] == "cover"
-    )
+    assert resolve_role("whatever", explicit_role="avoid")["role"] == "avoid"
+    assert resolve_role("custom", role_map={"custom": "cover"})["role"] == "cover"
 
 
 def test_compile_cover_avoid_inspect():

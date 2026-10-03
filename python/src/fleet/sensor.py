@@ -65,7 +65,9 @@ class SensorSpec:
         }
 
 
-def sensor_from_params(params: dict[str, Any], geo: dict[str, Any] | None = None) -> SensorSpec:
+def sensor_from_params(
+    params: dict[str, Any], geo: dict[str, Any] | None = None
+) -> SensorSpec:
     sensor = params.get("sensor") or {}
     altitude = float(
         sensor.get("altitude_m")

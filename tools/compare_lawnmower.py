@@ -21,6 +21,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--geojson", type=Path, required=True)
     parser.add_argument("--vertical", default="solar")
+    parser.add_argument(
+        "--partition",
+        choices=["region", "strip", "auto"],
+        default="auto",
+        help="Partition method for the auto planner (default: auto).",
+    )
     parser.add_argument("--out", type=Path, default=None)
     args = parser.parse_args()
 
@@ -32,14 +38,23 @@ def main() -> None:
             shutil.rmtree(d)
 
     auto = plan_site(
-        args.geojson, auto_dir, vertical=args.vertical, coverage_algorithm="auto"
+        args.geojson,
+        auto_dir,
+        vertical=args.vertical,
+        coverage_algorithm="auto",
+        partition=args.partition,
     )
     lawn = plan_site(
-        args.geojson, boustro_dir, vertical=args.vertical, coverage_algorithm="boustro"
+        args.geojson,
+        boustro_dir,
+        vertical=args.vertical,
+        coverage_algorithm="boustro",
+        partition="region",
     )
 
     def pack(label: str, result) -> dict:
         m = result.metrics
+        partition = m.get("partition") or {}
         return {
             "label": label,
             "coverage_pct": m["coverage"]["percentage"],
@@ -49,12 +64,14 @@ def main() -> None:
             "drones": m["drones"]["used"],
             "commute_share": (m.get("efficiency") or {}).get("commute_share"),
             "deconflicted": (m.get("deconfliction") or {}).get("ok"),
+            "partition_family": partition.get("family"),
             "ok": result.simulation.ok,
         }
 
     report = {
         "site": str(args.geojson),
         "vertical": args.vertical,
+        "partition": args.partition,
         "auto": pack("auto (mega-STC/boustro mix)", auto),
         "lawnmower": pack("boustro only", lawn),
     }

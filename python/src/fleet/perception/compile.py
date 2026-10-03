@@ -6,7 +6,7 @@ import math
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Optional
 
-from shapely.geometry import Point, Polygon, box, mapping, shape
+from shapely.geometry import Polygon, box, mapping, shape
 from shapely.ops import unary_union
 
 from .ontology import DEFAULT_ONTOLOGY, resolve_role
@@ -110,11 +110,11 @@ def compile_detections(
             avoid_polys.append(poly)
             out_features.append(_feature(mapping(poly), props))
         elif role == "depot":
-            pt = shaped if shaped.geom_type == "Point" else shaped.representative_point()
-            depot_props = {**props, "depot": True, "role": "depot"}
-            out_features.append(
-                _feature(mapping(pt), depot_props)
+            pt = (
+                shaped if shaped.geom_type == "Point" else shaped.representative_point()
             )
+            depot_props = {**props, "depot": True, "role": "depot"}
+            out_features.append(_feature(mapping(pt), depot_props))
         else:  # inspect
             if shaped.geom_type == "Point":
                 out_features.append(_feature(mapping(shaped), props))
@@ -179,7 +179,11 @@ def compile_detections(
                 site_features.append(
                     _feature(
                         mapping(part),
-                        {"role": "avoid", "class": "compiled_avoid", "source": "manual"},
+                        {
+                            "role": "avoid",
+                            "class": "compiled_avoid",
+                            "source": "manual",
+                        },
                     )
                 )
     site_features.extend(

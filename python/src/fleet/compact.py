@@ -114,7 +114,7 @@ def decode_tour(compact: dict[str, Any]) -> dict[str, Any]:
         n = int(run["n"])
         t_end = float(run.get("t_end", t + n))
         dt = (t_end - t) / n if n else 0.0
-        for k in range(n):
+        for _k in range(n):
             x += dx
             y += dy
             t = t + dt

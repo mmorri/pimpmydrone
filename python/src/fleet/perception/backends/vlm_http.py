@@ -67,7 +67,9 @@ class VlmHttpBackend:
         }
         headers = {"Authorization": f"Bearer {api_key}"}
         with httpx.Client(timeout=60.0) as client:
-            resp = client.post(f"{base}/chat/completions", json=payload, headers=headers)
+            resp = client.post(
+                f"{base}/chat/completions", json=payload, headers=headers
+            )
             resp.raise_for_status()
             data = resp.json()
         content = data["choices"][0]["message"]["content"]

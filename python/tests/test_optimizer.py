@@ -32,9 +32,7 @@ def test_optimizer_respects_drone_limit():
 
 def test_optimizer_minimises_makespan_by_default():
     tours = [make_tour(i, 10.0) for i in range(3)]
-    result = TourOptimizer(
-        tours, max_drones=3, time_limit=5, deconflict=False
-    ).solve()
+    result = TourOptimizer(tours, max_drones=3, time_limit=5, deconflict=False).solve()
     assert result.drone_count == 3
     assert abs(result.makespan - 10.0) < 1e-6
 
