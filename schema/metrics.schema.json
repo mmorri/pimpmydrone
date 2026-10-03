@@ -149,6 +149,9 @@
         "battery_ok": {
           "type": "boolean"
         },
+        "deconflicted": {
+          "type": "boolean"
+        },
         "problems": {
           "type": "array",
           "items": {
@@ -157,6 +160,29 @@
         }
       },
       "additionalProperties": false
+    },
+    "deconfliction": {
+      "type": "object",
+      "properties": {
+        "ok": { "type": "boolean" },
+        "conflicts": { "type": "integer", "minimum": 0 },
+        "sample": { "type": "array" }
+      },
+      "additionalProperties": true
+    },
+    "inspection": {
+      "type": "object",
+      "properties": {
+        "percentage": { "type": "number", "minimum": 0, "maximum": 100 },
+        "expected_cells": { "type": "integer", "minimum": 0 },
+        "imaged_cells": { "type": "integer", "minimum": 0 },
+        "missed_count": { "type": "integer", "minimum": 0 },
+        "missed_cells": { "type": "array" },
+        "sensor": { "type": "object" },
+        "ideal_forward_spacing_m": { "type": "number" },
+        "note": { "type": "string" }
+      },
+      "additionalProperties": true
     },
     "efficiency": {
       "type": "object",

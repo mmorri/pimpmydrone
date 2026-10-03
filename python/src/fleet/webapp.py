@@ -14,7 +14,7 @@ from typing import Any, Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -32,10 +32,15 @@ MAX_UPLOAD_BYTES = int(os.environ.get("FLEET_MAX_UPLOAD_BYTES", str(2_000_000)))
 DONATE_URL = os.environ.get(
     "FLEET_DONATE_URL", "https://github.com/sponsors/mmorri"
 )
+DONATE_ALT_URL = os.environ.get(
+    "FLEET_DONATE_ALT_URL", "https://ko-fi.com/pimpmydrone"
+)
 GITHUB_URL = os.environ.get(
     "FLEET_GITHUB_URL", "https://github.com/mmorri/pimpmydrone"
 )
 JOB_TTL_SECONDS = int(os.environ.get("FLEET_JOB_TTL_SECONDS", str(24 * 3600)))
+RATE_LIMIT_PER_MIN = int(os.environ.get("FLEET_RATE_LIMIT_PER_MIN", "12"))
+_CORS = [o.strip() for o in os.environ.get("FLEET_CORS_ORIGINS", "*").split(",") if o.strip()]
 
 
 class PlanRequest(BaseModel):
@@ -99,14 +104,37 @@ def create_app() -> FastAPI:
             "(YOLO / CNN / VLM / domain). Free forever. Donations welcome. "
             "Authors accept no responsibility for flights."
         ),
-        version="0.4.0",
+        version="0.5.0",
     )
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=os.environ.get("FLEET_CORS_ORIGINS", "*").split(","),
+        allow_origins=_CORS or ["*"],
         allow_methods=["GET", "POST"],
         allow_headers=["*"],
     )
+    # Simple in-process rate limit for plan endpoints (fair-use, not auth).
+    hit_log: dict[str, list[float]] = {}
+
+    @app.middleware("http")
+    async def rate_limit_plans(request, call_next):
+        path = request.url.path
+        if request.method == "POST" and path.startswith("/api/plan"):
+            client = (request.client.host if request.client else "unknown")
+            now = time.time()
+            window = hit_log.setdefault(client, [])
+            hit_log[client] = [t for t in window if now - t < 60.0]
+            if len(hit_log[client]) >= RATE_LIMIT_PER_MIN:
+                return JSONResponse(
+                    {
+                        "detail": (
+                            f"Fair-use limit: {RATE_LIMIT_PER_MIN} plan requests / "
+                            "minute / IP. Run locally or donate to keep the hangar online."
+                        )
+                    },
+                    status_code=429,
+                )
+            hit_log[client].append(now)
+        return await call_next(request)
 
     site_dir = WEBSITE_DIR if WEBSITE_DIR.exists() else STATIC_DIR
     if site_dir.exists():
@@ -155,20 +183,25 @@ def create_app() -> FastAPI:
         return {
             "status": "ok",
             "product": "pimpmydrone",
-            "version": "0.4.0",
+            "version": "0.5.0",
             "monetization": "donations",
             "max_cells": MAX_CELLS,
             "perception": True,
+            "deconfliction": True,
+            "inspection_metrics": True,
+            "schedule_mode": "sortie",
         }
 
     @app.get("/api/config")
     def config() -> dict[str, Any]:
         return {
             "donate_url": DONATE_URL,
+            "donate_alt_url": DONATE_ALT_URL,
             "github_url": GITHUB_URL,
             "max_cells": MAX_CELLS,
             "disclaimer_short": DISCLAIMER_SHORT,
             "monetization": "donations",
+            "rate_limit_per_min": RATE_LIMIT_PER_MIN,
         }
 
     @app.get("/api/disclaimer", response_class=PlainTextResponse)
@@ -405,6 +438,7 @@ def _inject_config(html: str) -> str:
         + json.dumps(
             {
                 "donate_url": DONATE_URL,
+                "donate_alt_url": DONATE_ALT_URL,
                 "github_url": GITHUB_URL,
                 "max_cells": MAX_CELLS,
                 "disclaimer_short": DISCLAIMER_SHORT,
@@ -507,6 +541,8 @@ def _run_job(
         "job_id": job_id,
         "vertical": vertical,
         "coverage_pct": metrics["coverage"]["percentage"],
+        "inspection_pct": (metrics.get("inspection") or {}).get("percentage"),
+        "deconflicted": (metrics.get("deconfliction") or {}).get("ok"),
         "makespan": metrics["makespan"],
         "drones": metrics["drones"]["used"],
         "total_length": metrics["total_length"],
@@ -514,6 +550,7 @@ def _run_job(
         "warnings": warnings,
         "disclaimer": DISCLAIMER_SHORT,
         "donate_url": DONATE_URL,
+        "donate_alt_url": DONATE_ALT_URL,
         "png_url": f"/api/jobs/{job_id}/png",
         "missions_geojson_url": f"/api/jobs/{job_id}/missions.geojson",
         "waypoints_csv_url": f"/api/jobs/{job_id}/waypoints.csv",

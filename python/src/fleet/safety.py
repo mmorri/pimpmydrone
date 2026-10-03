@@ -37,11 +37,12 @@ software, **you acknowledge and agree that:**
 3. Exports (QGroundControl `.plan`, CSV, GeoJSON) are **drafts for review**. You
    must validate every waypoint in your ground station, confirm home/RTH, altitude
    reference (AGL vs AMSL), fail-safes, and collision avoidance **before arming**.
-4. Multi-drone concurrency is scheduled for makespan only; **spatial deconfliction
-   is NOT guaranteed**. Flying multiple vehicles from these plans without your own
-   separation protocol is unsafe.
-5. Coverage percentages refer to **raster cells on a synthetic grid**, not sensor
-   footprint, GSD, spray deposition, or regulatory “inspection complete” criteria.
+4. Multi-drone clocks may be **time-staggered** to avoid same-cell overlaps in the
+   discrete simulator, but that is **not** certified separation, sense-and-avoid,
+   or ADS-B traffic management. You still need your own protocol.
+5. Grid coverage and approximate sensor/GSD reports are **not** regulatory
+   “inspection complete” criteria. Validate FOV, overlap, and photogrammetry QA
+   in your own tools.
 6. Use is at your own risk. If you do not accept this disclaimer in full, **do not
    use the software and do not fly the plans**.
 
@@ -125,12 +126,14 @@ def build_safety_report(
                 "## Planner metrics (not a flight clearance)",
                 "",
                 f"- Coverage of reachable grid cells: **{cov.get('percentage', '?')}%**",
+                f"- Approx. sensor/inspection sweep: **{(metrics.get('inspection') or {}).get('percentage', '?')}%**",
                 f"- Reachable cells: {cov.get('reachable_cells', '?')}",
                 f"- Unreachable / sealed pockets: {cov.get('unreachable_cells', '?')}",
                 f"- Out of battery range (skipped): {cov.get('out_of_range_cells', cov.get('skipped_cells', '?'))}",
                 f"- Drones used: {metrics.get('drones', {}).get('used', '?')}",
                 f"- Makespan (simulated): {metrics.get('makespan', '?')} s",
                 f"- Total path length (grid steps): {metrics.get('total_length', '?')}",
+                f"- Spatial deconfliction (sim): **{(metrics.get('deconfliction') or {}).get('ok', '?')}**",
                 "",
             ]
         )
@@ -213,11 +216,25 @@ def collect_warnings(
             f"Simulator reported {len(problems)} problem(s); do not fly until resolved."
         )
 
+    deconf = metrics.get("deconfliction") or {}
     drones = (metrics.get("drones") or {}).get("used") or 0
-    if drones > 1:
+    if drones > 1 and not deconf.get("ok", False):
         warnings.append(
-            "Multiple drones were scheduled without spatial deconfliction — "
-            "collision risk is yours to manage."
+            "Multiple drones still have unresolved spatial deconfliction conflicts — "
+            "do not fly concurrently until you separate them yourself."
+        )
+    elif drones > 1:
+        warnings.append(
+            "Multiple drones were time-staggered for discrete deconfliction; this is "
+            "not certified airborne separation — keep your own protocol."
+        )
+
+    inspection = metrics.get("inspection") or {}
+    insp_pct = inspection.get("percentage")
+    if insp_pct is not None and float(insp_pct) < 99.0:
+        warnings.append(
+            f"Approximate sensor sweep covers {float(insp_pct):.1f}% of work cells "
+            f"(FOV/GSD model) — not a photogrammetry QA pass."
         )
 
     efficiency = metrics.get("efficiency") or {}

@@ -75,15 +75,21 @@ short-commute maps.
 
 ## Phase 3 — Give the optimizer a real decision
 
-The CP-SAT stage only assigns whole regions to drones, so total path length is
-fixed before it runs and the stage is really a scheduler.
-
-- Assign **sorties** rather than whole regions, letting drones share a region.
-- Longer term, set-partitioning over generated sortie columns (column
+- **Sortie assignment.** Done (default `--schedule-mode sortie`): recharge stops
+  split into CP-SAT tasks so drones can interleave work from the same depot.
+  `--schedule-mode tour` keeps the old whole-region behaviour.
+- Longer term: set-partitioning over generated sortie columns (column
   generation), which folds partitioning and assignment into one model.
 
 ## Phase 4 — Scale and fidelity
 
+- **Spatial deconfliction.** Done at discrete fidelity: detect same-cell /
+  same-time clashes, stagger later drones, report in metrics / safety / QGC
+  readme. Not certified airborne separation.
+- **Sensor / GSD inspection report.** Done: FOV→footprint model writes
+  `metrics.inspection` (approx. imaged cells + GSD estimate).
+- **QGC export fidelity.** Done: RelHome/AGL altitude mode, inclusion site +
+  avoid keep-outs as geofence polygons when present on `geo.json`.
 - **Flat arrays instead of hash maps** in the Haskell core, indexed by
   `y * width + x`. The cheapest-return field keeps one entry per cell and
   heading, so on 1000x1000 the planner spends 50 s and 2.5 GB building it --
@@ -93,13 +99,15 @@ fixed before it runs and the stage is really a scheduler.
   1000x1000; encoding moves as direction runs would cut that by an order of
   magnitude.
 - **Parallel region planning.** Regions are independent.
-- **Deconfliction.** Drones fly concurrently in the schedule but nothing checks
-  that two of them never occupy a cell at the same time.
 - **Remove the duplicated `params`** between `map.json` and `params.json`.
 - **Richer visuals**: a sortie Gantt per drone, and a coverage-age heat map.
+- **Real terrain / OSM buildings / wind / NOTAM** — still out of scope; the
+  flat-world disclaimer stands.
 
 ## Done
 
+- **Sortie scheduling + discrete deconfliction + inspection metrics + QGC
+  geofence/AGL export + industrial solar example + dual donation CTAs.**
 - **Mega-cell STC + route shortcutting.** See Phase 2. Auto now compares
   mega-STC, fine-cell STC, and boustrophedon per region.
 - **Perception + ML adapters.** Shared detection GeoJSON, solar/security/ag/thermal/wildlife

@@ -24,13 +24,16 @@ Optional env:
 
 | Variable | Purpose |
 | --- | --- |
-| `FLEET_DONATE_URL` | Donation link (default GitHub Sponsors) |
+| `FLEET_DONATE_URL` | Primary donation link (default GitHub Sponsors) |
+| `FLEET_DONATE_ALT_URL` | Secondary tip jar (default Ko-fi) |
 | `FLEET_GITHUB_URL` | Repo link |
 | `FLEET_MAX_CELLS` | Fair-use grid cap for the demo (not a paywall) |
+| `FLEET_RATE_LIMIT_PER_MIN` | Plan POST rate limit per IP (default 12) |
+| `FLEET_CORS_ORIGINS` | Comma-separated origins (default `*`) |
 | `FLEET_JOBS` | Temp job directory |
 
-Enable [GitHub Sponsors](https://github.com/sponsors/mmorri) (or point
-`FLEET_DONATE_URL` at Ko-fi / PayPal / Open Collective).
+Enable [GitHub Sponsors](https://github.com/sponsors/mmorri) and/or
+[Ko-fi](https://ko-fi.com/pimpmydrone). Donations never buy a warranty.
 
 ## CLI
 

@@ -1,0 +1,56 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Industrial solar hangar case study",
+        "vertical": "solar",
+        "role": "cover"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-121.82000, 37.41000],
+          [-121.81200, 37.41000],
+          [-121.81200, 37.41650],
+          [-121.82000, 37.41650],
+          [-121.82000, 37.41000]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Substation keep-out",
+        "role": "avoid"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-121.81680, 37.41280],
+          [-121.81540, 37.41280],
+          [-121.81540, 37.41380],
+          [-121.81680, 37.41380],
+          [-121.81680, 37.41280]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "depot": true, "role": "depot", "name": "West pad" },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-121.81960, 37.41040]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "depot": true, "role": "depot", "name": "East pad" },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-121.81240, 37.41610]
+      }
+    }
+  ]
+}

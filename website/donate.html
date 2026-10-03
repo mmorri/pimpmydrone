@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Donate — PimpMyDrone</title>
   <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="/assets/styles.css?v=0.4.1" />
+  <link rel="stylesheet" href="/assets/styles.css?v=0.5.0" />
 </head>
 <body class="doc">
   <header class="top">
@@ -34,12 +34,13 @@
       <li>MIT open source — fork it, audit it, host it yourself</li>
       <li>Donations fund algorithms, safety docs, and hosting — not indemnity</li>
     </ul>
-    <a id="donateBtn" class="btn" href="https://github.com/sponsors/mmorri" target="_blank" rel="noopener">Donate via GitHub Sponsors</a>
+    <p style="display:flex;flex-wrap:wrap;gap:0.75rem;margin:1.25rem 0">
+      <a id="donateBtn" class="btn" href="https://github.com/sponsors/mmorri" target="_blank" rel="noopener">GitHub Sponsors</a>
+      <a id="donateAltBtn" class="btn ghost" href="https://ko-fi.com/pimpmydrone" target="_blank" rel="noopener">Ko-fi tip jar</a>
+    </p>
     <p class="hint">
-      Opens <code>github.com/sponsors/mmorri</code>. If that page asks you to
-      “Join the waitlist” or only shows the profile, Sponsors isn’t enabled on
-      the account yet — finish setup at
-      <a href="https://github.com/sponsors/accounts" target="_blank" rel="noopener">github.com/sponsors/accounts</a>.
+      Prefer whichever button works. If Sponsors shows a waitlist, use Ko-fi (or set
+      <code>FLEET_DONATE_URL</code> / <code>FLEET_DONATE_ALT_URL</code> on your host).
       A donation never buys a liability waiver — see <a href="/legal">/legal</a>.
     </p>
   </article>
@@ -47,6 +48,7 @@
     const cfg = window.FLEET_CONFIG || {};
     if (cfg.github_url) document.getElementById("navGithub").href = cfg.github_url;
     if (cfg.donate_url) document.getElementById("donateBtn").href = cfg.donate_url;
+    if (cfg.donate_alt_url) document.getElementById("donateAltBtn").href = cfg.donate_alt_url;
   </script>
 </body>
 </html>

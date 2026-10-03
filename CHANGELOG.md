@@ -4,6 +4,16 @@
 
 ### Added
 
+- **Sortie-level CP-SAT scheduling** (`--schedule-mode sortie`, default) so
+  drones can interleave recharge sorties from the same depot.
+- **Discrete spatial deconfliction** (`fleet.deconflict`): detect same-cell
+  time clashes, stagger clocks, surface in metrics/safety/QGC readme.
+- **Sensor / GSD inspection report** (`fleet.sensor` → `metrics.inspection`).
+- **QGC export upgrades**: RelHome/AGL altitude mode, site inclusion + avoid
+  keep-out geofence polygons from `geo.json`.
+- **Industrial solar case-study site** (`examples/sites/solar_industrial.geojson`)
+  with dual depots + substation keep-out; `tools/compare_lawnmower.py`.
+- **Dual donation CTAs** (Sponsors + Ko-fi), plan rate limiting, richer `/api/health`.
 - **Mega-cell STC** (`Coverage.MegaSTC`): 2×2 spanning-tree coverage with
   orphan-cell patching. `--coverage-algorithm stc` uses it; `auto` compares
   mega-STC, fine-cell STC, and boustrophedon per region.

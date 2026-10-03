@@ -318,6 +318,23 @@ def write_site_workspace(
     geo_path = out_dir / "geo.json"
     geo_payload = geo.to_json()
     geo_payload["site"] = mapping(site)
+    geo_payload["altitude_mode"] = "AGL"
+    if avoid_polygons:
+        geo_payload["avoid"] = [mapping(poly) for poly in avoid_polygons]
+    # Default nadir inspection sensor for the vertical (overridable in params).
+    geo_payload["sensor"] = {
+        "fov_h_deg": 60.0 if vertical != "security" else 80.0,
+        "fov_v_deg": 45.0 if vertical != "security" else 60.0,
+        "forward_overlap": 0.2,
+        "side_overlap": 0.2,
+    }
+    params_payload["sensor"] = {
+        **geo_payload["sensor"],
+        "altitude_m": altitude_m,
+        "cell_size_m": size,
+    }
+    params_payload["altitude_m"] = altitude_m
+    params_payload["cell_size_m"] = size
     io.write_json(map_path, map_payload)
     io.write_json(params_path, params_payload)
     io.write_json(geo_path, geo_payload)

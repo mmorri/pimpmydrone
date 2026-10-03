@@ -77,6 +77,19 @@ def optimizer_options(fn):
             show_default=True,
             help="CP-SAT time limit in seconds.",
         ),
+        click.option(
+            "--schedule-mode",
+            type=click.Choice(["sortie", "tour"]),
+            default="sortie",
+            show_default=True,
+            help="Assign recharge sorties (default) or whole region tours.",
+        ),
+        click.option(
+            "--deconflict/--no-deconflict",
+            default=True,
+            show_default=True,
+            help="Time-stagger drones to clear same-cell conflicts.",
+        ),
     ]
     for option in reversed(options):
         fn = option(fn)
@@ -181,8 +194,10 @@ def optimize_command(
     drone_cost: float,
     deadline: Optional[float],
     solver_time: float,
+    schedule_mode: str,
+    deconflict: bool,
 ) -> None:
-    """Assign tours to drones with the OR-Tools scheduling model."""
+    """Assign tours/sorties to drones with the OR-Tools scheduling model."""
 
     result = optimize_file(
         input_path,
@@ -191,10 +206,13 @@ def optimize_command(
         drone_cost=drone_cost,
         deadline=deadline,
         time_limit=solver_time,
+        mode=schedule_mode,
+        deconflict=deconflict,
     )
     console.print(
         f"Optimized tours written to [bold]{output_path}[/bold] "
-        f"with makespan {result.makespan:.2f}s and {result.drone_count} drones",
+        f"({result.mode}) with makespan {result.makespan:.2f}s and "
+        f"{result.drone_count} drones",
     )
 
 
@@ -256,6 +274,8 @@ def run_command(
     drone_cost: float,
     deadline: Optional[float],
     solver_time: float,
+    schedule_mode: str,
+    deconflict: bool,
     coverage_algorithm: str,
     partition: str,
     mp4: bool,
@@ -284,6 +304,8 @@ def run_command(
         drone_cost=drone_cost,
         deadline=deadline,
         time_limit=solver_time,
+        mode=schedule_mode,
+        deconflict=deconflict,
     )
     result = simulate(
         map_path,
@@ -333,6 +355,8 @@ def from_geo_command(
     drone_cost: float,
     deadline: Optional[float],
     solver_time: float,
+    schedule_mode: str,
+    deconflict: bool,
 ) -> None:
     """Plan a real-world site from GeoJSON and export flyable missions."""
 
@@ -349,6 +373,8 @@ def from_geo_command(
         drone_cost=drone_cost,
         deadline=deadline,
         solver_time=solver_time,
+        schedule_mode=schedule_mode,
+        deconflict=deconflict,
     )
     console.rule(f"Site mission ({vertical})")
     print_summary(result.simulation, output_dir)

@@ -23,7 +23,9 @@ from typing import List, Set, Tuple
 
 from . import io
 from .analyze import analyze_tours
+from .deconflict import find_conflicts
 from .map_utils import MapSpec, manhattan, min_travel_cost
+from .sensor import inspection_coverage, sensor_from_params
 
 Cell = Tuple[int, int]
 
@@ -38,6 +40,7 @@ class SimulationResult:
     continuous: bool
     battery_ok: bool
     problems: List[str]
+    deconflicted: bool = True
 
     @property
     def ok(self) -> bool:
@@ -46,6 +49,7 @@ class SimulationResult:
             and self.collision_free
             and self.continuous
             and self.battery_ok
+            and self.deconflicted
         )
 
 
@@ -74,6 +78,8 @@ def simulate(
     collision_free = True
     continuous = True
     battery_ok = True
+    geo_path = map_path.parent / "geo.json"
+    geo = io.read_json(geo_path) if geo_path.exists() else None
 
     for tour in tours:
         drone_id = tour.get("drone_id")
@@ -129,6 +135,18 @@ def simulate(
     if len(tours) > max_drones_allowed:
         raise RuntimeError("Optimized plan uses more drones than allowed")
 
+    conflicts = find_conflicts(tours)
+    deconflicted = not conflicts
+    if conflicts:
+        sample = conflicts[0]
+        problems.append(
+            f"{len(conflicts)} spatial conflict(s); e.g. drones "
+            f"{sample.drone_a}/{sample.drone_b} at {sample.cell} t≈{sample.time:.1f}s"
+        )
+
+    sensor = sensor_from_params(params, geo)
+    inspection = inspection_coverage(tours, expected, sensor)
+
     metrics = {
         "coverage": {
             "percentage": coverage_percentage,
@@ -137,6 +155,20 @@ def simulate(
             "out_of_range_cells": len(out_of_range),
             "expected_cells": len(expected),
             "uncovered_cells": [cell_to_json(cell) for cell in uncovered],
+        },
+        "inspection": inspection,
+        "deconfliction": {
+            "ok": deconflicted,
+            "conflicts": len(conflicts),
+            "sample": [
+                {
+                    "x": c.cell[0],
+                    "y": c.cell[1],
+                    "t": c.time,
+                    "drones": [c.drone_a, c.drone_b],
+                }
+                for c in conflicts[:5]
+            ],
         },
         "drones": {"used": len(tours), "max": max_drones_allowed},
         "makespan": max((entry["time"] for entry in per_drone), default=0.0),
@@ -148,13 +180,20 @@ def simulate(
             "collision_free": collision_free,
             "continuous": continuous,
             "battery_ok": battery_ok,
+            "deconflicted": deconflicted,
             "problems": problems,
         },
     }
 
     io.write_json(metrics_path, metrics)
     return SimulationResult(
-        metrics, coverage_ok, collision_free, continuous, battery_ok, problems
+        metrics,
+        coverage_ok,
+        collision_free,
+        continuous,
+        battery_ok,
+        problems,
+        deconflicted,
     )
 
 

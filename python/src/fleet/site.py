@@ -92,6 +92,8 @@ def plan_site(
     drone_cost: float = 1.0,
     deadline: Optional[float] = None,
     solver_time: float = 30.0,
+    schedule_mode: str = "sortie",
+    deconflict: bool = True,
     simplify_export: bool = True,
     plan_fn=None,
 ) -> SiteMissionResult:
@@ -137,6 +139,8 @@ def plan_site(
         drone_cost=drone_cost,
         deadline=deadline,
         time_limit=solver_time,
+        mode=schedule_mode,
+        deconflict=deconflict,
     )
     simulation = simulate(
         map_path,

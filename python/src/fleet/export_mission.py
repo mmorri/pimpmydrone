@@ -97,11 +97,15 @@ def export_qgc_plans(
     out_dir: Path,
     *,
     simplify: bool = True,
+    geo_payload: dict[str, Any] | None = None,
 ) -> list[Path]:
-    """Write one QGroundControl ``.plan`` file per drone."""
+    """Write one QGroundControl ``.plan`` file per drone (altitude = AGL draft)."""
 
     io.ensure_directory(out_dir)
     paths: list[Path] = []
+    fence = _geofence_from_geo(geo_payload)
+    # AltitudeMode 1 = RelHome / AGL-style relative altitude in QGC plan items.
+    alt_mode = 1
     for tour in tours:
         pts = tour_to_geo_waypoints(tour, geo, simplify=simplify)
         if not pts:
@@ -109,12 +113,20 @@ def export_qgc_plans(
         home = pts[0]
         items = []
         seq = 0
-        # Takeoff
-        items.append(_qgc_item(seq, 22, home["lat"], home["lon"], geo.altitude_m, [0, 0, 0, None, home["lat"], home["lon"], geo.altitude_m]))
+        items.append(
+            _qgc_item(
+                seq,
+                22,
+                home["lat"],
+                home["lon"],
+                geo.altitude_m,
+                [0, 0, 0, None, home["lat"], home["lon"], geo.altitude_m],
+                altitude_mode=alt_mode,
+            )
+        )
         seq += 1
         for pt in pts[1:]:
             if pt["recharge"]:
-                # Land then take off again at the same depot cell.
                 items.append(
                     _qgc_item(
                         seq,
@@ -123,6 +135,7 @@ def export_qgc_plans(
                         pt["lon"],
                         0.0,
                         [0, 0, 0, None, pt["lat"], pt["lon"], 0],
+                        altitude_mode=alt_mode,
                     )
                 )
                 seq += 1
@@ -134,6 +147,7 @@ def export_qgc_plans(
                         pt["lon"],
                         geo.altitude_m,
                         [0, 0, 0, None, pt["lat"], pt["lon"], geo.altitude_m],
+                        altitude_mode=alt_mode,
                     )
                 )
                 seq += 1
@@ -146,10 +160,10 @@ def export_qgc_plans(
                         pt["lon"],
                         geo.altitude_m,
                         [0, 0, 0, None, pt["lat"], pt["lon"], geo.altitude_m],
+                        altitude_mode=alt_mode,
                     )
                 )
                 seq += 1
-        # Final land
         last = pts[-1]
         items.append(
             _qgc_item(
@@ -159,21 +173,22 @@ def export_qgc_plans(
                 last["lon"],
                 0.0,
                 [0, 0, 0, None, last["lat"], last["lon"], 0],
+                altitude_mode=alt_mode,
             )
         )
         plan = {
             "fileType": "Plan",
             "groundStation": "QGroundControl",
             "version": 1,
-            "geoFence": {"circles": [], "polygons": [], "version": 2},
+            "geoFence": fence,
             "rallyPoints": {"points": [], "version": 2},
             "mission": {
                 "cruiseSpeed": max(1.0, float(geo.cell_size_m)),
                 "firmwareType": 12,
-                "globalPlanAltitudeMode": 1,
+                "globalPlanAltitudeMode": alt_mode,
                 "hoverSpeed": 5,
                 "items": items,
-                "plannedHomePosition": [home["lat"], home["lon"], geo.altitude_m],
+                "plannedHomePosition": [home["lat"], home["lon"], 0.0],
                 "vehicleType": 2,
                 "version": 2,
             },
@@ -182,6 +197,50 @@ def export_qgc_plans(
         io.write_json(path, plan)
         paths.append(path)
     return paths
+
+
+def _geofence_from_geo(geo_payload: dict[str, Any] | None) -> dict[str, Any]:
+    """Build QGC geofence polygons from avoid rings stored on geo.json."""
+
+    polygons: list[dict[str, Any]] = []
+    if geo_payload:
+        for geom in geo_payload.get("avoid") or []:
+            ring = _exterior_ring(geom)
+            if ring and len(ring) >= 3:
+                polygons.append(
+                    {
+                        "version": 1,
+                        "polygon": [[lat, lon] for lon, lat in ring],
+                        "inclusion": False,
+                    }
+                )
+        site = geo_payload.get("site")
+        site_ring = _exterior_ring(site) if site else None
+        if site_ring and len(site_ring) >= 3:
+            polygons.insert(
+                0,
+                {
+                    "version": 1,
+                    "polygon": [[lat, lon] for lon, lat in site_ring],
+                    "inclusion": True,
+                },
+            )
+    return {"circles": [], "polygons": polygons, "version": 2}
+
+
+def _exterior_ring(geom: dict[str, Any] | None) -> list[list[float]] | None:
+    if not geom:
+        return None
+    gtype = geom.get("type")
+    coords = geom.get("coordinates")
+    if gtype == "Polygon" and coords:
+        return [[float(lon), float(lat)] for lon, lat, *_ in coords[0]]
+    if gtype == "MultiPolygon" and coords:
+        # Largest ring by vertex count as a cheap stand-in for area.
+        rings = coords
+        best = max(rings, key=lambda poly: len(poly[0]) if poly else 0)
+        return [[float(lon), float(lat)] for lon, lat, *_ in best[0]]
+    return None
 
 
 def export_waypoints_csv(
@@ -244,7 +303,10 @@ def export_all(
     plans_dir = out_dir / "qgc"
     export_geojson_missions(tours, geo, geojson_path, simplify=simplify)
     export_waypoints_csv(tours, geo, csv_path, simplify=simplify)
-    plans = export_qgc_plans(tours, geo, plans_dir, simplify=simplify)
+    plans = export_qgc_plans(
+        tours, geo, plans_dir, simplify=simplify, geo_payload=geo_payload
+    )
+    deconflict_ok = ((metrics or {}).get("deconfliction") or {}).get("ok")
     readme = out_dir / "README_FLYING.md"
     readme.write_text(
         "\n".join(
@@ -253,8 +315,10 @@ def export_all(
                 "",
                 "1. Read `SAFETY_REPORT.md` and `DISCLAIMER.txt` completely.",
                 "2. Open each `qgc/drone_*.plan` in QGroundControl (or import CSV).",
-                "3. Verify home, altitude mode, geofence, and RTH before arming.",
-                "4. Multi-drone plans are **not** deconflicted in space — separate yourself.",
+                "3. Altitudes are **AGL / RelHome drafts** — confirm frame matches your vehicle.",
+                "4. Inclusion site + avoid keep-outs are embedded as QGC geofence polygons when present.",
+                "5. Multi-drone clocks were time-staggered when possible; still verify separation yourself.",
+                f"6. Simulator deconfliction flag: **{deconflict_ok}**.",
                 "",
                 "These paths are drafts from an experimental planner. You fly them at your own risk.",
                 "",
@@ -269,6 +333,8 @@ def export_all(
         "drones": len(tours),
         "vertical": geo.vertical,
         "altitude_m": geo.altitude_m,
+        "altitude_mode": geo_payload.get("altitude_mode", "AGL"),
+        "geofence_polygons": len(((_geofence_from_geo(geo_payload) or {}).get("polygons") or [])),
         "simplified": simplify,
         "disclaimer": "See SAFETY_REPORT.md — authors accept no responsibility for flights.",
     }
@@ -292,15 +358,17 @@ def _qgc_item(
     lon: float,
     alt: float,
     params: list[Any],
+    *,
+    altitude_mode: int = 1,
 ) -> dict[str, Any]:
     return {
         "AMSLAltAboveTerrain": None,
         "Altitude": alt,
-        "AltitudeMode": 1,
+        "AltitudeMode": altitude_mode,
         "autoContinue": True,
         "command": command,
         "doJumpId": seq + 1,
-        "frame": 3,
+        "frame": 3,  # MAV_FRAME_GLOBAL_RELATIVE_ALT
         "params": params,
         "type": "SimpleItem",
     }

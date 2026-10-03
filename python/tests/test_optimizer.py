@@ -21,7 +21,7 @@ def make_tour(drone_id: int, duration: float, depot=(0, 0), recharges=()) -> dic
 
 def test_optimizer_respects_drone_limit():
     tours = [make_tour(i, d) for i, d in enumerate([10.0, 8.0, 6.0])]
-    result = TourOptimizer(tours, max_drones=2, time_limit=5).solve()
+    result = TourOptimizer(tours, max_drones=2, time_limit=5, deconflict=False).solve()
     assert result.drone_count <= 2
     assert len(result.tours) == result.drone_count
     assert [t["drone_id"] for t in result.tours] == list(range(result.drone_count))
@@ -32,29 +32,44 @@ def test_optimizer_respects_drone_limit():
 
 def test_optimizer_minimises_makespan_by_default():
     tours = [make_tour(i, 10.0) for i in range(3)]
-    result = TourOptimizer(tours, max_drones=3, time_limit=5).solve()
+    result = TourOptimizer(
+        tours, max_drones=3, time_limit=5, deconflict=False
+    ).solve()
     assert result.drone_count == 3
     assert abs(result.makespan - 10.0) < 1e-6
 
 
 def test_optimizer_minimises_drones_under_deadline():
     tours = [make_tour(i, 10.0) for i in range(3)]
-    result = TourOptimizer(tours, max_drones=3, deadline=25.0, time_limit=5).solve()
+    result = TourOptimizer(
+        tours, max_drones=3, deadline=25.0, time_limit=5, deconflict=False
+    ).solve()
     assert result.drone_count == 2
     assert result.makespan <= 25.0 + 1e-6
 
 
 def test_optimizer_drone_cost_trades_makespan():
     tours = [make_tour(i, 10.0) for i in range(3)]
-    result = TourOptimizer(tours, max_drones=3, drone_cost=100.0, time_limit=5).solve()
+    result = TourOptimizer(
+        tours, max_drones=3, drone_cost=100.0, time_limit=5, deconflict=False
+    ).solve()
     assert result.drone_count == 1
     assert abs(result.makespan - 30.0) < 1e-6
 
 
 def test_optimizer_keeps_depots_apart():
     tours = [make_tour(0, 10.0, depot=(0, 0)), make_tour(1, 10.0, depot=(5, 5))]
-    result = TourOptimizer(tours, max_drones=2, drone_cost=1e6, time_limit=5).solve()
+    result = TourOptimizer(
+        tours, max_drones=2, drone_cost=1e6, time_limit=5, deconflict=False
+    ).solve()
     assert result.drone_count == 2
+
+
+def test_optimizer_deconflict_clears_shared_cells():
+    tours = [make_tour(i, 10.0) for i in range(2)]
+    result = TourOptimizer(tours, max_drones=2, time_limit=5, deconflict=True).solve()
+    assert result.deconflict is not None
+    assert result.deconflict["resolved"] is True
 
 
 def test_merge_marks_tour_boundary_as_recharge():

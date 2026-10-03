@@ -1,20 +1,15 @@
-"""OR-Tools scheduling of coverage tours onto a bounded fleet.
+"""OR-Tools scheduling of coverage tours (or sorties) onto a bounded fleet.
 
-Each tour produced by the Haskell planner is a self-contained sortie set that
-starts and ends at its depot. The optimizer decides which physical drone
-flies which tours and in what order (a drone can fly several tours back to
-back after recharging), so that
+Each tour from the Haskell planner is a self-contained path that starts and
+ends at its depot, possibly with mid-tour recharge stops. The optimizer can:
 
-1. the fleet never exceeds ``max_drones``,
-2. tours flown by the same drone start and end at the same depot, and
-3. the objective ``makespan + drone_cost * drones`` is minimised, where
-   ``drone_cost`` expresses how many seconds of makespan one extra drone is
-   worth (the default of one second only breaks ties toward smaller fleets).
-   With ``deadline`` set the number of drones is minimised first, subject to
-   the makespan not exceeding the deadline.
+* **tour mode** (legacy): assign whole region tours to drones;
+* **sortie mode** (default): split each tour at recharge stops so drones can
+  share a region's work and interleave sorties, subject to depot affinity.
 
-Total path length is fixed by the planner (re-ordering tours does not change
-it) so it is reported but not optimised here.
+Both modes minimise ``makespan + drone_cost * drones`` (or drones-first under
+a deadline). After scheduling, :func:`fleet.deconflict.deconflict_tours`
+staggers clocks so two drones do not occupy the same cell at the same time.
 """
 
 from __future__ import annotations
@@ -27,6 +22,7 @@ from typing import Dict, List, Optional, Tuple
 from ortools.sat.python import cp_model
 
 from . import io
+from .deconflict import deconflict_tours
 
 SECONDS_SCALE = 1000  # convert float seconds to millis for the integer solver
 
@@ -48,6 +44,8 @@ class OptimizerResult:
     drone_count: int
     makespan: float
     total_length: float
+    deconflict: dict | None = None
+    mode: str = "sortie"
 
 
 class TourOptimizer:
@@ -58,26 +56,33 @@ class TourOptimizer:
         drone_cost: float = 1.0,
         deadline: Optional[float] = None,
         time_limit: float = 30.0,
+        mode: str = "sortie",
+        deconflict: bool = True,
     ) -> None:
         if not tours:
             raise ValueError("No tours provided")
         if max_drones < 1:
             raise ValueError("max_drones must be at least 1")
-        self.tours = tours
+        if mode not in {"tour", "sortie"}:
+            raise ValueError("mode must be 'tour' or 'sortie'")
+        self.raw_tours = tours
         self.max_drones = max_drones
         self.drone_cost = drone_cost
         self.deadline = deadline
         self.time_limit = time_limit
+        self.mode = mode
+        self.deconflict = deconflict
+        units = split_into_sorties(tours) if mode == "sortie" else list(tours)
         self.tasks = [
             TourTask(
                 index=i,
-                duration=float(tour["cost"]["time"]),
+                duration=_tour_duration(tour),
                 length=float(tour["cost"]["length"]),
                 turns=int(tour["cost"].get("turns", 0)),
                 depot=tour_depot(tour),
                 tour=tour,
             )
-            for i, tour in enumerate(tours)
+            for i, tour in enumerate(units)
         ]
         self.horizon = (
             int(math.ceil(sum(task.duration for task in self.tasks) * SECONDS_SCALE))
@@ -94,7 +99,7 @@ class TourOptimizer:
         makespan = model.NewIntVar(0, self.horizon, "makespan")
 
         for task in self.tasks:
-            duration = int(round(task.duration * SECONDS_SCALE))
+            duration = max(1, int(round(task.duration * SECONDS_SCALE)))
             start = model.NewIntVar(0, self.horizon, f"start_{task.index}")
             end = model.NewIntVar(0, self.horizon, f"end_{task.index}")
             starts[task.index], ends[task.index] = start, end
@@ -113,7 +118,7 @@ class TourOptimizer:
                 [
                     model.NewOptionalIntervalVar(
                         starts[task.index],
-                        int(round(task.duration * SECONDS_SCALE)),
+                        max(1, int(round(task.duration * SECONDS_SCALE))),
                         ends[task.index],
                         assignment[(task.index, k)],
                         f"interval_{task.index}_{k}",
@@ -121,12 +126,10 @@ class TourOptimizer:
                     for task in self.tasks
                 ]
             )
-            # A used drone must fly something.
             model.Add(
                 sum(assignment[(t.index, k)] for t in self.tasks) >= 1
             ).OnlyEnforceIf(drone_used[k])
 
-        # Drones are interchangeable: break the symmetry by filling low ids first.
         for k in range(1, self.max_drones):
             model.AddImplication(drone_used[k], drone_used[k - 1])
 
@@ -147,7 +150,6 @@ class TourOptimizer:
 
         if self.deadline is not None:
             model.Add(makespan <= int(math.floor(self.deadline * SECONDS_SCALE)))
-            # Lexicographic: drones first, then makespan.
             drone_weight = self.horizon + 1
         else:
             drone_weight = int(round(self.drone_cost * SECONDS_SCALE))
@@ -178,13 +180,37 @@ class TourOptimizer:
                 jobs.sort(key=lambda item: item[1])
                 optimized.append(merge_tours(len(optimized), jobs, self.tasks))
 
+        deconflict_info = None
+        if self.deconflict and len(optimized) > 1:
+            result = deconflict_tours(optimized)
+            optimized = result.tours
+            deconflict_info = result.as_dict()
+            # Recompute makespan after delays.
+            makespan_s = max(
+                (float(t["cost"].get("time", 0.0)) for t in optimized), default=0.0
+            )
+        else:
+            makespan_s = solver.Value(makespan) / SECONDS_SCALE
+
         return OptimizerResult(
             tours=optimized,
             objective_value=solver.ObjectiveValue(),
             drone_count=int(solver.Value(drone_count)),
-            makespan=solver.Value(makespan) / SECONDS_SCALE,
+            makespan=makespan_s,
             total_length=sum(task.length for task in self.tasks),
+            deconflict=deconflict_info,
+            mode=self.mode,
         )
+
+
+def _tour_duration(tour: dict) -> float:
+    cost_t = float(tour.get("cost", {}).get("time", 0.0))
+    if cost_t > 0:
+        return cost_t
+    wps = tour.get("waypoints") or []
+    if not wps:
+        return 1.0
+    return max(float(wp.get("t", 0.0)) for wp in wps) or 1.0
 
 
 def tour_depot(tour: dict) -> Tuple[int, int]:
@@ -192,6 +218,71 @@ def tour_depot(tour: dict) -> Tuple[int, int]:
 
     first = min(tour["waypoints"], key=lambda wp: wp["index"])
     return (int(first["x"]), int(first["y"]))
+
+
+def split_into_sorties(tours: List[dict]) -> List[dict]:
+    """Split each tour into sorties at recharge stops (inclusive landings)."""
+
+    sorties: List[dict] = []
+    for tour in tours:
+        waypoints = sorted(tour.get("waypoints") or [], key=lambda wp: wp["index"])
+        if len(waypoints) < 2:
+            continue
+        stops = sorted(set(tour.get("recharge_stops") or []))
+        if not stops:
+            sorties.append(_slice_tour(tour, waypoints, len(sorties)))
+            continue
+        bounds: List[int] = []
+        for idx in [waypoints[0]["index"], *stops, waypoints[-1]["index"]]:
+            if not bounds or idx != bounds[-1]:
+                bounds.append(idx)
+        for i in range(len(bounds) - 1):
+            start_idx, end_idx = bounds[i], bounds[i + 1]
+            window = [wp for wp in waypoints if start_idx <= wp["index"] <= end_idx]
+            if len(window) < 2:
+                continue
+            sorties.append(_slice_tour(tour, window, len(sorties)))
+    return sorties if sorties else list(tours)
+
+
+def _slice_tour(tour: dict, window: List[dict], drone_hint: int) -> dict:
+    """Extract a contiguous waypoint window as its own tour with remapped ids."""
+
+    index_map = {wp["index"]: i for i, wp in enumerate(window)}
+    t0 = float(window[0].get("t", 0.0))
+    new_wps = [
+        {
+            "index": index_map[wp["index"]],
+            "x": wp["x"],
+            "y": wp["y"],
+            "t": float(wp.get("t", 0.0)) - t0,
+        }
+        for wp in window
+    ]
+    segs = []
+    for seg in tour.get("segments") or []:
+        if seg["from"] in index_map and seg["to"] in index_map:
+            segs.append(
+                {
+                    "from": index_map[seg["from"]],
+                    "to": index_map[seg["to"]],
+                    "length": float(seg["length"]),
+                    "turn_cost": float(seg.get("turn_cost", 0.0)),
+                    "battery_used": float(seg.get("battery_used", 0.0)),
+                }
+            )
+    length = sum(float(s["length"]) for s in segs) or float(
+        tour.get("cost", {}).get("length", 0.0)
+    ) * (len(window) / max(len(tour.get("waypoints") or [1]), 1))
+    turns = sum(int(s.get("turn_cost", 0) > 0) for s in segs)
+    duration = max((wp["t"] for wp in new_wps), default=0.0) or 1.0
+    return {
+        "drone_id": drone_hint,
+        "waypoints": new_wps,
+        "segments": segs,
+        "recharge_stops": [],
+        "cost": {"time": duration, "turns": turns, "length": length},
+    }
 
 
 def merge_tours(
@@ -226,6 +317,8 @@ def merge_tours(
             )
             next_index += 1
         for segment in tour["segments"]:
+            if segment["from"] not in index_mapping or segment["to"] not in index_mapping:
+                continue
             merged_segments.append(
                 {
                     "from": index_mapping[segment["from"]],
@@ -236,7 +329,8 @@ def merge_tours(
                 }
             )
         for stop in tour.get("recharge_stops", []):
-            recharge_stops.append(index_mapping.get(stop, stop))
+            if stop in index_mapping:
+                recharge_stops.append(index_mapping[stop])
         total_turns += int(tour["cost"].get("turns", 0))
         total_length += float(tour["cost"].get("length", 0.0))
 
@@ -260,6 +354,8 @@ def optimize_file(
     drone_cost: float = 1.0,
     deadline: Optional[float] = None,
     time_limit: float = 30.0,
+    mode: str = "sortie",
+    deconflict: bool = True,
 ) -> OptimizerResult:
     data = io.read_json(in_path)
     optimizer = TourOptimizer(
@@ -268,10 +364,18 @@ def optimize_file(
         drone_cost=drone_cost,
         deadline=deadline,
         time_limit=time_limit,
+        mode=mode,
+        deconflict=deconflict,
     )
     result = optimizer.solve()
     io.write_json(out_path, result.tours)
     return result
 
 
-__all__ = ["TourOptimizer", "optimize_file", "OptimizerResult", "merge_tours"]
+__all__ = [
+    "TourOptimizer",
+    "optimize_file",
+    "OptimizerResult",
+    "merge_tours",
+    "split_into_sorties",
+]
