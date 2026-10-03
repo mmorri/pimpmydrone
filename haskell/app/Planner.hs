@@ -15,9 +15,13 @@ import System.Exit (die)
 import System.IO (hPutStrLn, stderr)
 import Algorithm.Flood (bfsDistances)
 import Coverage.Boustro (planBoustro)
+import Coverage.MegaSTC (planMegaSTC)
 import Coverage.Repair (AssignedDepot (..), BuildResult (..), PlannerEnv, buildPathWith, prepareDepots)
+import Coverage.Shortcut (shortcutRoute)
 import Coverage.STC (planSTC)
-import Domain.Cell (Cell (..))
+import Domain.Cell (Cell (..), neighbors4)
+import qualified Data.HashSet as HS
+import qualified Data.Sequence as Seq
 import Domain.Depot (Depot (..))
 import Domain.Drone (DroneSpec)
 import Domain.Map (GridMap, freeNeighbors, isFree)
@@ -25,11 +29,10 @@ import Domain.Tour (Tour, TourCost (..), mkTour)
 import IO.Json (MapContext (..), readMapContext, readParams, readRegions, writeSkipped, writeTours)
 import Partition.Common (RegionAssignment (..))
 
--- | Which coverage pattern to run over a region. The two patterns suit
--- different terrain -- the lawnmower sweep is cheaper on open ground, the
--- spanning-tree walk on cluttered ground -- and which one wins varies from
--- region to region within a single map, so 'AlgoAuto' plans both and keeps
--- whichever tour is faster.
+-- | Which coverage pattern to run over a region. Mega-STC (2x2 spanning tree)
+-- is cheaper on open ground than fine-cell STC; boustrophedon often wins on
+-- open sweeps too. Cluttered ground still favours a tree walk. 'AlgoAuto'
+-- plans the candidates and keeps whichever tour is faster per region.
 data CoverageAlgorithm = AlgoSTC | AlgoBoustro | AlgoAuto deriving (Eq, Show)
 
 data Options = Options
@@ -55,7 +58,7 @@ optionsParser =
           <> metavar "ALGO"
           <> value AlgoAuto
           <> showDefaultWith showAlgo
-          <> help "Coverage pattern: stc, boustro or auto (cheaper of the two per region)"
+          <> help "Coverage pattern: stc (2x2 mega-cell), boustro, or auto (cheaper per region)"
       )
   where
     parseAlgo "stc" = Right AlgoSTC
@@ -134,9 +137,54 @@ planRegion env algo region =
       pure (mkTour (raDroneId region) brPath brRechargeStops brCost, brSkipped)
 
 patternsFor :: CoverageAlgorithm -> [RegionAssignment -> [Cell]]
-patternsFor AlgoSTC = [planSTC]
-patternsFor AlgoBoustro = [planBoustro]
-patternsFor AlgoAuto = [planSTC, planBoustro]
+patternsFor AlgoSTC = [withShortcut planMegaSTC]
+patternsFor AlgoBoustro = [withShortcut planBoustro]
+patternsFor AlgoAuto = [withShortcut planMegaSTC, withShortcut planBoustro, withShortcut planSTC]
+
+withShortcut :: (RegionAssignment -> [Cell]) -> RegionAssignment -> [Cell]
+withShortcut planner region =
+  let regionSet = HS.fromList (raSeed region : raCells region)
+      route = shortcutRoute regionSet (planner region)
+      missing =
+        [ c
+        | c <- HS.toList regionSet
+        , not (HS.member c (HS.fromList route))
+        ]
+   in if null missing
+        then route
+        else
+          let patch =
+                planSTC
+                  RegionAssignment
+                    { raDroneId = raDroneId region
+                    , raSeed = head missing
+                    , raCells = missing
+                    }
+           in if null route
+                then patch
+                else route ++ drop 1 (shortestInRegion regionSet (last route) (head patch)) ++ drop 1 patch
+
+shortestInRegion :: HS.HashSet Cell -> Cell -> Cell -> [Cell]
+shortestInRegion region start end
+  | start == end = [start]
+  | otherwise = maybe [start, end] id (bfs (Seq.singleton start) (M.singleton start Nothing))
+  where
+    bfs queue parents = case Seq.viewl queue of
+      Seq.EmptyL -> Nothing
+      cell Seq.:< rest
+        | cell == end -> Just (walkBack parents end [])
+        | otherwise ->
+            let fresh =
+                  [ n
+                  | n <- neighbors4 cell
+                  , HS.member n region
+                  , not (M.member n parents)
+                  ]
+                parents' = foldr (\n -> M.insert n (Just cell)) parents fresh
+             in bfs (foldl (Seq.|>) rest fresh) parents'
+    walkBack parents cell acc = case M.lookup cell parents of
+      Just (Just parent) -> walkBack parents parent (cell : acc)
+      _ -> cell : acc
 
 -- | Serve a region from the depot nearest (by grid distance) to its seed.
 -- With no depots at all the seed doubles as a depot.

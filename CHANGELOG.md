@@ -4,6 +4,11 @@
 
 ### Added
 
+- **Mega-cell STC** (`Coverage.MegaSTC`): 2×2 spanning-tree coverage with
+  orphan-cell patching. `--coverage-algorithm stc` uses it; `auto` compares
+  mega-STC, fine-cell STC, and boustrophedon per region.
+- **Route shortcutting** (`Coverage.Shortcut`): drop disposable revisit loops
+  and re-patch any uniquely removed cells.
 - **Perception Lab (0.4.0):** YOLO / ONNX CNN / VLM / domain adapters, shared
   detection schema, class→role ontologies, compile-to-site GeoJSON, API + CLI,
   hangar Perception Lab UI. CV outputs are untrusted — not sense-and-avoid.
@@ -12,7 +17,7 @@
 
 ### Changed
 
-- Mid-tour battery recalls now recharge at the **nearest depot** (cheapest
+- Mid-sortie battery recalls now recharge at the **nearest depot** (cheapest
   turn-aware return) instead of always the region\'s home depot. Tours still
   start and finish at the assigned home.
 

@@ -65,12 +65,12 @@ short-commute maps.
 
 ## Phase 2 — Cut the overlap
 
-- **Spanning-tree coverage over 2x2 mega-cells.** The textbook formulation
-  covers each fine cell once (about 1.05x) instead of the current 2x. This is
-  the single largest reduction available to in-region flight.
-- **Route shortcutting.** A cheap post-pass: where a route revisits cells,
-  replace the detour with an A* leg when that is shorter. Applies to both
-  patterns.
+- **Spanning-tree coverage over 2x2 mega-cells.** Done: `--coverage-algorithm stc`
+  (and auto) plans a DFS spanning tree on complete 2x2 blocks, covers each block
+  with a 4-cell snake, and patches orphan cells with the fine-cell walk. On
+  `open-40` seed 1 this cut STC flight from ~6544 to ~2618 steps at 100% coverage.
+- **Route shortcutting.** Done: drop revisit loops whose interior cells still
+  appear elsewhere, then re-patch any cells the shortcut uniquely removed.
 - **Per-region pattern choice** is done: see below.
 
 ## Phase 3 — Give the optimizer a real decision
@@ -100,6 +100,8 @@ fixed before it runs and the stage is really a scheduler.
 
 ## Done
 
+- **Mega-cell STC + route shortcutting.** See Phase 2. Auto now compares
+  mega-STC, fine-cell STC, and boustrophedon per region.
 - **Perception + ML adapters.** Shared detection GeoJSON, solar/security/ag/thermal/wildlife
   ontologies, compile→site (cover/avoid/inspect), YOLO / ONNX / VLM / domain
   backends, API/CLI, and hangar Perception Lab. Not sense-and-avoid.

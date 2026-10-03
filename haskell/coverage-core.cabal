@@ -35,6 +35,8 @@ library
         Partition.Strip,
         Partition.Common,
         Coverage.STC,
+        Coverage.MegaSTC,
+        Coverage.Shortcut,
         Coverage.Boustro,
         Coverage.Repair,
         Cost.Evaluate

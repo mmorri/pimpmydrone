@@ -8,41 +8,41 @@
     "steps": 546
   },
   "cluttered/boustro": {
-    "commute_steps": 125,
+    "commute_steps": 121,
     "covered_cells": 333,
-    "in_region_steps": 613,
+    "in_region_steps": 601,
     "skipped": 0,
     "sorties": 5,
-    "steps": 738
+    "steps": 722
   },
   "cluttered/stc": {
-    "commute_steps": 71,
+    "commute_steps": 72,
     "covered_cells": 333,
-    "in_region_steps": 481,
+    "in_region_steps": 532,
     "skipped": 0,
     "sorties": 4,
-    "steps": 552
+    "steps": 604
   },
   "open/boustro": {
-    "commute_steps": 68,
+    "commute_steps": 61,
     "covered_cells": 400,
-    "in_region_steps": 502,
+    "in_region_steps": 493,
     "skipped": 0,
     "sorties": 3,
-    "steps": 570
+    "steps": 554
   },
   "open/stc": {
-    "commute_steps": 63,
+    "commute_steps": 89,
     "covered_cells": 400,
-    "in_region_steps": 489,
+    "in_region_steps": 569,
     "skipped": 0,
-    "sorties": 3,
-    "steps": 552
+    "sorties": 4,
+    "steps": 658
   },
   "tight/boustro": {
-    "commute_steps": 1186,
+    "commute_steps": 1206,
     "covered_cells": 318,
-    "in_region_steps": 436,
+    "in_region_steps": 416,
     "skipped": 51,
     "sorties": 39,
     "steps": 1622

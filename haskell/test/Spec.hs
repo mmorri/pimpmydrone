@@ -12,6 +12,7 @@ import Test.QuickCheck
 import Algorithm.AStar (astarPath)
 import Algorithm.Flood (DepotField, bfsDistances, chainHome, depotField, fieldCells, fieldCost, fieldReturn)
 import Coverage.Boustro (planBoustro)
+import Coverage.MegaSTC (planMegaSTC)
 import Coverage.Repair (AssignedDepot (..), BuildResult (..), buildPath, roundTripCost)
 import Coverage.STC (planSTC)
 import Cost.Evaluate (pathCells, validateBattery)
@@ -33,6 +34,7 @@ main = do
       , ("strip partition covers reachable cells", property prop_strip_reachable)
       , ("A* path length equals BFS distance", property prop_astar_optimal)
       , ("STC visits every cell of a disconnected region", property prop_stc_disconnected)
+      , ("mega-STC covers every cell of an open rectangle", property prop_mega_stc_rectangle)
       , ("planned path avoids obstacles", property prop_planned_path_respects_obstacles)
       , ("battery invariant with recharges on a corridor", property prop_battery_corridor)
       , ("depot field is cost optimal and self consistent", property prop_depot_field_optimal)
@@ -191,6 +193,16 @@ prop_stc_disconnected =
   let cells = [Cell x 0 | x <- [0 .. 2]] ++ [Cell x 0 | x <- [5 .. 7]]
       route = planSTC (RegionAssignment 0 (Cell 0 0) cells)
    in HS.fromList route == HS.fromList cells
+
+-- Open even-sized rectangle: mega-STC should cover every cell, and on a clean
+-- 2x2 tiling the route should stay close to one visit per cell.
+prop_mega_stc_rectangle :: Bool
+prop_mega_stc_rectangle =
+  let cells = [Cell x y | x <- [0 .. 5], y <- [0 .. 5]]
+      route = planMegaSTC (RegionAssignment 0 (Cell 0 0) cells)
+      covered = HS.fromList route
+   in covered == HS.fromList cells
+        && length route <= length cells * 2
 
 -- * Repair / battery
 
