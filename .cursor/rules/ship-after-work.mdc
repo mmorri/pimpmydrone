@@ -1,0 +1,16 @@
+---
+description: Commit, push, and deploy pimpmydrone after finishing a slice
+alwaysApply: true
+---
+
+# Ship after work
+
+When a pimpmydrone change is finished and tests are green:
+
+1. Create a git commit (do not wait to be asked).
+2. Push the branch to `origin`.
+3. Publish with `./deploy.sh` so pimpmydrone.org matches the tree.
+
+Do not put secrets, passwords, or private keys in the repo or in `deploy.sh`.
+Use `~/.ssh/pimpmydrone_deploy` (Host `pimpmydrone` / `167.17.68.61`).
+After deploy, confirm `https://pimpmydrone.org/api/health` shows the new version.
