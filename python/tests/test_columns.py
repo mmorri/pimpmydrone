@@ -10,7 +10,12 @@ from fleet.columns import (
     solve_rmp_lp_duals,
     solve_set_partition,
 )
-from fleet.optimize import TourOptimizer, TourTask, tour_depot
+from fleet.optimize import (
+    TourOptimizer,
+    TourTask,
+    optimize_best_family,
+    tour_depot,
+)
 
 
 def make_tour(drone_id: int, duration: float, depot=(0, 0)) -> dict:
@@ -169,3 +174,21 @@ def test_columns_mode_reports_pricing_stats():
     ).solve()
     assert result.pricing_rounds is not None and result.pricing_rounds >= 1
     assert result.columns_added_by_pricing is not None
+
+
+def test_optimize_best_family_picks_lower_objective():
+    # Region: three 10s → with 3 drones makespan 10.
+    # Strip: one long 40s tour → makespan 40 even with spare drones.
+    region = [make_tour(i, 10.0) for i in range(3)]
+    strip = [make_tour(0, 40.0)]
+    pick = optimize_best_family(
+        {"region": region, "strip": strip},
+        max_drones=3,
+        time_limit=5,
+        mode="columns",
+        deconflict=False,
+    )
+    assert pick.family == "region"
+    assert pick.result.partition_family == "region"
+    assert "region" in pick.scores and "strip" in pick.scores
+    assert pick.scores["region"] <= pick.scores["strip"]

@@ -81,9 +81,9 @@ short-commute maps.
 - **Column set-partitioning.** Done (opt-in `--schedule-mode columns`): generate
   same-depot sortie packs, enrich them with LP dual pricing (GLOP RMP →
   negative reduced-cost columns), then solve a set-partitioning CP-SAT master.
-  Planner regions are folded into the seed pool (per-region columns). Trying
-  alternate partitions (e.g. strip vs region) as competing column families is
-  still open.
+  Planner regions are folded into the seed pool (per-region columns).
+  `--partition auto` plans region and strip as competing families and keeps the
+  better optimized objective (`partition_choice.json`).
 
 ## Phase 4 — Scale and fidelity
 
@@ -111,6 +111,7 @@ short-commute maps.
 
 ## Done
 
+- **Competing partition families (`--partition auto`).** See Phase 3.
 - **Column set-partitioning schedule mode.** See Phase 3.
 - **Flat depot field, compact tours, parallel region planning.** See Phase 4.
 - **Coverage-age heatmap, sortie Gantt, OSM building import, params dedup.**

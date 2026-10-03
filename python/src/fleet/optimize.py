@@ -54,6 +54,16 @@ class OptimizerResult:
     columns_selected: int | None = None
     pricing_rounds: int | None = None
     columns_added_by_pricing: int | None = None
+    partition_family: str | None = None
+
+
+@dataclass
+class FamilyPick:
+    """Best optimizer result among competing partition families."""
+
+    result: OptimizerResult
+    family: str
+    scores: Dict[str, float]
 
 
 class TourOptimizer:
@@ -443,10 +453,93 @@ def optimize_file(
     return result
 
 
+def optimize_best_family(
+    family_tours: Dict[str, List[dict]],
+    *,
+    max_drones: int,
+    drone_cost: float = 1.0,
+    deadline: Optional[float] = None,
+    time_limit: float = 30.0,
+    mode: str = "sortie",
+    deconflict: bool = True,
+) -> FamilyPick:
+    """Solve each partition family's tours and keep the best objective."""
+
+    if not family_tours:
+        raise ValueError("No partition families to optimize")
+
+    scores: Dict[str, float] = {}
+    best_name: Optional[str] = None
+    best_result: Optional[OptimizerResult] = None
+    # Stable preference when scores tie: region before strip, then name order.
+    preferred = {"region": 0, "strip": 1}
+
+    for name in sorted(family_tours.keys(), key=lambda n: (preferred.get(n, 50), n)):
+        tours = family_tours[name]
+        if not tours:
+            continue
+        result = TourOptimizer(
+            tours,
+            max_drones=max_drones,
+            drone_cost=drone_cost,
+            deadline=deadline,
+            time_limit=time_limit,
+            mode=mode,
+            deconflict=deconflict,
+        ).solve()
+        scores[name] = float(result.objective_value)
+        better = best_result is None or (
+            result.objective_value < best_result.objective_value - 1e-9
+            or (
+                abs(result.objective_value - best_result.objective_value) <= 1e-9
+                and result.makespan < best_result.makespan - 1e-9
+            )
+        )
+        if better:
+            best_name = name
+            best_result = result
+
+    if best_result is None or best_name is None:
+        raise ValueError("All partition families were empty")
+
+    best_result.partition_family = best_name
+    return FamilyPick(result=best_result, family=best_name, scores=scores)
+
+
+def optimize_families_to_file(
+    family_paths: Dict[str, Path],
+    out_path: Path,
+    *,
+    max_drones: int,
+    drone_cost: float = 1.0,
+    deadline: Optional[float] = None,
+    time_limit: float = 30.0,
+    mode: str = "sortie",
+    deconflict: bool = True,
+) -> FamilyPick:
+    """Load competing tour files, pick the best family, write optimized tours."""
+
+    families = {name: io.read_json(path) for name, path in family_paths.items()}
+    pick = optimize_best_family(
+        families,
+        max_drones=max_drones,
+        drone_cost=drone_cost,
+        deadline=deadline,
+        time_limit=time_limit,
+        mode=mode,
+        deconflict=deconflict,
+    )
+    io.write_json(out_path, pick.result.tours)
+    return pick
+
+
 __all__ = [
     "TourOptimizer",
     "optimize_file",
+    "optimize_best_family",
+    "optimize_families_to_file",
     "OptimizerResult",
+    "FamilyPick",
     "merge_tours",
     "split_into_sorties",
     "tour_region_id",

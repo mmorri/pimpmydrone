@@ -9,7 +9,7 @@ from typing import Any, Optional
 from . import io
 from .export_mission import export_all
 from .geo import load_geojson, write_site_workspace
-from .optimize import optimize_file
+from .optimize import optimize_families_to_file, optimize_file
 from .simulate import SimulationResult, simulate
 from .visualize import visualize
 
@@ -106,8 +106,11 @@ def plan_site(
     if vertical not in VERTICALS:
         raise ValueError(f"Unknown vertical {vertical!r}; choose from {sorted(VERTICALS)}")
     preset = VERTICALS[vertical]
+    stock_plan = None
     if plan_fn is None:
         from .cli import plan as plan_fn  # local import avoids a cli↔site cycle
+
+        stock_plan = plan_fn
 
     geojson = load_geojson(geojson_path)
     io.ensure_directory(out_dir)
@@ -142,17 +145,46 @@ def plan_site(
     png_path = out_dir / "path.png"
     export_dir = out_dir / "missions"
 
-    plan_fn(map_path, params_path, initial, coverage_algorithm, partition)
-    optimize_file(
-        initial,
-        optimized,
-        max_drones=fleet_size,
-        drone_cost=drone_cost,
-        deadline=deadline,
-        time_limit=solver_time,
-        mode=schedule_mode,
-        deconflict=deconflict,
-    )
+    if partition == "auto":
+        from .cli import plan_partition_families, promote_partition_family
+
+        if stock_plan is not None and plan_fn is stock_plan:
+            families = plan_partition_families(
+                map_path, params_path, out_dir, coverage_algorithm
+            )
+        else:
+            families = {}
+            for method in ("region", "strip"):
+                path = out_dir / f"tours_initial_{method}.json"
+                plan_fn(map_path, params_path, path, coverage_algorithm, method)
+                families[method] = path
+        pick = optimize_families_to_file(
+            families,
+            optimized,
+            max_drones=fleet_size,
+            drone_cost=drone_cost,
+            deadline=deadline,
+            time_limit=solver_time,
+            mode=schedule_mode,
+            deconflict=deconflict,
+        )
+        promote_partition_family(out_dir, pick.family)
+        io.write_json(
+            out_dir / "partition_choice.json",
+            {"family": pick.family, "scores": pick.scores, "mode": schedule_mode},
+        )
+    else:
+        plan_fn(map_path, params_path, initial, coverage_algorithm, partition)
+        optimize_file(
+            initial,
+            optimized,
+            max_drones=fleet_size,
+            drone_cost=drone_cost,
+            deadline=deadline,
+            time_limit=solver_time,
+            mode=schedule_mode,
+            deconflict=deconflict,
+        )
     from .compact import compression_ratio, write_compact_tours
 
     compact_path = out_dir / "tours_compact.json"

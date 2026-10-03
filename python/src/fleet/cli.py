@@ -14,7 +14,7 @@ from rich.table import Table
 from . import io
 from .export_mission import export_all
 from .generate_map import GeneratorConfig, write_workspace
-from .optimize import optimize_file
+from .optimize import optimize_families_to_file, optimize_file
 from .simulate import SimulationResult, simulate
 from .site import VERTICALS, plan_site
 from .visualize import visualize
@@ -121,14 +121,32 @@ def generate_command(output_dir: Optional[Path], **config_kwargs) -> None:
 @click.option(
     "--algorithm", type=click.Choice(["stc", "boustro", "auto"]), default="auto"
 )
-@click.option("--partition", type=click.Choice(["region", "strip"]), default="region")
+@click.option(
+    "--partition",
+    type=click.Choice(["region", "strip", "auto"]),
+    default="region",
+)
 def plan_command(
     map_path: Path, params_path: Path, output_path: Path, algorithm: str, partition: str
 ) -> None:
     """Plan tours using the Haskell executables."""
 
-    plan(map_path, params_path, output_path, algorithm, partition)
-    console.print(f"Planned initial tours at [bold]{output_path}[/bold]")
+    if partition == "auto":
+        families = plan_partition_families(
+            map_path, params_path, output_path.parent, algorithm
+        )
+        # Default canonical path mirrors region until optimize picks a winner.
+        io.write_json(output_path, io.read_json(families["region"]))
+        console.print(
+            f"Planned partition families at [bold]{output_path.parent}[/bold] "
+            f"({', '.join(families)})"
+        )
+    else:
+        plan(map_path, params_path, output_path, algorithm, partition)
+        console.print(f"Planned initial tours at [bold]{output_path}[/bold]")
+
+
+PARTITION_METHODS = ("region", "strip")
 
 
 def plan(
@@ -137,11 +155,14 @@ def plan(
     output_path: Path,
     algorithm: str = "auto",
     partition: str = "region",
+    *,
+    regions_path: Optional[Path] = None,
+    skipped_path: Optional[Path] = None,
 ) -> Path:
     map_path, params_path = map_path.resolve(), params_path.resolve()
     output_path = output_path.resolve()
-    regions_path = output_path.parent / "regions.json"
-    skipped_path = output_path.parent / "skipped.json"
+    regions_path = (regions_path or (output_path.parent / "regions.json")).resolve()
+    skipped_path = (skipped_path or (output_path.parent / "skipped.json")).resolve()
     partitioner = HASKELL_BIN / "coverage-partitioner"
     planner = HASKELL_BIN / "coverage-planner"
     if not partitioner.exists() or not planner.exists():
@@ -180,6 +201,47 @@ def plan(
         ]
     )
     return output_path
+
+
+def plan_partition_families(
+    map_path: Path,
+    params_path: Path,
+    out_dir: Path,
+    algorithm: str = "auto",
+    methods: tuple[str, ...] = PARTITION_METHODS,
+) -> dict[str, Path]:
+    """Plan each partition method into its own tours/regions/skipped files."""
+
+    out_dir = out_dir.resolve()
+    io.ensure_directory(out_dir)
+    paths: dict[str, Path] = {}
+    for method in methods:
+        tours_path = out_dir / f"tours_initial_{method}.json"
+        plan(
+            map_path,
+            params_path,
+            tours_path,
+            algorithm,
+            method,
+            regions_path=out_dir / f"regions_{method}.json",
+            skipped_path=out_dir / f"skipped_{method}.json",
+        )
+        paths[method] = tours_path
+    return paths
+
+
+def promote_partition_family(out_dir: Path, family: str) -> None:
+    """Copy the winning family's artifacts onto the canonical filenames."""
+
+    mapping = {
+        f"tours_initial_{family}.json": "tours_initial.json",
+        f"regions_{family}.json": "regions.json",
+        f"skipped_{family}.json": "skipped.json",
+    }
+    for src_name, dst_name in mapping.items():
+        src = out_dir / src_name
+        if src.exists():
+            io.write_json(out_dir / dst_name, io.read_json(src))
 
 
 @run.command("optimize")
@@ -267,7 +329,11 @@ def visualize_command(
     default="auto",
     show_default=True,
 )
-@click.option("--partition", type=click.Choice(["region", "strip"]), default="region")
+@click.option(
+    "--partition",
+    type=click.Choice(["region", "strip", "auto"]),
+    default="region",
+)
 @click.option("--mp4/--no-mp4", default=False)
 @click.option("--output-dir", type=PathArg, default=None)
 def run_command(
@@ -296,17 +362,41 @@ def run_command(
     mp4_path = out_dir / "path.mp4" if mp4 else None
 
     write_workspace(map_path, params_path, config)
-    plan(map_path, params_path, initial_tours_path, coverage_algorithm, partition)
-    optimize_file(
-        initial_tours_path,
-        optimized_tours_path,
-        max_drones=config.max_drones,
-        drone_cost=drone_cost,
-        deadline=deadline,
-        time_limit=solver_time,
-        mode=schedule_mode,
-        deconflict=deconflict,
-    )
+    if partition == "auto":
+        families = plan_partition_families(
+            map_path, params_path, out_dir, coverage_algorithm
+        )
+        pick = optimize_families_to_file(
+            families,
+            optimized_tours_path,
+            max_drones=config.max_drones,
+            drone_cost=drone_cost,
+            deadline=deadline,
+            time_limit=solver_time,
+            mode=schedule_mode,
+            deconflict=deconflict,
+        )
+        promote_partition_family(out_dir, pick.family)
+        io.write_json(
+            out_dir / "partition_choice.json",
+            {"family": pick.family, "scores": pick.scores, "mode": schedule_mode},
+        )
+        console.print(
+            f"Partition family [bold]{pick.family}[/bold] won "
+            f"(scores={pick.scores})"
+        )
+    else:
+        plan(map_path, params_path, initial_tours_path, coverage_algorithm, partition)
+        optimize_file(
+            initial_tours_path,
+            optimized_tours_path,
+            max_drones=config.max_drones,
+            drone_cost=drone_cost,
+            deadline=deadline,
+            time_limit=solver_time,
+            mode=schedule_mode,
+            deconflict=deconflict,
+        )
     result = simulate(
         map_path,
         params_path,
@@ -340,7 +430,11 @@ def run_command(
     default="auto",
     show_default=True,
 )
-@click.option("--partition", type=click.Choice(["region", "strip"]), default="region")
+@click.option(
+    "--partition",
+    type=click.Choice(["region", "strip", "auto"]),
+    default="region",
+)
 @click.option(
     "--osm-buildings/--no-osm-buildings",
     default=False,

@@ -6,7 +6,7 @@ import pytest
 
 from fleet import cli, io
 from fleet.generate_map import GeneratorConfig, write_workspace
-from fleet.optimize import optimize_file
+from fleet.optimize import optimize_families_to_file, optimize_file
 from fleet.simulate import simulate
 
 BINARIES = [
@@ -48,6 +48,46 @@ def test_pipeline_end_to_end(tmp_path: Path, algorithm: str, partition: str) -> 
     metrics = io.read_json(metrics_path)
     assert metrics["coverage"]["percentage"] == 100.0
     assert 1 <= metrics["drones"]["used"] <= config.max_drones
+
+
+def test_pipeline_partition_auto_picks_a_family(tmp_path: Path) -> None:
+    config = GeneratorConfig(
+        seed=11,
+        width=12,
+        height=12,
+        obstacle_density=0.1,
+        no_fly_count=0,
+        depot_count=1,
+        battery=80.0,
+        max_drones=3,
+    )
+    map_path, params_path = tmp_path / "map.json", tmp_path / "params.json"
+    write_workspace(map_path, params_path, config)
+    families = cli.plan_partition_families(
+        map_path, params_path, tmp_path, algorithm="auto"
+    )
+    assert set(families) == {"region", "strip"}
+    optimized = tmp_path / "tours_optimized.json"
+    pick = optimize_families_to_file(
+        families,
+        optimized,
+        max_drones=config.max_drones,
+        time_limit=5,
+        mode="columns",
+        deconflict=True,
+    )
+    assert pick.family in {"region", "strip"}
+    cli.promote_partition_family(tmp_path, pick.family)
+    assert (tmp_path / "tours_initial.json").exists()
+    assert (tmp_path / "regions.json").exists()
+    result = simulate(
+        map_path,
+        params_path,
+        optimized,
+        tmp_path / "metrics.json",
+        skipped_path=tmp_path / "skipped.json",
+    )
+    assert result.ok, result.problems
 
 
 def test_pipeline_with_two_depots(tmp_path: Path) -> None:
