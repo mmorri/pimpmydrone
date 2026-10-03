@@ -55,7 +55,7 @@ def create_app() -> FastAPI:
             "Experimental multi-drone coverage planner. Free forever. "
             "Donations welcome. Authors accept no responsibility for flights."
         ),
-        version="0.3.2",
+        version="0.3.3",
     )
     app.add_middleware(
         CORSMiddleware,
@@ -99,7 +99,7 @@ def create_app() -> FastAPI:
         return {
             "status": "ok",
             "product": "pimpmydrone",
-            "version": "0.3.2",
+            "version": "0.3.3",
             "monetization": "donations",
             "max_cells": MAX_CELLS,
         }

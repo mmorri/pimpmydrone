@@ -37,9 +37,10 @@ attack.
   uncovered work cells, then fall back to the cheapest return tree if the biased
   path would break the battery reserve. Route cells already flown over during a
   commute are skipped so the work is not repeated.
-- **Cost-balanced partitioning.** Regions are balanced by cell count, but a
-  distant region costs far more per cell. Weight cells by round-trip cost when
-  growing regions.
+- **Cost-balanced partitioning.** Done: region growing claims the next cell for
+  whichever region has the lowest accumulated round-trip cost to its serving
+  depot, so distant work does not pile onto one drone the way equal cell
+  counts did.
 
 ### Tried and rejected: sortie-first decomposition
 

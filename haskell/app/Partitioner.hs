@@ -49,14 +49,14 @@ main = do
   mapCtx <- either (die . ("map: " ++)) pure =<< readMapContext optMap
   params <- either (die . ("params: " ++)) pure =<< readParams optParams
   let droneCount = max 1 (maybe (dsMaxDrones params) id optDrones)
-      regions = selectMethod optMethod (mcMap mapCtx) (mcDepots mapCtx) droneCount
+      regions = selectMethod optMethod (mcMap mapCtx) (mcDepots mapCtx) params droneCount
   case optOutput of
     Nothing -> BL.putStrLn (encodeRegionsLazy regions)
     Just outPath -> writeRegions outPath regions
 
-selectMethod :: PartitionMethod -> GridMap -> [Depot] -> Int -> [RegionAssignment]
-selectMethod RegionGrowMethod = Region.regionGrow
-selectMethod StripMethod = Strip.stripPartition
+selectMethod :: PartitionMethod -> GridMap -> [Depot] -> DroneSpec -> Int -> [RegionAssignment]
+selectMethod RegionGrowMethod gm depots drone n = Region.regionGrow gm depots drone n
+selectMethod StripMethod gm depots _ n = Strip.stripPartition gm depots n
 
 opts :: ParserInfo Options
 opts =

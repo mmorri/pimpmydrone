@@ -4,7 +4,7 @@
 
 Both partitioners first compute the free cells reachable from the depots with a breadth-first flood fill (`Domain.Map.reachableFree`); everything else is ignored.
 
-- **Region growing** (`--method region`, default). Seeds are the depots plus farthest-point samples of the reachable set. Regions then grow breadth-first in round-robin order, each claiming one unclaimed cell per round. Because every region grows at the same rate, sizes stay balanced where the geometry allows, and every region is connected by construction.
+- **Region growing** (`--method region`, default). Seeds are the depots plus farthest-point samples of the reachable set. Regions then grow by always letting the region with the lowest accumulated round-trip commute cost claim the next frontier cell. Distant cells weigh more than nearby ones, so makespan stays fairer than equal cell counts, and every region stays connected by construction.
 - **Strips** (`--method strip`). Vertical strips of equal width. Simple and predictable, but strips may be disconnected by obstacles; the planner bridges the gaps.
 
 ## Coverage patterns (`haskell/src/Coverage/`)

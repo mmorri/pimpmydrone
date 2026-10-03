@@ -10,6 +10,8 @@
 
 - Depot commute legs **cover uncovered work cells on the way** (biased routing
   with cheapest-tree fallback), and already-covered route cells are skipped.
+- Region growing balances by **accumulated round-trip commute cost**, not
+  raw cell count.
 
 ### Added
 

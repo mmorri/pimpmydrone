@@ -78,14 +78,14 @@ spec battery = DroneSpec {dsSpeed = 1, dsBattery = battery, dsTakeoffCost = 1, d
 prop_region_cover :: Positive Int -> Positive Int -> Positive Int -> Bool
 prop_region_cover (Positive rawW) (Positive rawH) (Positive rawD) =
   let gm = emptyMap (2 + rawW `mod` 6) (2 + rawH `mod` 6)
-      regions = Region.regionGrow gm [Depot 0 (Cell 0 0)] (1 + rawD `mod` 4)
+      regions = Region.regionGrow gm [Depot 0 (Cell 0 0)] (spec 100) (1 + rawD `mod` 4)
       assigned = concatMap raCells regions
    in length assigned == HS.size (HS.fromList assigned)
         && HS.fromList assigned == HS.fromList (freeCells gm)
 
 prop_regions_reachable :: World -> Positive Int -> Bool
 prop_regions_reachable (World gm depot) (Positive rawD) =
-  let regions = Region.regionGrow gm [Depot 0 depot] (1 + rawD `mod` 5)
+  let regions = Region.regionGrow gm [Depot 0 depot] (spec 100) (1 + rawD `mod` 5)
       assigned = concatMap raCells regions
       reachable = reachableFree gm [depot]
    in HS.fromList assigned == reachable
@@ -232,7 +232,7 @@ prop_full_coverage (World gm depotCell) (Positive rawD) useStc =
   forAll (choose (4, 60 :: Double)) $ \battery ->
     let drone = spec battery
         depots = [Depot 0 depotCell]
-        regions = Region.regionGrow gm depots (1 + rawD `mod` 4)
+        regions = Region.regionGrow gm depots drone (1 + rawD `mod` 4)
         planner = if useStc then planSTC else planBoustro
         depot = AssignedDepot (Depot 0 depotCell) depotCell
         field = depotField (freeNeighbors gm) 1 depotCell
