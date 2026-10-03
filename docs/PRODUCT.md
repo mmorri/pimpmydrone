@@ -48,6 +48,7 @@ uv run python -m fleet from-geo --geojson ../examples/sites/solar_farm.geojson \
 uv run python -m fleet from-geo --geojson ../examples/sites/solar_farm.geojson \
   --output-dir ../outputs/site-solar-auto --vertical solar \
   --partition auto --schedule-mode columns
+# Same knobs in the hangar: Schedule mode + partition auto (default).
 ```
 
 ## Perception / ML adapters

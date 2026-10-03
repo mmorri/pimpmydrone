@@ -129,6 +129,7 @@
     const body = {
       geojson,
       vertical: document.getElementById("vertical").value,
+      schedule_mode: document.getElementById("scheduleMode")?.value || "sortie",
       accepted_disclaimer: true,
     };
     const maxDrones = document.getElementById("maxDrones").value;
@@ -176,6 +177,9 @@
     const partition = data.partition_family
       ? `<div class="metric"><span>Partition</span><b>${data.partition_family}</b></div>`
       : "";
+    const schedule = data.schedule_mode
+      ? `<div class="metric"><span>Schedule</span><b>${data.schedule_mode}</b></div>`
+      : "";
     const deconf =
       data.deconflicted == null
         ? ""
@@ -189,6 +193,7 @@
       <div class="metric"><span>Drones</span><b>${data.drones}</b></div>
       <div class="metric"><span>Path length</span><b>${Number(data.total_length).toFixed(0)}</b></div>
       ${partition}
+      ${schedule}
       ${deconf}
     `;
     const warnings = document.getElementById("warnings");
@@ -403,6 +408,7 @@
             perception: perceptionFC,
             ontology: document.getElementById("percOntology").value,
             vertical: document.getElementById("vertical").value || "solar",
+            schedule_mode: document.getElementById("scheduleMode")?.value || "sortie",
             accepted_disclaimer: true,
           }),
         });

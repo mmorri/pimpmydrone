@@ -78,9 +78,10 @@ short-commute maps.
 - **Sortie assignment.** Done (default `--schedule-mode sortie`): recharge stops
   split into CP-SAT tasks so drones can interleave work from the same depot.
   `--schedule-mode tour` keeps the old whole-region behaviour.
-- **Column set-partitioning.** Done (opt-in `--schedule-mode columns`): generate
-  same-depot sortie packs, enrich them with LP dual pricing (GLOP RMP →
-  negative reduced-cost columns), then solve a set-partitioning CP-SAT master.
+- **Column set-partitioning.** Done (opt-in `--schedule-mode columns`, and
+  the hangar Schedule mode picker): generate same-depot sortie packs, enrich
+  them with LP dual pricing (GLOP RMP → negative reduced-cost columns), then
+  solve a set-partitioning CP-SAT master.
   Planner regions are folded into the seed pool (per-region columns).
   `--partition auto` plans region and strip as competing families and keeps the
   better optimized objective (`partition_choice.json`).

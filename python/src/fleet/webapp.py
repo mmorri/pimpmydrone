@@ -10,7 +10,7 @@ import tempfile
 import time
 import uuid
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -44,6 +44,18 @@ RATE_LIMIT_PER_MIN = int(os.environ.get("FLEET_RATE_LIMIT_PER_MIN", "12"))
 _CORS = [
     o.strip() for o in os.environ.get("FLEET_CORS_ORIGINS", "*").split(",") if o.strip()
 ]
+SCHEDULE_MODES = ("sortie", "tour", "columns")
+ScheduleMode = Literal["sortie", "tour", "columns"]
+
+
+def parse_schedule_mode(value: Optional[str]) -> str:
+    mode = (value or "sortie").strip().lower()
+    if mode not in SCHEDULE_MODES:
+        raise HTTPException(
+            400,
+            f"Unknown schedule_mode {value!r}; choose from {list(SCHEDULE_MODES)}",
+        )
+    return mode
 
 
 class PlanRequest(BaseModel):
@@ -53,6 +65,7 @@ class PlanRequest(BaseModel):
     max_drones: Optional[int] = Field(default=None, ge=1, le=12)
     battery: Optional[float] = Field(default=None, gt=0)
     altitude_m: Optional[float] = Field(default=None, gt=0, le=120)
+    schedule_mode: ScheduleMode = "sortie"
     accepted_disclaimer: bool = False
 
 
@@ -96,6 +109,7 @@ class PlanFromPerceptionRequest(BaseModel):
     max_drones: Optional[int] = Field(default=None, ge=1, le=12)
     battery: Optional[float] = Field(default=None, gt=0)
     altitude_m: Optional[float] = Field(default=None, gt=0, le=120)
+    schedule_mode: ScheduleMode = "sortie"
     accepted_disclaimer: bool = False
 
 
@@ -107,7 +121,7 @@ def create_app() -> FastAPI:
             "(YOLO / CNN / VLM / domain). Free forever. Donations welcome. "
             "Authors accept no responsibility for flights."
         ),
-        version="0.5.7",
+        version="0.5.8",
     )
     app.add_middleware(
         CORSMiddleware,
@@ -186,14 +200,14 @@ def create_app() -> FastAPI:
         return {
             "status": "ok",
             "product": "pimpmydrone",
-            "version": "0.5.7",
+            "version": "0.5.8",
             "monetization": "donations",
             "max_cells": MAX_CELLS,
             "perception": True,
             "deconfliction": True,
             "inspection_metrics": True,
             "schedule_mode": "sortie",
-            "schedule_modes": ["sortie", "tour", "columns"],
+            "schedule_modes": list(SCHEDULE_MODES),
             "partitions": ["region", "strip", "auto"],
             "osm_buildings": True,
             "coverage_age": True,
@@ -205,6 +219,7 @@ def create_app() -> FastAPI:
             "region_columns": True,
             "partition_families": True,
             "hangar_partition": "auto",
+            "hangar_schedule_mode": "sortie",
         }
 
     @app.get("/api/config")
@@ -247,6 +262,7 @@ def create_app() -> FastAPI:
             max_drones=body.max_drones,
             battery=body.battery,
             altitude_m=body.altitude_m,
+            schedule_mode=parse_schedule_mode(body.schedule_mode),
         )
 
     @app.get("/api/perception/backends")
@@ -365,6 +381,7 @@ def create_app() -> FastAPI:
             max_drones=body.max_drones,
             battery=body.battery,
             altitude_m=body.altitude_m,
+            schedule_mode=parse_schedule_mode(body.schedule_mode),
             perception_report=compiled.report,
         )
         # Persist perception artefacts alongside the job.
@@ -383,6 +400,7 @@ def create_app() -> FastAPI:
         max_drones: Optional[int] = Form(None),
         battery: Optional[float] = Form(None),
         altitude_m: Optional[float] = Form(None),
+        schedule_mode: str = Form("sortie"),
         accepted_disclaimer: bool = Form(False),
     ) -> dict[str, Any]:
         _require_disclaimer(accepted_disclaimer)
@@ -400,6 +418,7 @@ def create_app() -> FastAPI:
             max_drones=max_drones,
             battery=battery,
             altitude_m=altitude_m,
+            schedule_mode=parse_schedule_mode(schedule_mode),
         )
 
     @app.get("/api/jobs/{job_id}/png")
@@ -515,6 +534,7 @@ def _run_job(
     max_drones: Optional[int],
     battery: Optional[float],
     altitude_m: Optional[float],
+    schedule_mode: str = "sortie",
     perception_report: Optional[dict[str, Any]] = None,
 ) -> dict[str, Any]:
     if vertical not in VERTICALS:
@@ -540,6 +560,7 @@ def _run_job(
             battery=battery,
             altitude_m=altitude_m,
             partition="auto",
+            schedule_mode=schedule_mode,
         )
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(400, str(exc)) from exc
@@ -570,6 +591,7 @@ def _run_job(
         "deconflicted": (metrics.get("deconfliction") or {}).get("ok"),
         "partition_family": partition.get("family"),
         "partition_scores": partition.get("scores"),
+        "schedule_mode": schedule_mode,
         "makespan": metrics["makespan"],
         "drones": metrics["drones"]["used"],
         "total_length": metrics["total_length"],

@@ -4,6 +4,9 @@
 
 ### Added
 
+- **Hangar schedule-mode picker** (`sortie` / `columns` / `tour`): the public
+  planner and `/api/plan` accept `schedule_mode` so column set-partitioning is
+  not CLI-only. Results show the mode next to the partition family.
 - **Competing partition families** (`--partition auto`): plan both region and
   strip, optimize each, keep the better objective, and record the winner in
   `partition_choice.json`. The hangar web planner uses `auto` by default.

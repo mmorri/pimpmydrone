@@ -164,6 +164,14 @@
         <label for="maxDrones">Max drones (optional)</label>
         <input id="maxDrones" type="number" min="1" max="12" placeholder="preset default" />
 
+        <label for="scheduleMode">Schedule mode</label>
+        <select id="scheduleMode">
+          <option value="sortie" selected>Sortie — interleave recharge legs (default)</option>
+          <option value="columns">Columns — pack sorties (LP pricing + set-partition)</option>
+          <option value="tour">Tour — one planned region per drone</option>
+        </select>
+        <p class="hint">Columns is slower. Partition stays auto (region vs strip, keep the winner).</p>
+
         <label for="file">Upload GeoJSON</label>
         <input id="file" type="file" accept=".json,.geojson,application/geo+json,application/json" />
 
@@ -196,7 +204,7 @@
           <ul>
             <li>Open-source multi-drone coverage optimisation</li>
             <li>Battery-aware tours with a discrete simulator</li>
-            <li>Region vs strip partition auto-pick + column scheduling</li>
+            <li>Region vs strip partition auto-pick + optional column scheduling</li>
             <li>Discrete same-cell / same-time deconfliction (sim only)</li>
             <li>QGC / GeoJSON / CSV draft exports</li>
             <li>Donation-funded hangar — free to run locally or here</li>
@@ -223,6 +231,6 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <script src="/assets/app.js?v=0.5.7"></script>
+  <script src="/assets/app.js?v=0.5.8"></script>
 </body>
 </html>

@@ -139,4 +139,26 @@ def test_api_config_is_donation_funded() -> None:
     health = client.get("/api/health").json()
     assert health["partition_families"] is True
     assert health["hangar_partition"] == "auto"
+    assert health["hangar_schedule_mode"] == "sortie"
+    assert "columns" in health["schedule_modes"]
     assert health["version"].startswith("0.5.")
+    assert 'id="scheduleMode"' in home.text
+    assert "pack sorties" in home.text.lower()
+
+
+def test_api_rejects_unknown_schedule_mode() -> None:
+    client = TestClient(create_app())
+    res = client.post(
+        "/api/plan",
+        json={
+            "geojson": {
+                "type": "Polygon",
+                "coordinates": [
+                    [[0, 0], [0.001, 0], [0.001, 0.001], [0, 0.001], [0, 0]]
+                ],
+            },
+            "accepted_disclaimer": True,
+            "schedule_mode": "teleport",
+        },
+    )
+    assert res.status_code == 422
