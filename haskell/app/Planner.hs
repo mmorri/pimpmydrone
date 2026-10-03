@@ -1,6 +1,7 @@
 module Main (main) where
 
 import Control.Concurrent.Async (mapConcurrently)
+import Control.Exception (evaluate)
 import Control.Monad (forM, unless)
 import Data.Aeson (encode)
 import qualified Data.ByteString.Lazy.Char8 as BL
@@ -14,18 +15,24 @@ import qualified Data.Set as S
 import Options.Applicative
 import System.Exit (die)
 import System.IO (hPutStrLn, stderr)
-import Algorithm.Flood (bfsDistances)
 import Coverage.Boustro (planBoustro)
 import Coverage.MegaSTC (planMegaSTC)
-import Coverage.Repair (AssignedDepot (..), BuildResult (..), PlannerEnv, buildPathWith, prepareDepots)
+import Coverage.Repair
+  ( AssignedDepot (..)
+  , BuildResult (..)
+  , PlannerEnv
+  , buildPathWith
+  , plannerEnvWithFields
+  )
 import Coverage.Shortcut (shortcutRoute)
 import Coverage.STC (planSTC)
 import Domain.Cell (Cell (..), neighbors4)
 import qualified Data.HashSet as HS
 import qualified Data.Sequence as Seq
 import Domain.Depot (Depot (..))
-import Domain.Drone (DroneSpec)
-import Domain.Map (GridMap, freeNeighbors, isFree)
+import Domain.Drone (DroneSpec (..))
+import Domain.Map (GridMap (..), freeNeighbors, isFree)
+import Algorithm.Flood (bfsDistances, depotField)
 import Domain.Tour (Tour, TourCost (..), mkTour)
 import IO.Json (MapContext (..), readMapContext, readParams, readRegions, writeSkipped, writeTours)
 import Partition.Common (RegionAssignment (..))
@@ -109,17 +116,31 @@ main = do
 warn :: String -> IO ()
 warn = hPutStrLn stderr . ("coverage-planner: " ++)
 
--- | One planner environment per distinct home depot. Every env shares fields
--- for every depot on the map so mid-tour recharges can divert to the nearest.
+-- | One planner environment per distinct home depot. Depot fields are built
+-- once (in parallel) and shared so mid-tour recharges can divert to the nearest.
 buildEnvs :: GridMap -> DroneSpec -> [AssignedDepot] -> [Cell] -> IO (M.Map Cell PlannerEnv)
-buildEnvs gm params depots mapDepotCells =
+buildEnvs gm params depots mapDepotCells = do
   let homes = nubOrd (fmap adCell depots)
       fieldCells = nubOrd (homes ++ mapDepotCells)
-   in fmap M.fromList . forM homes $ \cell -> do
-        let depot = head [d | d <- depots, adCell d == cell]
-        case prepareDepots gm params depot fieldCells of
-          Left err -> die ("depot " ++ show cell ++ ": " ++ err)
-          Right env -> pure (cell, env)
+  fields <-
+    mapConcurrently
+      ( \cell ->
+          evaluate
+            ( cell
+            , depotField
+                (gmWidth gm)
+                (gmHeight gm)
+                (freeNeighbors gm)
+                (dsSpeed params)
+                cell
+            )
+      )
+      fieldCells
+  fmap M.fromList $ forM homes $ \cell -> do
+    let depot = head [d | d <- depots, adCell d == cell]
+    case plannerEnvWithFields gm params depot fields of
+      Left err -> die ("depot " ++ show cell ++ ": " ++ err)
+      Right env -> pure (cell, env)
   where
     nubOrd = S.toList . S.fromList
 

@@ -4,6 +4,7 @@ module Coverage.Repair
   , PlannerEnv
   , prepareDepot
   , prepareDepots
+  , plannerEnvWithFields
   , buildPath
   , buildPathWith
   , roundTripCost
@@ -98,29 +99,33 @@ prepareDepot gm drone depot = prepareDepots gm drone depot [adCell depot]
 
 -- | Multi-depot environment: home plus every other free depot cell.
 prepareDepots :: GridMap -> DroneSpec -> AssignedDepot -> [Cell] -> Either String PlannerEnv
-prepareDepots gm drone (AssignedDepot _ home) depotCells
+prepareDepots gm drone depot@(AssignedDepot _ home) depotCells =
+  let freeDepots = filter (isFree gm) (nubCells (home : depotCells))
+      fields =
+        [ ( cell
+          , depotField
+              (gmWidth gm)
+              (gmHeight gm)
+              (freeNeighbors gm)
+              (dsSpeed drone)
+              cell
+          )
+        | cell <- freeDepots
+        ]
+   in plannerEnvWithFields gm drone depot fields
+  where
+    nubCells = foldr (\c acc -> if c `elem` acc then acc else c : acc) []
+
+-- | Assemble an env from pre-built depot fields (shared across homes).
+plannerEnvWithFields ::
+  GridMap -> DroneSpec -> AssignedDepot -> [(Cell, DepotField)] -> Either String PlannerEnv
+plannerEnvWithFields gm drone (AssignedDepot _ home) fields
   | not (isFree gm home) = Left ("Depot cell " ++ show home ++ " is blocked")
   | dsSpeed drone <= 0 = Left "Drone speed must be positive"
   | dsTakeoffCost drone + dsLandingCost drone > dsBattery drone + epsilon =
       Left "Battery budget is smaller than takeoff plus landing cost"
-  | otherwise =
-      let freeDepots = filter (isFree gm) (nubCells (home : depotCells))
-          fields =
-            [ ( cell
-              , depotField
-                  (gmWidth gm)
-                  (gmHeight gm)
-                  (freeNeighbors gm)
-                  (dsSpeed drone)
-                  cell
-              )
-            | cell <- freeDepots
-            ]
-       in if null fields
-            then Left "No free depot cells"
-            else Right (PlannerEnv gm drone home fields)
-  where
-    nubCells = foldr (\c acc -> if c `elem` acc then acc else c : acc) []
+  | null fields = Left "No free depot cells"
+  | otherwise = Right (PlannerEnv gm drone home fields)
 
 buildPathWith :: PlannerEnv -> [Cell] -> Either String BuildResult
 buildPathWith env route = do

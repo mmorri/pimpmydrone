@@ -306,6 +306,11 @@ def export_all(
     plans = export_qgc_plans(
         tours, geo, plans_dir, simplify=simplify, geo_payload=geo_payload
     )
+    from .compact import compression_ratio, write_compact_tours
+
+    compact_path = out_dir / "tours_compact.json"
+    write_compact_tours(compact_path, tours)
+    compact_ratio = round(compression_ratio(tours), 3)
     deconflict_ok = ((metrics or {}).get("deconfliction") or {}).get("ok")
     readme = out_dir / "README_FLYING.md"
     readme.write_text(
@@ -319,6 +324,7 @@ def export_all(
                 "4. Inclusion site + avoid keep-outs are embedded as QGC geofence polygons when present.",
                 "5. Multi-drone clocks were time-staggered when possible; still verify separation yourself.",
                 f"6. Simulator deconfliction flag: **{deconflict_ok}**.",
+                "7. `tours_compact.json` is a lossless `runs-v1` encoding of the grid tours (smaller archive).",
                 "",
                 "These paths are drafts from an experimental planner. You fly them at your own risk.",
                 "",
@@ -330,6 +336,8 @@ def export_all(
         "geojson": str(geojson_path),
         "csv": str(csv_path),
         "qgc_plans": [str(p) for p in plans],
+        "tours_compact": str(compact_path),
+        "compact_ratio_expanded_over_compact": compact_ratio,
         "drones": len(tours),
         "vertical": geo.vertical,
         "altitude_m": geo.altitude_m,

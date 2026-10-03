@@ -95,8 +95,8 @@ short-commute maps.
   turn-aware semantics; less HashMap heap traffic on large grids.
 - **Compact tour encoding.** Done: `fleet.compact` writes `tours_compact.json`
   (`runs-v1` direction runs) plus `compact_stats.json` beside expanded tours.
-- **Parallel region planning.** Done: `coverage-planner` plans regions with
-  `mapConcurrently` (RTS `-N`).
+- **Parallel region planning.** Done: `coverage-planner` builds unique depot
+  fields once in parallel, then plans regions with `mapConcurrently` (RTS `-N`).
 - **Remove the duplicated `params`.** Done: kinematics live only in
   `params.json`; `map.json` no longer embeds a copy.
 - **Richer visuals.** Done: `coverage_age.png` (first-visit heat map) and
