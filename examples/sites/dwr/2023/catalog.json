@@ -1,0 +1,186 @@
+{
+  "source": "California DWR Statewide Crop Mapping 2023 (final)",
+  "year": 2023,
+  "service": "https://gis.water.ca.gov/arcgis/rest/services/Planning/i15_Crop_Mapping_2023/MapServer",
+  "attribution": "California Department of Water Resources, Statewide Crop Mapping. Field boundaries are a public sample, not the full state layer.",
+  "organization": "examples/sites/dwr/2023/<county>/<crop>/<field>.geojson. Flight lines are not stored here \u2014 plan a field and the hangar writes that field's tours.",
+  "counties": [
+    {
+      "county": "Fresno",
+      "crops": [
+        {
+          "crop": "Almonds",
+          "code": "D12",
+          "slug": "almonds",
+          "fields": [
+            {
+              "id": "dwr_2023_1020339",
+              "unique_id": "1020339",
+              "acres": 18.0,
+              "county": "Fresno",
+              "crop": "Almonds",
+              "code": "D12",
+              "vertical": "generic",
+              "path": "fresno/almonds/dwr_2023_1020339.geojson"
+            },
+            {
+              "id": "dwr_2023_1000709",
+              "unique_id": "1000709",
+              "acres": 27.0,
+              "county": "Fresno",
+              "crop": "Almonds",
+              "code": "D12",
+              "vertical": "generic",
+              "path": "fresno/almonds/dwr_2023_1000709.geojson"
+            }
+          ]
+        },
+        {
+          "crop": "Pistachios",
+          "code": "D14",
+          "slug": "pistachios",
+          "fields": [
+            {
+              "id": "dwr_2023_1042522",
+              "unique_id": "1042522",
+              "acres": 18.01,
+              "county": "Fresno",
+              "crop": "Pistachios",
+              "code": "D14",
+              "vertical": "generic",
+              "path": "fresno/pistachios/dwr_2023_1042522.geojson"
+            },
+            {
+              "id": "dwr_2023_1022619",
+              "unique_id": "1022619",
+              "acres": 27.08,
+              "county": "Fresno",
+              "crop": "Pistachios",
+              "code": "D14",
+              "vertical": "generic",
+              "path": "fresno/pistachios/dwr_2023_1022619.geojson"
+            }
+          ]
+        },
+        {
+          "crop": "Grapes",
+          "code": "V",
+          "slug": "grapes",
+          "fields": [
+            {
+              "id": "dwr_2023_1006190",
+              "unique_id": "1006190",
+              "acres": 18.0,
+              "county": "Fresno",
+              "crop": "Grapes",
+              "code": "V",
+              "vertical": "generic",
+              "path": "fresno/grapes/dwr_2023_1006190.geojson"
+            },
+            {
+              "id": "dwr_2023_1025819",
+              "unique_id": "1025819",
+              "acres": 27.0,
+              "county": "Fresno",
+              "crop": "Grapes",
+              "code": "V",
+              "vertical": "generic",
+              "path": "fresno/grapes/dwr_2023_1025819.geojson"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "county": "Kern",
+      "crops": [
+        {
+          "crop": "Almonds",
+          "code": "D12",
+          "slug": "almonds",
+          "fields": [
+            {
+              "id": "dwr_2023_1503984",
+              "unique_id": "1503984",
+              "acres": 18.0,
+              "county": "Kern",
+              "crop": "Almonds",
+              "code": "D12",
+              "vertical": "generic",
+              "path": "kern/almonds/dwr_2023_1503984.geojson"
+            },
+            {
+              "id": "dwr_2023_1513674",
+              "unique_id": "1513674",
+              "acres": 27.0,
+              "county": "Kern",
+              "crop": "Almonds",
+              "code": "D12",
+              "vertical": "generic",
+              "path": "kern/almonds/dwr_2023_1513674.geojson"
+            }
+          ]
+        },
+        {
+          "crop": "Pistachios",
+          "code": "D14",
+          "slug": "pistachios",
+          "fields": [
+            {
+              "id": "dwr_2023_1526443",
+              "unique_id": "1526443",
+              "acres": 18.04,
+              "county": "Kern",
+              "crop": "Pistachios",
+              "code": "D14",
+              "vertical": "generic",
+              "path": "kern/pistachios/dwr_2023_1526443.geojson"
+            },
+            {
+              "id": "dwr_2023_1517621",
+              "unique_id": "1517621",
+              "acres": 27.09,
+              "county": "Kern",
+              "crop": "Pistachios",
+              "code": "D14",
+              "vertical": "generic",
+              "path": "kern/pistachios/dwr_2023_1517621.geojson"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "county": "Tulare",
+      "crops": [
+        {
+          "crop": "Walnuts",
+          "code": "D13",
+          "slug": "walnuts",
+          "fields": [
+            {
+              "id": "dwr_2023_5432793",
+              "unique_id": "5432793",
+              "acres": 18.08,
+              "county": "Tulare",
+              "crop": "Walnuts",
+              "code": "D13",
+              "vertical": "generic",
+              "path": "tulare/walnuts/dwr_2023_5432793.geojson"
+            },
+            {
+              "id": "dwr_2023_5429062",
+              "unique_id": "5429062",
+              "acres": 27.07,
+              "county": "Tulare",
+              "crop": "Walnuts",
+              "code": "D13",
+              "vertical": "generic",
+              "path": "tulare/walnuts/dwr_2023_5429062.geojson"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

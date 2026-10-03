@@ -1,0 +1,81 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Fresno pistachios \u00b7 27.1 ac",
+        "role": "cover",
+        "source": "DWR Statewide Crop Mapping 2023",
+        "year": 2023,
+        "county": "Fresno",
+        "crop": "Pistachios",
+        "crop_code": "D14",
+        "unique_id": "1022619",
+        "acres": 27.08,
+        "vertical": "generic"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -119.738273,
+              36.46155
+            ],
+            [
+              -119.738339,
+              36.458637
+            ],
+            [
+              -119.733086,
+              36.4586
+            ],
+            [
+              -119.733118,
+              36.458757
+            ],
+            [
+              -119.733337,
+              36.458923
+            ],
+            [
+              -119.733372,
+              36.45918
+            ],
+            [
+              -119.734186,
+              36.459913
+            ],
+            [
+              -119.734636,
+              36.460095
+            ],
+            [
+              -119.736263,
+              36.461546
+            ],
+            [
+              -119.738273,
+              36.46155
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "depot": true,
+        "role": "depot"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.738339,
+          36.458637
+        ]
+      }
+    }
+  ]
+}

@@ -167,11 +167,13 @@
         <label for="altitudeM">Altitude AGL m (optional)</label>
         <input id="altitudeM" type="number" min="1" max="120" step="1" placeholder="preset default" />
 
-        <label for="exampleSite">Example site</label>
+        <label for="exampleSite">Site</label>
         <select id="exampleSite">
           <option value="">Draw or upload your own…</option>
+          <optgroup label="Demos" id="demoSites"></optgroup>
         </select>
-        <button id="loadExampleBtn" class="btn ghost" type="button">Load example on map</button>
+        <p class="hint">California fields are DWR 2023 polygons, grouped by county and crop. Plan a field to draw its flight lines.</p>
+        <button id="loadExampleBtn" class="btn ghost" type="button">Load site on map</button>
 
         <label for="scheduleMode">Schedule mode</label>
         <select id="scheduleMode">
@@ -246,6 +248,6 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <script src="/assets/app.js?v=0.5.11"></script>
+  <script src="/assets/app.js?v=0.5.12"></script>
 </body>
 </html>

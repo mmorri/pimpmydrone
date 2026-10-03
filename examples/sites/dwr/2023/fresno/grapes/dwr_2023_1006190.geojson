@@ -1,0 +1,65 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Fresno grapes \u00b7 18.0 ac",
+        "role": "cover",
+        "source": "DWR Statewide Crop Mapping 2023",
+        "year": 2023,
+        "county": "Fresno",
+        "crop": "Grapes",
+        "crop_code": "V",
+        "unique_id": "1006190",
+        "acres": 18.0,
+        "vertical": "generic"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -119.605196,
+              36.619704
+            ],
+            [
+              -119.606155,
+              36.619705
+            ],
+            [
+              -119.606145,
+              36.617972
+            ],
+            [
+              -119.601863,
+              36.617969
+            ],
+            [
+              -119.601903,
+              36.619674
+            ],
+            [
+              -119.605196,
+              36.619704
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "depot": true,
+        "role": "depot"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.606145,
+          36.617972
+        ]
+      }
+    }
+  ]
+}

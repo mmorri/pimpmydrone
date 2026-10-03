@@ -142,6 +142,7 @@ def test_api_config_is_donation_funded() -> None:
     assert health["hangar_schedule_mode"] == "sortie"
     assert health["hangar_osm_buildings"] is False
     assert health["hangar_examples"] is True
+    assert health["hangar_fields"] is True
     assert "columns" in health["schedule_modes"]
     assert health["version"].startswith("0.5.")
     assert 'id="scheduleMode"' in home.text
@@ -164,6 +165,27 @@ def test_api_lists_and_serves_example_sites() -> None:
     assert geo["features"]
     assert client.get("/api/examples/../secret").status_code == 404
     assert client.get("/api/examples/not_a_site").status_code == 404
+
+
+def test_api_lists_dwr_fields_by_county_and_crop() -> None:
+    client = TestClient(create_app())
+    catalog = client.get("/api/fields").json()
+    counties = {row["county"] for row in catalog["counties"]}
+    assert {"Fresno", "Kern", "Tulare"} <= counties
+    fresno = next(row for row in catalog["counties"] if row["county"] == "Fresno")
+    crops = {crop["crop"] for crop in fresno["crops"]}
+    assert {"Almonds", "Pistachios", "Grapes"} <= crops
+    field_id = fresno["crops"][0]["fields"][0]["id"]
+    geo = client.get(f"/api/fields/{field_id}")
+    assert geo.status_code == 200
+    body = geo.json()
+    assert body["type"] == "FeatureCollection"
+    roles = {feat["properties"].get("role") for feat in body["features"]}
+    assert "cover" in roles
+    assert "depot" in roles
+    assert client.get("/api/fields/../secret").status_code == 404
+    assert client.get("/api/fields/dwr_2023_notreal").status_code == 404
+    assert client.get("/api/fields/dwr_1999_1").status_code == 404
 
 
 def test_api_rejects_unknown_schedule_mode() -> None:

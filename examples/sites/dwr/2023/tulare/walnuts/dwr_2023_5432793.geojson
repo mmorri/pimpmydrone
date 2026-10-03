@@ -1,0 +1,77 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Tulare walnuts \u00b7 18.1 ac",
+        "role": "cover",
+        "source": "DWR Statewide Crop Mapping 2023",
+        "year": 2023,
+        "county": "Tulare",
+        "crop": "Walnuts",
+        "crop_code": "D13",
+        "unique_id": "5432793",
+        "acres": 18.08,
+        "vertical": "generic"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -119.505944,
+              36.539138
+            ],
+            [
+              -119.50631,
+              36.53914
+            ],
+            [
+              -119.506328,
+              36.539381
+            ],
+            [
+              -119.507764,
+              36.539376
+            ],
+            [
+              -119.50777,
+              36.53592
+            ],
+            [
+              -119.505582,
+              36.535906
+            ],
+            [
+              -119.505601,
+              36.539143
+            ],
+            [
+              -119.50592,
+              36.539138
+            ],
+            [
+              -119.505944,
+              36.539138
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "depot": true,
+        "role": "depot"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.50777,
+          36.53592
+        ]
+      }
+    }
+  ]
+}

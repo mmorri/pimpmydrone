@@ -44,6 +44,8 @@ make test                        # QuickCheck properties + pytest (incl. end-to-
 ```bash
 make serve                       # http://127.0.0.1:8000 — disclaimer gate, then planner
 make site                        # examples/sites/solar_farm.geojson → outputs/site-solar/
+# California crop fields: examples/sites/dwr/2023/<county>/<crop>/<field>.geojson
+# Refresh the sample (does not download the statewide layer): python3 tools/fetch_dwr_fields.py
 ```
 
 The public site is **donation-funded** (no subscriptions). Authors **accept no

@@ -30,6 +30,8 @@ from .site import VERTICALS, plan_site
 ROOT = Path(__file__).resolve().parents[3]
 WEBSITE_DIR = Path(os.environ.get("FLEET_WEBSITE", ROOT / "website"))
 EXAMPLES_DIR = ROOT / "examples" / "sites"
+DWR_DIR = EXAMPLES_DIR / "dwr" / "2023"
+FIELD_ID = re.compile(r"dwr_[0-9]{4}_[0-9]+")
 EXAMPLE_SITES = (
     {
         "id": "solar_farm",
@@ -86,6 +88,38 @@ def example_geojson(site_id: str) -> dict[str, Any]:
     path = EXAMPLES_DIR / f"{site_id}.geojson"
     if not path.is_file():
         raise HTTPException(404, "Unknown example site")
+    return io.read_json(path)
+
+
+def field_catalog() -> dict[str, Any]:
+    path = DWR_DIR / "catalog.json"
+    if not path.is_file():
+        return {"counties": [], "year": 2023}
+    return io.read_json(path)
+
+
+def _field_index(catalog: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    index: dict[str, dict[str, Any]] = {}
+    for county in catalog.get("counties") or []:
+        for crop in county.get("crops") or []:
+            for field in crop.get("fields") or []:
+                field_id = str(field.get("id") or "")
+                if FIELD_ID.fullmatch(field_id):
+                    index[field_id] = field
+    return index
+
+
+def field_geojson(field_id: str) -> dict[str, Any]:
+    if not FIELD_ID.fullmatch(field_id or ""):
+        raise HTTPException(404, "Unknown field")
+    field = _field_index(field_catalog()).get(field_id)
+    rel = str((field or {}).get("path") or "")
+    if field is None or not re.fullmatch(r"[a-z0-9_./-]+", rel) or ".." in rel.split("/"):
+        raise HTTPException(404, "Unknown field")
+    path = (DWR_DIR / rel).resolve()
+    root = DWR_DIR.resolve()
+    if not path.is_relative_to(root) or not path.is_file():
+        raise HTTPException(404, "Unknown field")
     return io.read_json(path)
 
 
@@ -164,7 +198,7 @@ def create_app() -> FastAPI:
             "(YOLO / CNN / VLM / domain). Free forever. Donations welcome. "
             "Authors accept no responsibility for flights."
         ),
-        version="0.5.11",
+        version="0.5.12",
     )
     app.add_middleware(
         CORSMiddleware,
@@ -243,7 +277,7 @@ def create_app() -> FastAPI:
         return {
             "status": "ok",
             "product": "pimpmydrone",
-            "version": "0.5.11",
+            "version": "0.5.12",
             "monetization": "donations",
             "max_cells": MAX_CELLS,
             "perception": True,
@@ -265,6 +299,7 @@ def create_app() -> FastAPI:
             "hangar_schedule_mode": "sortie",
             "hangar_osm_buildings": False,
             "hangar_examples": True,
+            "hangar_fields": True,
         }
 
     @app.get("/api/config")
@@ -290,6 +325,14 @@ def create_app() -> FastAPI:
     @app.get("/api/examples/{site_id}")
     def example_site(site_id: str) -> dict[str, Any]:
         return example_geojson(site_id)
+
+    @app.get("/api/fields")
+    def fields() -> dict[str, Any]:
+        return field_catalog()
+
+    @app.get("/api/fields/{field_id}")
+    def field_site(field_id: str) -> dict[str, Any]:
+        return field_geojson(field_id)
 
     @app.get("/api/verticals")
     def verticals() -> dict[str, Any]:

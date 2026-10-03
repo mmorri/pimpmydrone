@@ -102,6 +102,7 @@
 
   async function loadExamples() {
     const select = document.getElementById("exampleSite");
+    const demos = document.getElementById("demoSites");
     const btn = document.getElementById("loadExampleBtn");
     if (!select) return;
     try {
@@ -112,17 +113,44 @@
         opt.value = site.id;
         opt.textContent = `${site.title} — ${site.description}`;
         opt.dataset.vertical = site.vertical || "";
-        select.appendChild(opt);
+        (demos || select).appendChild(opt);
       }
     } catch (_err) {
       /* hangar still works by drawing / upload */
+    }
+    try {
+      const res = await fetch("/api/fields");
+      const data = await res.json();
+      for (const county of data.counties || []) {
+        for (const crop of county.crops || []) {
+          const group = document.createElement("optgroup");
+          group.label = `${county.county} — ${crop.crop}`;
+          for (const field of crop.fields || []) {
+            const opt = document.createElement("option");
+            opt.value = field.id;
+            opt.dataset.kind = "field";
+            opt.dataset.vertical = field.vertical || "generic";
+            const acres = Number(field.acres);
+            opt.textContent = Number.isFinite(acres) ? `${acres.toFixed(1)} ac` : field.id;
+            group.appendChild(opt);
+          }
+          if (group.childElementCount) select.appendChild(group);
+        }
+      }
+    } catch (_err) {
+      /* demos still load if the field catalog is missing */
     }
     const applyExample = async () => {
       const id = select.value;
       if (!id) return;
       const error = document.getElementById("error");
+      const kind = select.selectedOptions[0]?.dataset.kind;
+      const url =
+        kind === "field"
+          ? `/api/fields/${encodeURIComponent(id)}`
+          : `/api/examples/${encodeURIComponent(id)}`;
       try {
-        const res = await fetch(`/api/examples/${encodeURIComponent(id)}`);
+        const res = await fetch(url);
         const geo = await res.json();
         if (!res.ok) throw new Error(geo.detail || "Could not load example");
         uploadedGeo = geo;
@@ -283,14 +311,20 @@
     if (data.osm_url) {
       extras.push(`<a href="${data.osm_url}" download>OSM buildings report</a>`);
     }
+    const select = document.getElementById("exampleSite");
+    const slug =
+      select && /^[a-z0-9_]+$/.test(select.value || "") ? select.value : "site";
     const qgc = (data.qgc_urls || [])
-      .map((u, i) => `<a href="${u}" download>QGC plan — drone ${i}</a>`)
+      .map(
+        (u, i) =>
+          `<a href="${u}" download="${slug}-drone-${i}.plan">QGC plan — drone ${i}</a>`
+      )
       .join("");
     document.getElementById("downloads").innerHTML = `
-      <a href="${data.safety_url}" download>SAFETY_REPORT.md (read this)</a>
-      <a href="${data.missions_geojson_url}" download>Missions GeoJSON</a>
-      <a href="${data.waypoints_csv_url}" download>Waypoints CSV</a>
-      <a href="${data.bundle_url}" download>Full job zip</a>
+      <a href="${data.safety_url}" download="${slug}-SAFETY_REPORT.md">SAFETY_REPORT.md (read this)</a>
+      <a href="${data.missions_geojson_url}" download="${slug}-missions.geojson">Missions GeoJSON</a>
+      <a href="${data.waypoints_csv_url}" download="${slug}-waypoints.csv">Waypoints CSV</a>
+      <a href="${data.bundle_url}" download="${slug}-job.zip">Full job zip</a>
       ${extras.join("")}
       ${qgc}
     `;

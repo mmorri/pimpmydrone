@@ -1,0 +1,85 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Kern almonds \u00b7 18.0 ac",
+        "role": "cover",
+        "source": "DWR Statewide Crop Mapping 2023",
+        "year": 2023,
+        "county": "Kern",
+        "crop": "Almonds",
+        "crop_code": "D12",
+        "unique_id": "1503984",
+        "acres": 18.0,
+        "vertical": "generic"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -119.389155,
+              35.493055
+            ],
+            [
+              -119.38618,
+              35.493043
+            ],
+            [
+              -119.386186,
+              35.493275
+            ],
+            [
+              -119.385969,
+              35.493315
+            ],
+            [
+              -119.385965,
+              35.49304
+            ],
+            [
+              -119.38588,
+              35.493039
+            ],
+            [
+              -119.385852,
+              35.494656
+            ],
+            [
+              -119.385916,
+              35.494729
+            ],
+            [
+              -119.390149,
+              35.494755
+            ],
+            [
+              -119.390139,
+              35.493062
+            ],
+            [
+              -119.389155,
+              35.493055
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "depot": true,
+        "role": "depot"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.390139,
+          35.493062
+        ]
+      }
+    }
+  ]
+}

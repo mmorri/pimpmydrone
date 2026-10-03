@@ -1,0 +1,81 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Fresno almonds \u00b7 18.0 ac",
+        "role": "cover",
+        "source": "DWR Statewide Crop Mapping 2023",
+        "year": 2023,
+        "county": "Fresno",
+        "crop": "Almonds",
+        "crop_code": "D12",
+        "unique_id": "1020339",
+        "acres": 18.0,
+        "vertical": "generic"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -119.678319,
+              36.535869
+            ],
+            [
+              -119.678328,
+              36.532692
+            ],
+            [
+              -119.676142,
+              36.532705
+            ],
+            [
+              -119.676148,
+              36.535819
+            ],
+            [
+              -119.676403,
+              36.535874
+            ],
+            [
+              -119.676421,
+              36.536234
+            ],
+            [
+              -119.677482,
+              36.536222
+            ],
+            [
+              -119.67769,
+              36.535925
+            ],
+            [
+              -119.677955,
+              36.535872
+            ],
+            [
+              -119.678319,
+              36.535869
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "depot": true,
+        "role": "depot"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.678328,
+          36.532692
+        ]
+      }
+    }
+  ]
+}

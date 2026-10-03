@@ -1,0 +1,81 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Kern pistachios \u00b7 18.0 ac",
+        "role": "cover",
+        "source": "DWR Statewide Crop Mapping 2023",
+        "year": 2023,
+        "county": "Kern",
+        "crop": "Pistachios",
+        "crop_code": "D14",
+        "unique_id": "1526443",
+        "acres": 18.04,
+        "vertical": "generic"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -119.707383,
+              35.543124
+            ],
+            [
+              -119.707586,
+              35.543099
+            ],
+            [
+              -119.707555,
+              35.539555
+            ],
+            [
+              -119.705172,
+              35.539543
+            ],
+            [
+              -119.705137,
+              35.539817
+            ],
+            [
+              -119.705509,
+              35.541059
+            ],
+            [
+              -119.705894,
+              35.542769
+            ],
+            [
+              -119.705998,
+              35.54309
+            ],
+            [
+              -119.706079,
+              35.543138
+            ],
+            [
+              -119.707383,
+              35.543124
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "depot": true,
+        "role": "depot"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.707555,
+          35.539555
+        ]
+      }
+    }
+  ]
+}

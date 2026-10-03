@@ -14,6 +14,12 @@
 
 ### Added
 
+- **DWR 2023 crop fields** (`/api/fields`): a hangar-sized sample of California
+  Statewide Crop Mapping polygons, filed as
+  `examples/sites/dwr/2023/<county>/<crop>/<field>.geojson`. The Site picker
+  groups them by county and crop. Flight lines are produced when you plan a
+  field; the statewide layer is not vendored. `tools/fetch_dwr_fields.py`
+  refreshes the sample.
 - **Hangar example sites** (`/api/examples`): load bundled solar / industrial /
   security GeoJSON onto the map so a first plan does not require drawing.
 - **Hangar altitude AGL** override (optional; still capped at 120 m).
