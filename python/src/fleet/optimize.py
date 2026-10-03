@@ -5,9 +5,11 @@ ends at its depot, possibly with mid-tour recharge stops. The optimizer can:
 
 * **tour mode** (legacy): assign whole region tours to drones;
 * **sortie mode** (default): split each tour at recharge stops so drones can
-  share a region's work and interleave sorties, subject to depot affinity.
+  share a region's work and interleave sorties, subject to depot affinity;
+* **columns mode**: generate same-depot sortie packs and solve a
+  set-partitioning master (column-generation style) over that pool.
 
-Both modes minimise ``makespan + drone_cost * drones`` (or drones-first under
+All modes minimise ``makespan + drone_cost * drones`` (or drones-first under
 a deadline). After scheduling, :func:`fleet.deconflict.deconflict_tours`
 staggers clocks so two drones do not occupy the same cell at the same time.
 """
@@ -46,6 +48,8 @@ class OptimizerResult:
     total_length: float
     deconflict: dict | None = None
     mode: str = "sortie"
+    columns_generated: int | None = None
+    columns_selected: int | None = None
 
 
 class TourOptimizer:
@@ -63,8 +67,8 @@ class TourOptimizer:
             raise ValueError("No tours provided")
         if max_drones < 1:
             raise ValueError("max_drones must be at least 1")
-        if mode not in {"tour", "sortie"}:
-            raise ValueError("mode must be 'tour' or 'sortie'")
+        if mode not in {"tour", "sortie", "columns"}:
+            raise ValueError("mode must be 'tour', 'sortie', or 'columns'")
         self.raw_tours = tours
         self.max_drones = max_drones
         self.drone_cost = drone_cost
@@ -72,7 +76,11 @@ class TourOptimizer:
         self.time_limit = time_limit
         self.mode = mode
         self.deconflict = deconflict
-        units = split_into_sorties(tours) if mode == "sortie" else list(tours)
+        units = (
+            split_into_sorties(tours)
+            if mode in {"sortie", "columns"}
+            else list(tours)
+        )
         self.tasks = [
             TourTask(
                 index=i,
@@ -90,6 +98,48 @@ class TourOptimizer:
         )
 
     def solve(self) -> OptimizerResult:
+        if self.mode == "columns":
+            return self._solve_columns()
+        return self._solve_intervals()
+
+    def _solve_columns(self) -> OptimizerResult:
+        from .columns import (
+            columns_to_tours,
+            generate_columns,
+            solve_set_partition,
+        )
+
+        columns = generate_columns(self.tasks, max_drones=self.max_drones)
+        selected, objective, drone_count, makespan_s = solve_set_partition(
+            self.tasks,
+            columns,
+            max_drones=self.max_drones,
+            drone_cost=self.drone_cost,
+            deadline=self.deadline,
+            time_limit=self.time_limit,
+        )
+        optimized = columns_to_tours(selected, self.tasks)
+        deconflict_info = None
+        if self.deconflict and len(optimized) > 1:
+            result = deconflict_tours(optimized)
+            optimized = result.tours
+            deconflict_info = result.as_dict()
+            makespan_s = max(
+                (float(t["cost"].get("time", 0.0)) for t in optimized), default=0.0
+            )
+        return OptimizerResult(
+            tours=optimized,
+            objective_value=objective,
+            drone_count=drone_count,
+            makespan=makespan_s,
+            total_length=sum(task.length for task in self.tasks),
+            deconflict=deconflict_info,
+            mode=self.mode,
+            columns_generated=len(columns),
+            columns_selected=len(selected),
+        )
+
+    def _solve_intervals(self) -> OptimizerResult:
         model = cp_model.CpModel()
         drones = range(self.max_drones)
         assignment: Dict[Tuple[int, int], cp_model.IntVar] = {}

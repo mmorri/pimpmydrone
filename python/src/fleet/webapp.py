@@ -104,7 +104,7 @@ def create_app() -> FastAPI:
             "(YOLO / CNN / VLM / domain). Free forever. Donations welcome. "
             "Authors accept no responsibility for flights."
         ),
-        version="0.5.3",
+        version="0.5.4",
     )
     app.add_middleware(
         CORSMiddleware,
@@ -183,18 +183,20 @@ def create_app() -> FastAPI:
         return {
             "status": "ok",
             "product": "pimpmydrone",
-            "version": "0.5.3",
+            "version": "0.5.4",
             "monetization": "donations",
             "max_cells": MAX_CELLS,
             "perception": True,
             "deconfliction": True,
             "inspection_metrics": True,
             "schedule_mode": "sortie",
+            "schedule_modes": ["sortie", "tour", "columns"],
             "osm_buildings": True,
             "coverage_age": True,
             "compact_tours": True,
             "flat_depot_field": True,
             "sortie_gantt": True,
+            "column_generation": True,
         }
 
     @app.get("/api/config")

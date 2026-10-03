@@ -78,8 +78,11 @@ short-commute maps.
 - **Sortie assignment.** Done (default `--schedule-mode sortie`): recharge stops
   split into CP-SAT tasks so drones can interleave work from the same depot.
   `--schedule-mode tour` keeps the old whole-region behaviour.
-- Longer term: set-partitioning over generated sortie columns (column
-  generation), which folds partitioning and assignment into one model.
+- **Column set-partitioning.** Done (opt-in `--schedule-mode columns`): generate
+  same-depot sortie packs (singletons, LPT bins, small combinations), then
+  solve a set-partitioning CP-SAT master so each sortie is covered once.
+  Iterative dual pricing and folding region partitioning into the column
+  pool are still open.
 
 ## Phase 4 — Scale and fidelity
 
@@ -107,6 +110,7 @@ short-commute maps.
 
 ## Done
 
+- **Column set-partitioning schedule mode.** See Phase 3.
 - **Flat depot field, compact tours, parallel region planning.** See Phase 4.
 - **Coverage-age heatmap, sortie Gantt, OSM building import, params dedup.**
 - **Sortie scheduling + discrete deconfliction + inspection metrics + QGC

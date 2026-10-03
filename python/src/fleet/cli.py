@@ -79,10 +79,10 @@ def optimizer_options(fn):
         ),
         click.option(
             "--schedule-mode",
-            type=click.Choice(["sortie", "tour"]),
+            type=click.Choice(["sortie", "tour", "columns"]),
             default="sortie",
             show_default=True,
-            help="Assign recharge sorties (default) or whole region tours.",
+            help="sortie (default), tour (whole regions), or columns (set-partition packs).",
         ),
         click.option(
             "--deconflict/--no-deconflict",
