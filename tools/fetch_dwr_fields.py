@@ -58,7 +58,7 @@ def _query(county: str, code: str, lo: float, hi: float, order: str) -> dict:
         "f": "geojson",
     }
     url = SERVICE + "?" + urllib.parse.urlencode(params)
-    req = urllib.request.Request(url, headers={"User-Agent": "PimpMyDrone/0.5.12"})
+    req = urllib.request.Request(url, headers={"User-Agent": "PimpMyDrone/0.5.13"})
     with urllib.request.urlopen(req, timeout=60) as resp:
         return json.load(resp)
 

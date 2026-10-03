@@ -17,6 +17,7 @@
     <nav>
       <a href="/#planner">Planner</a>
       <a href="/#perception">Perception</a>
+      <a href="/fields">Fields</a>
       <a href="/guide" aria-current="page">Guide</a>
       <a href="/legal">Legal</a>
       <a href="/donate">Donate</a>
@@ -71,12 +72,12 @@
       <ol class="guide-steps">
         <li>Open <a href="/#planner">Hangar planner</a>.</li>
         <li>Set <strong>Vertical preset</strong> to <code>solar</code> (≈5&nbsp;m cells, mid altitude).</li>
-        <li>Load <strong>Demo solar farm</strong>, or a California field grouped
-          by county and crop (DWR 2023, under Site), or draw a polygon, or
-          upload a GeoJSON boundary
-          (repo sample: <code>examples/sites/solar_farm.geojson</code>;
-          fields live in <code>examples/sites/dwr/2023/</code>).
-          Planning a field writes that field's flight lines.</li>
+        <li>Load <strong>Demo solar farm</strong>, draw a polygon, or upload a
+          GeoJSON boundary
+          (repo sample: <code>examples/sites/solar_farm.geojson</code>).
+          California crop fields are on the <a href="/fields">fields page</a>,
+          grouped by county and crop
+          (<code>examples/sites/dwr/2023/</code>). Open one to plan its flight lines.</li>
         <li>Optional: add Point features with <code>"role": "depot"</code> or
           <code>"depot": true</code> for hangar placement.</li>
         <li>Leave <strong>Schedule mode</strong> on <code>sortie</code>, or pick

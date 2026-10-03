@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>California fields — PimpMyDrone</title>
+  <meta name="description" content="DWR 2023 California crop fields, grouped by county and crop, ready to plan as flight lines." />
+  <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="/assets/styles.css?v=0.5.13" />
+</head>
+<body class="doc">
+  <header class="top">
+    <div class="brand">
+      <a href="/" class="logo">PimpMyDrone</a>
+      <span class="tag">DWR 2023 · county / crop</span>
+    </div>
+    <nav>
+      <a href="/#planner">Planner</a>
+      <a href="/fields" aria-current="page">Fields</a>
+      <a href="/guide">Guide</a>
+      <a href="/legal">Legal</a>
+      <a href="/donate">Donate</a>
+      <a id="navGithub" href="https://github.com/mmorri/pimpmydrone" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+
+  <article class="doc-card fields-card">
+    <p class="gate-kicker">Field catalog · not the whole state</p>
+    <h1>California crop fields<br /><span class="accent">by county and crop</span></h1>
+    <p class="lede">
+      Each block is one DWR 2023 field polygon. Pick a county, then a field, and
+      open it in the planner. Flight lines are drawn for that field only.
+    </p>
+    <aside class="guide-warn" aria-label="Disclaimer">
+      <strong>Not a flight clearance.</strong> These boundaries are a public sample.
+      Paths still ignore wind, wires, terrain, and other aircraft. Read
+      <a href="/legal">/legal</a> before you arm anything.
+    </aside>
+    <p id="fieldSource" class="hint"></p>
+    <div id="fieldFilters" class="field-filters" role="tablist" aria-label="County"></div>
+    <div class="field-layout">
+      <div id="fieldCatalog" class="field-catalog" aria-live="polite"></div>
+      <div id="fieldMap" class="field-map" role="region" aria-label="Field map"></div>
+    </div>
+    <p id="fieldPick" class="field-pick" hidden>
+      <a id="fieldPlan" class="btn" href="/#planner">Plan flight lines</a>
+    </p>
+  </article>
+
+  <footer class="foot">
+    <p>
+      © PimpMyDrone contributors · MIT ·
+      <a href="/legal">No warranty / no liability</a> ·
+      <a href="/donate">Donate</a><br />
+      Not affiliated with MTV or any television program.
+    </p>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="/assets/fields.js?v=0.5.13"></script>
+</body>
+</html>

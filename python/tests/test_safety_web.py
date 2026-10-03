@@ -148,6 +148,11 @@ def test_api_config_is_donation_funded() -> None:
     assert 'id="scheduleMode"' in home.text
     assert 'id="osmBuildings"' in home.text
     assert 'id="exampleSite"' in home.text
+    assert 'href="/fields"' in home.text
+    fields_page = client.get("/fields")
+    assert fields_page.status_code == 200
+    assert 'id="fieldCatalog"' in fields_page.text
+    assert 'id="fieldMap"' in fields_page.text
     assert 'id="altitudeM"' in home.text
     assert "pack sorties" in home.text.lower()
     assert "osm buildings" in home.text.lower()

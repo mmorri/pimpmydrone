@@ -14,6 +14,9 @@
 
 ### Added
 
+- **Fields page** (`/fields`): county and crop browser for the DWR 2023 sample,
+  with a map. Opening a field loads it in the planner (`/?field=`). The planner
+  dropdown keeps the demo sites.
 - **DWR 2023 crop fields** (`/api/fields`): a hangar-sized sample of California
   Statewide Crop Mapping polygons, filed as
   `examples/sites/dwr/2023/<county>/<crop>/<field>.geojson`. The Site picker

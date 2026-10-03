@@ -497,6 +497,84 @@ select, input[type="number"], input[type="file"], input[type="text"], input[type
   line-height: 1.55;
   padding-left: 1.1rem;
 }
+.fields-card { width: min(1100px, calc(100% - 2rem)); }
+.field-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0 0 1rem;
+}
+.field-filter {
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  color: var(--chrome);
+  border-radius: 999px;
+  padding: 0.35rem 0.8rem;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.field-filter[aria-pressed="true"] {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.field-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 300px) 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+.field-catalog {
+  max-height: 560px;
+  overflow: auto;
+  padding-right: 0.2rem;
+}
+.field-county { margin: 0 0 1rem; }
+.field-county h2 {
+  margin: 0 0 0.35rem;
+  font-family: "Bebas Neue", Impact, sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 1.45rem;
+  color: var(--gold);
+}
+.field-county h3 {
+  margin: 0.55rem 0 0.25rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.field-county ul { list-style: none; margin: 0; padding: 0; }
+.field-row {
+  width: 100%;
+  text-align: left;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--chrome);
+  font: inherit;
+  padding: 0.35rem 0.45rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.field-row:hover, .field-row.is-selected {
+  border-color: var(--line);
+  background: var(--bg-2);
+}
+.field-map {
+  min-height: 560px;
+  height: 560px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  overflow: hidden;
+  background: #0c0c12;
+}
+.field-pick { margin-top: 1rem; }
+@media (max-width: 800px) {
+  .field-layout { grid-template-columns: 1fr; }
+  .field-catalog { max-height: none; }
+  .field-map { height: 420px; min-height: 420px; }
+}
 @keyframes plan-pulse {
   0%, 100% { opacity: 0.55; }
   50% { opacity: 1; }

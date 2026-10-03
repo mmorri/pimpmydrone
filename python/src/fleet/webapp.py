@@ -198,7 +198,7 @@ def create_app() -> FastAPI:
             "(YOLO / CNN / VLM / domain). Free forever. Donations welcome. "
             "Authors accept no responsibility for flights."
         ),
-        version="0.5.12",
+        version="0.5.13",
     )
     app.add_middleware(
         CORSMiddleware,
@@ -267,6 +267,13 @@ def create_app() -> FastAPI:
             return HTMLResponse(_inject_config(path.read_text(encoding="utf-8")))
         raise HTTPException(404, "Guide page missing")
 
+    @app.get("/fields", response_class=HTMLResponse)
+    def fields_page() -> HTMLResponse:
+        path = site_dir / "fields.html"
+        if path.exists():
+            return HTMLResponse(_inject_config(path.read_text(encoding="utf-8")))
+        raise HTTPException(404, "Fields page missing")
+
     @app.get("/readme", response_class=HTMLResponse)
     def readme_page() -> HTMLResponse:
         """Alias for the operator case-study guide."""
@@ -277,7 +284,7 @@ def create_app() -> FastAPI:
         return {
             "status": "ok",
             "product": "pimpmydrone",
-            "version": "0.5.12",
+            "version": "0.5.13",
             "monetization": "donations",
             "max_cells": MAX_CELLS,
             "perception": True,

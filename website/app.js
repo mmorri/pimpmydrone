@@ -68,11 +68,13 @@
   });
 
   let uploadedGeo = null;
+  let activeSiteId = "";
   const fileInput = document.getElementById("file");
   fileInput.addEventListener("change", async (ev) => {
     const file = ev.target.files[0];
     if (!file) return;
     uploadedGeo = JSON.parse(await file.text());
+    activeSiteId = "";
     drawn.clearLayers();
     const layer = L.geoJSON(uploadedGeo);
     drawn.addLayer(layer);
@@ -82,6 +84,7 @@
   document.getElementById("clearBtn").onclick = () => {
     drawn.clearLayers();
     uploadedGeo = null;
+    activeSiteId = "";
     fileInput.value = "";
     const example = document.getElementById("exampleSite");
     if (example) example.value = "";
@@ -118,52 +121,29 @@
     } catch (_err) {
       /* hangar still works by drawing / upload */
     }
-    try {
-      const res = await fetch("/api/fields");
-      const data = await res.json();
-      for (const county of data.counties || []) {
-        for (const crop of county.crops || []) {
-          const group = document.createElement("optgroup");
-          group.label = `${county.county} — ${crop.crop}`;
-          for (const field of crop.fields || []) {
-            const opt = document.createElement("option");
-            opt.value = field.id;
-            opt.dataset.kind = "field";
-            opt.dataset.vertical = field.vertical || "generic";
-            const acres = Number(field.acres);
-            opt.textContent = Number.isFinite(acres) ? `${acres.toFixed(1)} ac` : field.id;
-            group.appendChild(opt);
-          }
-          if (group.childElementCount) select.appendChild(group);
-        }
+    const applyGeo = (geo, id, vertical) => {
+      uploadedGeo = geo;
+      activeSiteId = id || "";
+      drawn.clearLayers();
+      const layer = L.geoJSON(geo);
+      drawn.addLayer(layer);
+      map.fitBounds(layer.getBounds(), { padding: [24, 24] });
+      fileInput.value = "";
+      const vertSel = document.getElementById("vertical");
+      if (vertical && vertSel && [...vertSel.options].some((o) => o.value === vertical)) {
+        vertSel.value = vertical;
       }
-    } catch (_err) {
-      /* demos still load if the field catalog is missing */
-    }
+    };
     const applyExample = async () => {
       const id = select.value;
       if (!id) return;
       const error = document.getElementById("error");
-      const kind = select.selectedOptions[0]?.dataset.kind;
-      const url =
-        kind === "field"
-          ? `/api/fields/${encodeURIComponent(id)}`
-          : `/api/examples/${encodeURIComponent(id)}`;
       try {
-        const res = await fetch(url);
+        const res = await fetch(`/api/examples/${encodeURIComponent(id)}`);
         const geo = await res.json();
         if (!res.ok) throw new Error(geo.detail || "Could not load example");
-        uploadedGeo = geo;
-        drawn.clearLayers();
-        const layer = L.geoJSON(geo);
-        drawn.addLayer(layer);
-        map.fitBounds(layer.getBounds(), { padding: [24, 24] });
-        fileInput.value = "";
         const vertical = select.selectedOptions[0]?.dataset.vertical;
-        const vertSel = document.getElementById("vertical");
-        if (vertical && vertSel && [...vertSel.options].some((o) => o.value === vertical)) {
-          vertSel.value = vertical;
-        }
+        applyGeo(geo, id, vertical);
         if (error) error.hidden = true;
       } catch (err) {
         if (error) {
@@ -174,9 +154,24 @@
     };
     select.addEventListener("change", applyExample);
     if (btn) btn.addEventListener("click", applyExample);
+    const fieldId = new URLSearchParams(location.search).get("field") || "";
+    if (/^dwr_[0-9]{4}_[0-9]+$/.test(fieldId)) {
+      try {
+        const res = await fetch(`/api/fields/${encodeURIComponent(fieldId)}`);
+        const geo = await res.json();
+        if (!res.ok) throw new Error(geo.detail || "Could not load field");
+        const cover = (geo.features || []).find((feature) => feature.properties) || {};
+        applyGeo(geo, fieldId, (cover.properties || {}).vertical || "generic");
+      } catch (err) {
+        const error = document.getElementById("error");
+        if (error) {
+          error.hidden = false;
+          error.textContent = String(err.message || err);
+        }
+      }
+    }
   }
-  loadVerticals();
-  loadExamples();
+  loadVerticals().then(loadExamples);
 
   function currentGeoJSON() {
     if (uploadedGeo) return uploadedGeo;
@@ -312,8 +307,9 @@
       extras.push(`<a href="${data.osm_url}" download>OSM buildings report</a>`);
     }
     const select = document.getElementById("exampleSite");
-    const slug =
-      select && /^[a-z0-9_]+$/.test(select.value || "") ? select.value : "site";
+    const fromSelect =
+      select && /^[a-z0-9_]+$/.test(select.value || "") ? select.value : "";
+    const slug = /^[a-z0-9_]+$/.test(activeSiteId) ? activeSiteId : fromSelect || "site";
     const qgc = (data.qgc_urls || [])
       .map(
         (u, i) =>
