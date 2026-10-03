@@ -24,7 +24,7 @@
       <div class="gate-scroll">
         <p><strong>PimpMyDrone is experimental planning software only.</strong> It is not a certified flight system, not aviation advice, and not a substitute for a licensed remote pilot.</p>
         <p>By continuing you agree that the authors, contributors, hosts, and donors accept <strong>no liability</strong> for crash, injury, death, property damage, airspace violation, privacy harm, fines, or any other loss — even if warned. Generated paths ignore wind, terrain, wires, buildings, birds, other aircraft, NOTAMs, and local law.</p>
-        <p>Multi-drone schedules are <strong>not spatially deconflicted</strong>. Exports are drafts for you to inspect in your own ground station before arming. If you cannot accept that, leave now.</p>
+        <p>We apply <strong>discrete same-cell time staggering</strong> in the simulator — that is <strong>not</strong> certified airborne separation. Exports are drafts for you to inspect in your own ground station before arming. If you cannot accept that, leave now.</p>
         <p class="gate-legal-link">Full text: <a href="/legal">/legal</a> · also shipped inside every mission zip as <code>SAFETY_REPORT.md</code>.</p>
       </div>
       <label class="gate-check">
@@ -196,6 +196,8 @@
           <ul>
             <li>Open-source multi-drone coverage optimisation</li>
             <li>Battery-aware tours with a discrete simulator</li>
+            <li>Region vs strip partition auto-pick + column scheduling</li>
+            <li>Discrete same-cell / same-time deconfliction (sim only)</li>
             <li>QGC / GeoJSON / CSV draft exports</li>
             <li>Donation-funded hangar — free to run locally or here</li>
             <li>Perception adapters for YOLO / ONNX / VLM / domain models</li>
@@ -205,8 +207,8 @@
           <h3>Not in the build</h3>
           <ul>
             <li>A certified autopilot or UTM product</li>
-            <li>Airspace, terrain, or certified sense-and-avoid</li>
-            <li>Spatial deconfliction between drones</li>
+            <li>Airspace, terrain, wind, NOTAMs, or sense-and-avoid</li>
+            <li>Certified airborne separation between drones</li>
             <li>A paid SLA, warranty, TV-show affiliation, or insurance</li>
           </ul>
         </div>
@@ -221,6 +223,6 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <script src="/assets/app.js?v=0.4.0"></script>
+  <script src="/assets/app.js?v=0.5.7"></script>
 </body>
 </html>

@@ -107,7 +107,7 @@ def create_app() -> FastAPI:
             "(YOLO / CNN / VLM / domain). Free forever. Donations welcome. "
             "Authors accept no responsibility for flights."
         ),
-        version="0.5.6",
+        version="0.5.7",
     )
     app.add_middleware(
         CORSMiddleware,
@@ -186,7 +186,7 @@ def create_app() -> FastAPI:
         return {
             "status": "ok",
             "product": "pimpmydrone",
-            "version": "0.5.6",
+            "version": "0.5.7",
             "monetization": "donations",
             "max_cells": MAX_CELLS,
             "perception": True,
@@ -204,6 +204,7 @@ def create_app() -> FastAPI:
             "dual_pricing": True,
             "region_columns": True,
             "partition_families": True,
+            "hangar_partition": "auto",
         }
 
     @app.get("/api/config")
@@ -560,12 +561,15 @@ def _run_job(
     warnings = collect_warnings(
         metrics=metrics, geo=geo_payload, perception=perception_report
     )
+    partition = metrics.get("partition") or {}
     return {
         "job_id": job_id,
         "vertical": vertical,
         "coverage_pct": metrics["coverage"]["percentage"],
         "inspection_pct": (metrics.get("inspection") or {}).get("percentage"),
         "deconflicted": (metrics.get("deconfliction") or {}).get("ok"),
+        "partition_family": partition.get("family"),
+        "partition_scores": partition.get("scores"),
         "makespan": metrics["makespan"],
         "drones": metrics["drones"]["used"],
         "total_length": metrics["total_length"],

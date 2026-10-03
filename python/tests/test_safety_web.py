@@ -109,3 +109,9 @@ def test_api_config_is_donation_funded() -> None:
     home = client.get("/")
     assert home.status_code == 200
     assert "do not take responsibility" in home.text.lower() or "not</em> take responsibility" in home.text.lower()
+    assert "not spatially deconflicted" not in home.text.lower()
+    assert "discrete same-cell" in home.text.lower()
+    health = client.get("/api/health").json()
+    assert health["partition_families"] is True
+    assert health["hangar_partition"] == "auto"
+    assert health["version"].startswith("0.5.")

@@ -167,11 +167,29 @@
   function showResult(data) {
     const result = document.getElementById("result");
     result.hidden = false;
+    const insp =
+      data.inspection_pct == null
+        ? ""
+        : `<div class="metric"><span>Inspection (approx)</span><b>${Number(
+            data.inspection_pct
+          ).toFixed(1)}%</b></div>`;
+    const partition = data.partition_family
+      ? `<div class="metric"><span>Partition</span><b>${data.partition_family}</b></div>`
+      : "";
+    const deconf =
+      data.deconflicted == null
+        ? ""
+        : `<div class="metric"><span>Sim deconflict</span><b>${
+            data.deconflicted ? "ok" : "conflicts"
+          }</b></div>`;
     document.getElementById("metrics").innerHTML = `
       <div class="metric"><span>Coverage</span><b>${Number(data.coverage_pct).toFixed(1)}%</b></div>
+      ${insp}
       <div class="metric"><span>Makespan</span><b>${Number(data.makespan).toFixed(0)} s</b></div>
       <div class="metric"><span>Drones</span><b>${data.drones}</b></div>
       <div class="metric"><span>Path length</span><b>${Number(data.total_length).toFixed(0)}</b></div>
+      ${partition}
+      ${deconf}
     `;
     const warnings = document.getElementById("warnings");
     const list = data.warnings || [];
@@ -179,6 +197,17 @@
       ? `<strong>Before you fly</strong><ul>${list.map((w) => `<li>${w}</li>`).join("")}</ul>`
       : "";
     document.getElementById("preview").src = data.png_url + "?t=" + Date.now();
+    const extras = [];
+    if (data.coverage_age_url) {
+      extras.push(
+        `<a href="${data.coverage_age_url}" target="_blank" rel="noopener">Coverage-age heatmap</a>`
+      );
+    }
+    if (data.sortie_gantt_url) {
+      extras.push(
+        `<a href="${data.sortie_gantt_url}" target="_blank" rel="noopener">Sortie Gantt</a>`
+      );
+    }
     const qgc = (data.qgc_urls || [])
       .map((u, i) => `<a href="${u}" download>QGC plan — drone ${i}</a>`)
       .join("");
@@ -187,6 +216,7 @@
       <a href="${data.missions_geojson_url}" download>Missions GeoJSON</a>
       <a href="${data.waypoints_csv_url}" download>Waypoints CSV</a>
       <a href="${data.bundle_url}" download>Full job zip</a>
+      ${extras.join("")}
       ${qgc}
     `;
   }
