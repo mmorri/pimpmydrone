@@ -30,6 +30,14 @@ from .deconflict import deconflict_tours
 SECONDS_SCALE = 1000  # convert float seconds to millis for the integer solver
 
 
+def _optional_map_spec(path: Optional[Path]):
+    if path is None or not Path(path).exists():
+        return None
+    from .map_utils import MapSpec
+
+    return MapSpec.from_json(io.read_json(path))
+
+
 @dataclass
 class TourTask:
     index: int
@@ -76,6 +84,7 @@ class TourOptimizer:
         time_limit: float = 30.0,
         mode: str = "sortie",
         deconflict: bool = True,
+        map_spec=None,
     ) -> None:
         if not tours:
             raise ValueError("No tours provided")
@@ -90,6 +99,7 @@ class TourOptimizer:
         self.time_limit = time_limit
         self.mode = mode
         self.deconflict = deconflict
+        self.map_spec = map_spec
         units = (
             split_into_sorties(tours) if mode in {"sortie", "columns"} else list(tours)
         )
@@ -125,7 +135,7 @@ class TourOptimizer:
             deadline=self.deadline,
             time_limit=self.time_limit,
         )
-        optimized = columns_to_tours(cg.selected, self.tasks)
+        optimized = columns_to_tours(cg.selected, self.tasks, map_spec=self.map_spec)
         makespan_s = cg.makespan
         deconflict_info = None
         if self.deconflict and len(optimized) > 1:
@@ -238,7 +248,11 @@ class TourOptimizer:
         for jobs in schedule.values():
             if jobs:
                 jobs.sort(key=lambda item: item[1])
-                optimized.append(merge_tours(len(optimized), jobs, self.tasks))
+                optimized.append(
+                    merge_tours(
+                        len(optimized), jobs, self.tasks, map_spec=self.map_spec
+                    )
+                )
 
         deconflict_info = None
         if self.deconflict and len(optimized) > 1:
@@ -364,8 +378,98 @@ def _slice_tour(
     return sliced
 
 
+def _grid_deadhead(
+    start: Tuple[int, int],
+    end: Tuple[int, int],
+    *,
+    t0: float,
+    next_index: int,
+    map_spec=None,
+    speed: float = 1.0,
+) -> List[dict]:
+    """Walk start→end on free cells when a map is available, else axis-aligned."""
+
+    if map_spec is None:
+        return _manhattan_deadhead(
+            start, end, t0=t0, next_index=next_index, speed=speed
+        )
+    from collections import deque
+
+    allowed = set(map_spec.free_cells())
+    allowed.add(start)
+    allowed.add(end)
+    came: Dict[Tuple[int, int], Optional[Tuple[int, int]]] = {start: None}
+    queue = deque([start])
+    found = False
+    while queue:
+        cur = queue.popleft()
+        if cur == end:
+            found = True
+            break
+        x, y = cur
+        for nxt in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+            if nxt in allowed and nxt not in came:
+                came[nxt] = cur
+                queue.append(nxt)
+    if not found:
+        return _manhattan_deadhead(
+            start, end, t0=t0, next_index=next_index, speed=speed
+        )
+    cells: List[Tuple[int, int]] = []
+    cur = end
+    while came[cur] is not None:
+        cells.append(cur)
+        cur = came[cur]
+    cells.reverse()
+    if cells and cells[-1] == end:
+        cells = cells[:-1]
+    dt = 1.0 / speed if speed else 1.0
+    t = t0
+    waypoints: List[dict] = []
+    for x, y in cells:
+        t += dt
+        waypoints.append({"index": next_index, "x": x, "y": y, "t": t})
+        next_index += 1
+    return waypoints
+
+
+def _manhattan_deadhead(
+    start: Tuple[int, int],
+    end: Tuple[int, int],
+    *,
+    t0: float,
+    next_index: int,
+    speed: float = 1.0,
+) -> List[dict]:
+    """4-connected walk from ``start`` (exclusive) to ``end`` (exclusive)."""
+
+    x, y = start
+    tx, ty = end
+    dt = 1.0 / speed if speed else 1.0
+    t = t0
+    waypoints: List[dict] = []
+    while x != tx:
+        x += 1 if tx > x else -1
+        t += dt
+        if (x, y) == end:
+            break
+        waypoints.append({"index": next_index, "x": x, "y": y, "t": t})
+        next_index += 1
+    while y != ty:
+        y += 1 if ty > y else -1
+        t += dt
+        if (x, y) == end:
+            break
+        waypoints.append({"index": next_index, "x": x, "y": y, "t": t})
+        next_index += 1
+    return waypoints
+
+
 def merge_tours(
-    drone_id: int, schedule: List[Tuple[int, float]], tasks: List[TourTask]
+    drone_id: int,
+    schedule: List[Tuple[int, float]],
+    tasks: List[TourTask],
+    map_spec=None,
 ) -> dict:
     """Concatenate the tours a drone flies, in start-time order.
 
@@ -383,6 +487,23 @@ def merge_tours(
         tour = tasks[job_index].tour
         if merged_waypoints:
             recharge_stops.append(merged_waypoints[-1]["index"])
+            prev = (
+                int(merged_waypoints[-1]["x"]),
+                int(merged_waypoints[-1]["y"]),
+            )
+            first = min(tour["waypoints"], key=lambda wp: wp["index"])
+            nxt = (int(first["x"]), int(first["y"]))
+            if prev != nxt:
+                extras = _grid_deadhead(
+                    prev,
+                    nxt,
+                    t0=float(merged_waypoints[-1]["t"]),
+                    next_index=next_index,
+                    map_spec=map_spec,
+                )
+                merged_waypoints.extend(extras)
+                next_index += len(extras)
+                total_length += abs(prev[0] - nxt[0]) + abs(prev[1] - nxt[1])
         index_mapping: Dict[int, int] = {}
         for waypoint in sorted(tour["waypoints"], key=lambda wp: wp["index"]):
             index_mapping[waypoint["index"]] = next_index
@@ -438,8 +559,10 @@ def optimize_file(
     time_limit: float = 30.0,
     mode: str = "sortie",
     deconflict: bool = True,
+    map_path: Optional[Path] = None,
 ) -> OptimizerResult:
     data = io.read_json(in_path)
+    spec = _optional_map_spec(map_path or in_path.parent / "map.json")
     optimizer = TourOptimizer(
         data,
         max_drones=max_drones,
@@ -448,6 +571,7 @@ def optimize_file(
         time_limit=time_limit,
         mode=mode,
         deconflict=deconflict,
+        map_spec=spec,
     )
     result = optimizer.solve()
     io.write_json(out_path, result.tours)
@@ -463,6 +587,7 @@ def optimize_best_family(
     time_limit: float = 30.0,
     mode: str = "sortie",
     deconflict: bool = True,
+    map_spec=None,
 ) -> FamilyPick:
     """Solve each partition family's tours and keep the best objective."""
 
@@ -487,6 +612,7 @@ def optimize_best_family(
             time_limit=time_limit,
             mode=mode,
             deconflict=deconflict,
+            map_spec=map_spec,
         ).solve()
         scores[name] = float(result.objective_value)
         better = best_result is None or (
@@ -521,6 +647,8 @@ def optimize_families_to_file(
     """Load competing tour files, pick the best family, write optimized tours."""
 
     families = {name: io.read_json(path) for name, path in family_paths.items()}
+    first = next(iter(family_paths.values()), None)
+    spec = _optional_map_spec(first.parent / "map.json" if first else None)
     pick = optimize_best_family(
         families,
         max_drones=max_drones,
@@ -529,6 +657,7 @@ def optimize_families_to_file(
         time_limit=time_limit,
         mode=mode,
         deconflict=deconflict,
+        map_spec=spec,
     )
     io.write_json(out_path, pick.result.tours)
     return pick

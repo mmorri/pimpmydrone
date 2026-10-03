@@ -487,7 +487,7 @@ def solve_column_generation(
 
 
 def columns_to_tours(
-    selected: Sequence[Column], tasks: Sequence[TourTask]
+    selected: Sequence[Column], tasks: Sequence[TourTask], map_spec=None
 ) -> List[dict]:
     """Materialise selected columns as merged drone tours."""
 
@@ -498,7 +498,7 @@ def columns_to_tours(
         for idx in col.sortie_indices:
             schedule.append((idx, t))
             t += tasks[idx].duration
-        tours.append(merge_tours(drone_id, schedule, list(tasks)))
+        tours.append(merge_tours(drone_id, schedule, list(tasks), map_spec=map_spec))
     return tours
 
 

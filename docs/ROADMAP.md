@@ -5,23 +5,24 @@ this document argues from; `benchmarks/baseline.md` is the current state.
 
 ## Where the flight time goes
 
-Across the benchmark matrix (24 missions, all reaching 100% coverage of the
-cells in range):
+Across the benchmark matrix (36 rows: 6 maps × 3 algorithms × 2 seeds, all
+reaching 100% coverage of the cells in range):
 
 | | share of all flown steps |
 | --- | --- |
-| Commuting between a depot and the area being covered | **57.7%** |
-| Flying inside the region | 42.3% |
+| Commuting between a depot and the area being covered | **52.7%** |
+| Flying inside the region | 47.3% |
 
-Per-cell, the average covered cell is flown over **2.3 to 13.6 times** depending
+Per-cell, the average covered cell is flown over **2.0 to 9.6 times** depending
 on the case. Two independent problems produce that number:
 
 1. **Commuting.** Every sortie pays a return trip to the depot. On
-   `tight-battery-40` this reaches 90% of all flight; even on the roomy
-   `large-100` it is 32%.
+   `tight-battery-40` this still reaches ~84% of all flight; even on the roomy
+   `large-100` it is ~30%. The 2026-10-03 refresh is **19.2% less flight** and
+   **29.7% less makespan** than the September baseline.
 2. **Overlap.** The spanning-tree walk traverses every tree edge twice, so
    in-region flight alone is about 2x the cell count. On open maps
-   boustrophedon already does this in 2.33 steps per cell against STC's 4.09.
+   mega-STC now lands around 2.5 steps/cell (was 4.09 before the Phase 2 work).
 
 Everything below attacks one of those two numbers, or makes them cheaper to
 attack.

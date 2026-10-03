@@ -80,3 +80,20 @@ def test_merge_marks_tour_boundary_as_recharge():
     assert merged["recharge_stops"] == [1, 2]
     assert merged["cost"]["time"] == 8.0
     assert [s["from"] for s in merged["segments"]] == [0, 1, 3, 4]
+
+
+def test_merge_inserts_deadhead_between_mismatched_endpoints():
+    from fleet.optimize import TourTask, tour_depot
+
+    a = make_tour(0, 4.0, depot=(0, 0))
+    b = make_tour(1, 4.0, depot=(3, 2))
+    tasks = [TourTask(i, 4.0, 2.0, 1, tour_depot(t), t) for i, t in enumerate([a, b])]
+    merged = merge_tours(0, [(0, 0.0), (1, 10.0)], tasks)
+    cells = [(int(wp["x"]), int(wp["y"])) for wp in merged["waypoints"]]
+    jumps = [
+        (p, q)
+        for p, q in zip(cells, cells[1:], strict=False)
+        if abs(p[0] - q[0]) + abs(p[1] - q[1]) > 1
+    ]
+    assert not jumps
+    assert (3, 2) in cells

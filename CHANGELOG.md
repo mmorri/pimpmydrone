@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Changed
+
+- **Benchmark refresh** (2026-10-03): matrix length **-19.2%**, makespan
+  **-29.7%**, commute **52.7%** (was 56.9%). Sortie merges that hop between
+  nearest-depot recharges now insert an obstacle-aware deadhead so the
+  simulator no longer sees teleports.
+
 ### Added
 
 - **Hangar example sites** (`/api/examples`): load bundled solar / industrial /

@@ -164,7 +164,7 @@ def create_app() -> FastAPI:
             "(YOLO / CNN / VLM / domain). Free forever. Donations welcome. "
             "Authors accept no responsibility for flights."
         ),
-        version="0.5.9",
+        version="0.5.10",
     )
     app.add_middleware(
         CORSMiddleware,
@@ -243,7 +243,7 @@ def create_app() -> FastAPI:
         return {
             "status": "ok",
             "product": "pimpmydrone",
-            "version": "0.5.9",
+            "version": "0.5.10",
             "monetization": "donations",
             "max_cells": MAX_CELLS,
             "perception": True,
