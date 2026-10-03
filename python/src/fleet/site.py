@@ -153,6 +153,18 @@ def plan_site(
         mode=schedule_mode,
         deconflict=deconflict,
     )
+    from .compact import compression_ratio, write_compact_tours
+
+    compact_path = out_dir / "tours_compact.json"
+    tours_opt = io.read_json(optimized)
+    write_compact_tours(compact_path, tours_opt)
+    io.write_json(
+        out_dir / "compact_stats.json",
+        {
+            "ratio_expanded_over_compact": round(compression_ratio(tours_opt), 3),
+            "compact_path": str(compact_path),
+        },
+    )
     simulation = simulate(
         map_path,
         params_path,

@@ -1,5 +1,6 @@
 module Main (main) where
 
+import Control.Concurrent.Async (mapConcurrently)
 import Control.Monad (forM, unless)
 import Data.Aeson (encode)
 import qualified Data.ByteString.Lazy.Char8 as BL
@@ -90,8 +91,12 @@ main = do
   -- is done once per depot and shared by every region that depot serves.
   let assigned = mapMaybe (assignDepot depots depotIndex) nonEmpty
   envs <- buildEnvs gm params (fmap snd assigned) (fmap depotCell depots)
-  planned <- forM assigned $ \(region, depot) ->
-    planRegion (envFor envs depot) optAlgorithm region
+  -- Regions are independent once depot fields exist; plan them in parallel.
+  planned <-
+    mapConcurrently
+      ( \(region, depot) -> planRegion (envFor envs depot) optAlgorithm region
+      )
+      assigned
   let tours = fmap fst planned
       skipped = [(raDroneId r, cells) | ((_, cells), r) <- zip planned nonEmpty, not (null cells)]
   case optOutput of

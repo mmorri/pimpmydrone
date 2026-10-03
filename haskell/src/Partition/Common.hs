@@ -77,7 +77,9 @@ assignRegions gm drone depots seeds =
           else fmap servingDepot seeds
     fields =
       HM.fromList
-        [ (cell, depotField (freeNeighbors gm) (dsSpeed drone) cell)
+        [ ( cell
+          , depotField (gmWidth gm) (gmHeight gm) (freeNeighbors gm) (dsSpeed drone) cell
+          )
         | cell <- fieldCells
         ]
     weight seed cell =

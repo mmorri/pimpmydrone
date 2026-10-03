@@ -95,6 +95,7 @@ executable coverage-planner
         -Wall
         -threaded
         -rtsopts
+        -with-rtsopts=-N
     build-depends:
         base,
         coverage-core,
@@ -102,7 +103,8 @@ executable coverage-planner
         optparse-applicative,
         aeson,
         containers,
-        unordered-containers
+        unordered-containers,
+        async
     default-language: Haskell2010
     default-extensions:
         RecordWildCards,

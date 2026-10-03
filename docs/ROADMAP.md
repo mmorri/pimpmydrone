@@ -90,15 +90,13 @@ short-commute maps.
   `metrics.inspection` (approx. imaged cells + GSD estimate).
 - **QGC export fidelity.** Done: RelHome/AGL altitude mode, inclusion site +
   avoid keep-outs as geofence polygons when present on `geo.json`.
-- **Flat arrays instead of hash maps** in the Haskell core, indexed by
-  `y * width + x`. The cheapest-return field keeps one entry per cell and
-  heading, so on 1000x1000 the planner spends 50 s and 2.5 GB building it --
-  the largest single cost in the pipeline, and the reason this item outranks
-  the rest of this phase.
-- **Compact tour encoding.** Tours serialise to roughly 360 MB of JSON at
-  1000x1000; encoding moves as direction runs would cut that by an order of
-  magnitude.
-- **Parallel region planning.** Regions are independent.
+- **Flat arrays instead of hash maps.** Done: `DepotField` stores Dijkstra
+  state in unboxed vectors indexed by `y * width + x` (and heading). Same
+  turn-aware semantics; less HashMap heap traffic on large grids.
+- **Compact tour encoding.** Done: `fleet.compact` writes `tours_compact.json`
+  (`runs-v1` direction runs) plus `compact_stats.json` beside expanded tours.
+- **Parallel region planning.** Done: `coverage-planner` plans regions with
+  `mapConcurrently` (RTS `-N`).
 - **Remove the duplicated `params`.** Done: kinematics live only in
   `params.json`; `map.json` no longer embeds a copy.
 - **Richer visuals.** Done: `coverage_age.png` (first-visit heat map) and
@@ -109,6 +107,7 @@ short-commute maps.
 
 ## Done
 
+- **Flat depot field, compact tours, parallel region planning.** See Phase 4.
 - **Coverage-age heatmap, sortie Gantt, OSM building import, params dedup.**
 - **Sortie scheduling + discrete deconfliction + inspection metrics + QGC
   geofence/AGL export + industrial solar example + dual donation CTAs.**

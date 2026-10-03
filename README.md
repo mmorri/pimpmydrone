@@ -97,7 +97,8 @@ Measured on a laptop, single depot, `--obstacle-density 0.01 --battery 5000`:
 | 1000 x 1000 | ~990k | 8 s | 50 s | 11 s | 10 s | ~2.5 GB |
 
 Planning is dominated by building the cheapest-return field for each depot;
-`docs/ROADMAP.md` covers the flat-array representation that would shrink it.
+the field is now a flat unboxed array (`DepotField`), regions plan in parallel,
+and site missions also write compact `runs-v1` tours.
 
 ## Troubleshooting
 

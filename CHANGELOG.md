@@ -4,6 +4,12 @@
 
 ### Added
 
+- **Flat-array depot field** (`Algorithm.Flood.DepotField`): cheapest-return
+  Dijkstra in unboxed vectors indexed by `y * width + x` (+ heading).
+- **Parallel region planning**: `coverage-planner` uses `mapConcurrently`
+  with RTS `-N`.
+- **Compact tour encoding** (`fleet.compact`): `tours_compact.json`
+  (`runs-v1` direction runs) and `compact_stats.json` on every site mission.
 - **Coverage-age heatmap** and **sortie Gantt** PNGs from `fleet.visualize`.
 - **OSM building keep-outs** via `fleet enrich-osm` / `--osm-buildings` (Overpass).
 - **Sortie-level CP-SAT scheduling** (`--schedule-mode sortie`, default) so

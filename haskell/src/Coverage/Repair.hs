@@ -25,7 +25,7 @@ import Domain.Cell (Cell (..), headingFromTo, manhattan)
 import Domain.Cost (CostBreakdown (..), addSegmentCost, emptyCost)
 import Domain.Depot (Depot (..))
 import Domain.Drone (DroneSpec (..))
-import Domain.Map (GridMap, freeNeighbors, isFree)
+import Domain.Map (GridMap (..), freeNeighbors, isFree)
 import Domain.Path (Path (..), Segment (..), Waypoint (..))
 import Domain.Tour (TourCost (..))
 
@@ -106,7 +106,14 @@ prepareDepots gm drone (AssignedDepot _ home) depotCells
   | otherwise =
       let freeDepots = filter (isFree gm) (nubCells (home : depotCells))
           fields =
-            [ (cell, depotField (freeNeighbors gm) (dsSpeed drone) cell)
+            [ ( cell
+              , depotField
+                  (gmWidth gm)
+                  (gmHeight gm)
+                  (freeNeighbors gm)
+                  (dsSpeed drone)
+                  cell
+              )
             | cell <- freeDepots
             ]
        in if null fields

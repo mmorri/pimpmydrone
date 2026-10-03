@@ -123,7 +123,7 @@ prop_astar_optimal (World gm depot) =
 -- from the cost, but the drone flies the route.
 prop_depot_field_optimal :: World -> Property
 prop_depot_field_optimal (World gm depot) =
-  let field = depotField (freeNeighbors gm) 1 depot
+  let field = depotField (gmWidth gm) (gmHeight gm) (freeNeighbors gm) 1 depot
       reference = referenceCosts gm depot
    in conjoin $
         -- Without this the properties below hold vacuously for an empty field.
@@ -224,7 +224,7 @@ prop_battery_corridor =
           drone = spec battery
           depot = AssignedDepot (Depot 0 (Cell 0 0)) (Cell 0 0)
           region = RegionAssignment 0 (Cell 0 0) (freeCells gm)
-          field = depotField (freeNeighbors gm) 1 (Cell 0 0)
+          field = depotField (gmWidth gm) (gmHeight gm) (freeNeighbors gm) 1 (Cell 0 0)
           inRange c = maybe False (<= battery) (roundTripCost drone field c)
        in case buildPath gm drone depot (planSTC region) of
             Left err -> counterexample ("buildPath failed: " ++ err) False
@@ -247,7 +247,7 @@ prop_full_coverage (World gm depotCell) (Positive rawD) useStc =
         regions = Region.regionGrow gm depots drone (1 + rawD `mod` 4)
         planner = if useStc then planSTC else planBoustro
         depot = AssignedDepot (Depot 0 depotCell) depotCell
-        field = depotField (freeNeighbors gm) 1 depotCell
+        field = depotField (gmWidth gm) (gmHeight gm) (freeNeighbors gm) 1 depotCell
         inRange c = maybe False (<= battery) (roundTripCost drone field c)
         expected = filter inRange (HS.toList (reachableFree gm [depotCell]))
         built = [buildPath gm drone depot (planner r) | r <- regions, not (null (raCells r))]
