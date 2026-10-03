@@ -404,6 +404,99 @@ select, input[type="number"], input[type="file"], input[type="text"], input[type
   max-height: 180px;
   overflow: auto;
 }
+
+.guide-card h1 .accent {
+  background: linear-gradient(90deg, var(--gold), var(--neon-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.guide-warn {
+  margin: 1rem 0 1.25rem;
+  padding: 0.85rem 1rem;
+  border: 2px solid var(--stop);
+  border-radius: 6px;
+  background: var(--warn-bg);
+  color: #ffd2c5;
+  line-height: 1.45;
+}
+.guide-toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 1rem;
+  margin: 0 0 1.5rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+.guide-toc a {
+  color: var(--chrome);
+  text-decoration: none;
+}
+.guide-toc a:hover { color: var(--gold); }
+.guide-section {
+  margin: 1.75rem 0;
+}
+.guide-section h2 {
+  font-family: "Bebas Neue", Impact, sans-serif;
+  font-size: 1.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 0 0 0.55rem;
+  color: var(--gold);
+}
+.guide-steps {
+  margin: 0.6rem 0 0;
+  padding-left: 1.2rem;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.guide-steps li { margin: 0.35rem 0; }
+.guide-steps code, .guide-pre code {
+  color: var(--chrome);
+}
+.guide-callout {
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-2);
+}
+.guide-callout h3 {
+  margin: 0 0 0.5rem;
+  font-family: "Bebas Neue", Impact, sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--neon);
+}
+.guide-callout ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.guide-pre {
+  margin: 0.75rem 0;
+  padding: 1rem;
+  overflow: auto;
+  background: #0c0c12;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: #dfe8da;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  white-space: pre;
+}
+.guide-next {
+  color: var(--muted);
+  line-height: 1.55;
+  padding-left: 1.1rem;
+}
 @keyframes plan-pulse {
   0%, 100% { opacity: 0.55; }
   50% { opacity: 1; }

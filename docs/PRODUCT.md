@@ -47,6 +47,11 @@ See [`docs/PERCEPTION.md`](PERCEPTION.md). Hangar UI: `#perception`.
 
 CV/VLM outputs are **untrusted** and are not sense-and-avoid.
 
+## Operator guide
+
+Public case-study README: `/guide` (also `/readme`) — solar polygon path,
+perception path, export/preflight, and CLI twin.
+
 ## What “good enough to ask for donations” means here
 
 - Planner + simulator still verify coverage.

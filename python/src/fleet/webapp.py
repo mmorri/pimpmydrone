@@ -138,6 +138,18 @@ def create_app() -> FastAPI:
             return HTMLResponse(_inject_config(path.read_text(encoding="utf-8")))
         raise HTTPException(404, "Donate page missing")
 
+    @app.get("/guide", response_class=HTMLResponse)
+    def guide_page() -> HTMLResponse:
+        path = site_dir / "guide.html"
+        if path.exists():
+            return HTMLResponse(_inject_config(path.read_text(encoding="utf-8")))
+        raise HTTPException(404, "Guide page missing")
+
+    @app.get("/readme", response_class=HTMLResponse)
+    def readme_page() -> HTMLResponse:
+        """Alias for the operator case-study guide."""
+        return guide_page()
+
     @app.get("/api/health")
     def health() -> dict[str, Any]:
         return {

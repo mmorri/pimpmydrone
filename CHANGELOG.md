@@ -7,6 +7,8 @@
 - **Perception Lab (0.4.0):** YOLO / ONNX CNN / VLM / domain adapters, shared
   detection schema, class→role ontologies, compile-to-site GeoJSON, API + CLI,
   hangar Perception Lab UI. CV outputs are untrusted — not sense-and-avoid.
+- **Operator case-study guide** at `/guide` (alias `/readme`): solar walkthrough
+  for polygon-only and perception→QGC paths, plus CLI twin commands.
 
 ### Changed
 

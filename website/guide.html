@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Case study guide — PimpMyDrone</title>
+  <meta name="description" content="Step-by-step case study: turn a solar site (and optional YOLO/VLM detections) into a multi-drone QGroundControl draft with PimpMyDrone." />
+  <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/assets/styles.css?v=0.4.1" />
+</head>
+<body class="doc">
+  <header class="top">
+    <div class="brand">
+      <a href="/" class="logo">PimpMyDrone</a>
+      <span class="tag">readme · case study</span>
+    </div>
+    <nav>
+      <a href="/#planner">Planner</a>
+      <a href="/#perception">Perception</a>
+      <a href="/guide" aria-current="page">Guide</a>
+      <a href="/legal">Legal</a>
+      <a href="/donate">Donate</a>
+      <a id="navGithub" href="https://github.com/mmorri/pimpmydrone" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+
+  <article class="doc-card guide-card">
+    <p class="gate-kicker">Hangar readme · solar case study</p>
+    <h1>From polygon to QGC draft<br /><span class="accent">in one hangar pass</span></h1>
+    <p class="lede">
+      This page is the operator README. Follow the solar-farm case study end to end —
+      plain site polygon, or perception detections (YOLO / demo / VLM) — then export a
+      draft mission. Everything here is experimental. You fly it; you own the risk.
+    </p>
+
+    <aside class="guide-warn" aria-label="Disclaimer">
+      <strong>Not a flight clearance.</strong> Paths ignore wind, wires, terrain, NOTAMs,
+      and other aircraft. Perception is <em>not</em> sense-and-avoid. Read
+      <a href="/legal">/legal</a> before you arm anything.
+    </aside>
+
+    <nav class="guide-toc" aria-label="Guide contents">
+      <a href="#story">The story</a>
+      <a href="#path-a">Path A · polygon</a>
+      <a href="#path-b">Path B · perception</a>
+      <a href="#export">Export &amp; preflight</a>
+      <a href="#cli">CLI twin</a>
+      <a href="#next">What next</a>
+    </nav>
+
+    <section id="story" class="guide-section">
+      <h2>1. The story</h2>
+      <p>
+        You run a mid-size solar site. You want two to four drones to lawnmower the
+        array, skip a truck parked on a string, and mark a thermal hotspot for a
+        closer look — then open the result in QGroundControl.
+      </p>
+      <ol class="guide-steps">
+        <li>Accept the liability gate on the <a href="/">homepage</a>.</li>
+        <li>Choose vertical preset <code>solar</code>.</li>
+        <li>Either draw/upload a site polygon <strong>or</strong> load perception detections.</li>
+        <li>Re-confirm the disclaimer and hit customize / plan.</li>
+        <li>Read <code>SAFETY_REPORT.md</code>, then download QGC plans.</li>
+      </ol>
+    </section>
+
+    <section id="path-a" class="guide-section">
+      <h2>2. Path A — site polygon only</h2>
+      <p>Best when you already have a boundary and do not need CV.</p>
+      <ol class="guide-steps">
+        <li>Open <a href="/#planner">Hangar planner</a>.</li>
+        <li>Set <strong>Vertical preset</strong> to <code>solar</code> (≈5&nbsp;m cells, mid altitude).</li>
+        <li>Draw a polygon on the map, or upload a GeoJSON boundary
+          (sample in the repo: <code>examples/sites/solar_farm.geojson</code>).</li>
+        <li>Optional: add Point features with <code>"role": "depot"</code> or
+          <code>"depot": true</code> for hangar placement.</li>
+        <li>Check <em>I re-confirm the disclaimer</em> → <strong>Customize mission</strong>.</li>
+        <li>Wait for metrics (coverage, makespan, drones) and the path preview.</li>
+      </ol>
+      <p class="hint">
+        Fair-use grid cap on the public demo keeps jobs honest — not a paywall.
+        Local installs can raise <code>FLEET_MAX_CELLS</code>.
+      </p>
+    </section>
+
+    <section id="path-b" class="guide-section">
+      <h2>3. Path B — perception → mission</h2>
+      <p>
+        Best when YOLO / a thermal model / a VLM already labeled the site.
+        Roles: <span class="role cover">cover</span>
+        <span class="role avoid">avoid</span>
+        <span class="role inspect">inspect</span>
+        <span class="role depot">depot</span>
+      </p>
+      <ol class="guide-steps">
+        <li>Scroll to <a href="/#perception">Perception Lab</a>.</li>
+        <li>Pick ontology <code>solar / infra</code>.</li>
+        <li>
+          <strong>Load demo detections</strong> for a one-click walkthrough,
+          <em>or</em> upload a detections FeatureCollection
+          (sample: <code>examples/perception/solar_detections.geojson</code>),
+          <em>or</em> type a command like
+          <code>survey panels, avoid trucks</code> and run NL.
+        </li>
+        <li>Confirm cover / avoid / inspect overlays on the perception map.</li>
+        <li>With the planner disclaimer still checked, hit
+          <strong>Plan from perception</strong>.</li>
+        <li>Read the perception report JSON — class counts are not a clearance.</li>
+      </ol>
+      <p class="hint">
+        Full adapter docs (YOLO, ONNX, llama.cpp / vLLM, domain plugins):
+        <a id="percDocs" href="https://github.com/mmorri/pimpmydrone/blob/fix/coverage-pipeline/docs/PERCEPTION.md" target="_blank" rel="noopener">docs/PERCEPTION.md</a>
+      </p>
+    </section>
+
+    <section id="export" class="guide-section">
+      <h2>4. Export &amp; preflight</h2>
+      <ol class="guide-steps">
+        <li>Download <strong>SAFETY_REPORT.md</strong> first — every checklist item is yours.</li>
+        <li>Grab <strong>QGC plan — drone N</strong> files (one per scheduled aircraft).</li>
+        <li>Optional: Missions GeoJSON, waypoints CSV, or the full job zip.</li>
+        <li>In QGroundControl: inspect home / RTH, altitude mode, geofence, and every leg.</li>
+        <li>Multi-drone schedules are <strong>not</strong> spatially deconflicted — separate yourself.</li>
+      </ol>
+      <div class="guide-callout">
+        <h3>Case-study success looks like</h3>
+        <ul>
+          <li>Coverage of reachable grid cells near 100% (or an explained skip list).</li>
+          <li>Avoid zones empty of free cells (truck / crane punched out).</li>
+          <li>Inspect points visible in the bundle for the hotspot follow-up.</li>
+          <li>You still treat the export as a <em>draft</em> until GCS review is done.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="cli" class="guide-section">
+      <h2>5. Same case study on the CLI</h2>
+      <p>Mirror of Path B for scripts and CI:</p>
+      <pre class="guide-pre">git clone https://github.com/mmorri/pimpmydrone.git
+cd pimpmydrone
+make build
+cd python &amp;&amp; uv sync
+
+# Perception → site → plan
+uv run python -m fleet perception ingest \
+  --input ../examples/perception/solar_detections.geojson \
+  --output /tmp/site.geojson --ontology solar
+
+uv run python -m fleet perception plan-from-perception \
+  --input ../examples/perception/solar_detections.geojson \
+  --output-dir ../outputs/case-solar --vertical solar
+
+# Or polygon-only
+uv run python -m fleet from-geo \
+  --geojson ../examples/sites/solar_farm.geojson \
+  --output-dir ../outputs/site-solar --vertical solar</pre>
+      <p class="hint">
+        Local UI: <code>make serve</code> → <code>http://127.0.0.1:8000</code>.
+      </p>
+    </section>
+
+    <section id="next" class="guide-section">
+      <h2>6. What to try next</h2>
+      <ul class="guide-next">
+        <li><a href="/#perception">Security ontology</a> — person / vehicle inspect targets on a fence corridor.</li>
+        <li><a href="/#perception">Thermal ontology</a> — smoke / flame / hotspot priorities.</li>
+        <li>Wire a real model: set <code>FLEET_YOLO_MODEL</code> or <code>FLEET_VLM_URL</code> (see perception docs).</li>
+        <li>Tip the shop if it saved you a sortie — <a href="/donate">/donate</a> (not a subscription).</li>
+      </ul>
+      <div class="hero-actions">
+        <a class="btn" href="/#planner">Open the planner</a>
+        <a class="btn ghost" href="/#perception">Open Perception Lab</a>
+      </div>
+    </section>
+  </article>
+
+  <footer class="foot">
+    <p>
+      © PimpMyDrone contributors · MIT ·
+      <a href="/legal">No warranty / no liability</a> ·
+      <a href="/donate">Donate</a><br />
+      Not affiliated with MTV or any television program.
+    </p>
+  </footer>
+
+  <script>
+    const cfg = window.FLEET_CONFIG || {};
+    const gh = document.getElementById("navGithub");
+    if (cfg.github_url && gh) gh.href = cfg.github_url;
+    const docs = document.getElementById("percDocs");
+    if (docs && cfg.github_url) {
+      docs.href = cfg.github_url.replace(/\/$/, "") + "/blob/fix/coverage-pipeline/docs/PERCEPTION.md";
+    }
+  </script>
+</body>
+</html>
