@@ -248,13 +248,7 @@ def rasterize_site(
         "obstacles": [cell_to_json(cell) for cell in obstacles],
         "no_fly": no_fly,
         "depots": [cell_to_json(cell) for cell in depots],
-        "params": {
-            "v": speed,
-            "B": battery,
-            "takeoff_cost": takeoff_cost,
-            "landing_cost": landing_cost,
-            "max_drones": max_drones,
-        },
+        # Drone kinematics live only in params.json (no duplicated block).
     }
     params_payload = {
         "v": speed,

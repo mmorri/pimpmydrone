@@ -4,6 +4,8 @@
 
 ### Added
 
+- **Coverage-age heatmap** and **sortie Gantt** PNGs from `fleet.visualize`.
+- **OSM building keep-outs** via `fleet enrich-osm` / `--osm-buildings` (Overpass).
 - **Sortie-level CP-SAT scheduling** (`--schedule-mode sortie`, default) so
   drones can interleave recharge sorties from the same depot.
 - **Discrete spatial deconfliction** (`fleet.deconflict`): detect same-cell
@@ -27,6 +29,7 @@
 
 ### Changed
 
+- `map.json` no longer duplicates drone params; `params.json` is the sole source.
 - Mid-sortie battery recalls now recharge at the **nearest depot** (cheapest
   turn-aware return) instead of always the region\'s home depot. Tours still
   start and finish at the assigned home.

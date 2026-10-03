@@ -65,13 +65,7 @@ def generate_workspace(config: GeneratorConfig) -> tuple[dict, dict]:
         "obstacles": [cell_to_json(cell) for cell in obstacle_cells],
         "no_fly": [polygon_to_json(poly) for poly in no_fly_polys],
         "depots": [cell_to_json(cell) for cell in depot_cells],
-        "params": {
-            "v": config.speed,
-            "B": config.battery,
-            "takeoff_cost": config.takeoff_cost,
-            "landing_cost": config.landing_cost,
-            "max_drones": config.max_drones,
-        },
+        # Drone kinematics live only in params.json (no duplicated block).
     }
 
     params_payload = {

@@ -183,13 +183,16 @@ def create_app() -> FastAPI:
         return {
             "status": "ok",
             "product": "pimpmydrone",
-            "version": "0.5.0",
+            "version": "0.5.1",
             "monetization": "donations",
             "max_cells": MAX_CELLS,
             "perception": True,
             "deconfliction": True,
             "inspection_metrics": True,
             "schedule_mode": "sortie",
+            "osm_buildings": True,
+            "coverage_age": True,
+            "sortie_gantt": True,
         }
 
     @app.get("/api/config")
@@ -391,6 +394,14 @@ def create_app() -> FastAPI:
     def job_png(job_id: str) -> FileResponse:
         return _file_response(_job_dir(job_id) / "path.png", "image/png")
 
+    @app.get("/api/jobs/{job_id}/coverage-age.png")
+    def job_coverage_age(job_id: str) -> FileResponse:
+        return _file_response(_job_dir(job_id) / "coverage_age.png", "image/png")
+
+    @app.get("/api/jobs/{job_id}/sortie-gantt.png")
+    def job_sortie_gantt(job_id: str) -> FileResponse:
+        return _file_response(_job_dir(job_id) / "sortie_gantt.png", "image/png")
+
     @app.get("/api/jobs/{job_id}/missions.geojson")
     def job_geojson(job_id: str) -> FileResponse:
         return _file_response(
@@ -552,6 +563,8 @@ def _run_job(
         "donate_url": DONATE_URL,
         "donate_alt_url": DONATE_ALT_URL,
         "png_url": f"/api/jobs/{job_id}/png",
+        "coverage_age_url": f"/api/jobs/{job_id}/coverage-age.png",
+        "sortie_gantt_url": f"/api/jobs/{job_id}/sortie-gantt.png",
         "missions_geojson_url": f"/api/jobs/{job_id}/missions.geojson",
         "waypoints_csv_url": f"/api/jobs/{job_id}/waypoints.csv",
         "safety_url": f"/api/jobs/{job_id}/safety",

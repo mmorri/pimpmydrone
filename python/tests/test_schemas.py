@@ -39,7 +39,6 @@ def test_metrics_match_schema(tmp_path: Path) -> None:
         "obstacles": [],
         "no_fly": [],
         "depots": [{"x": 0, "y": 0}],
-        "params": {},
     }
     params = {
         "v": 1.0,

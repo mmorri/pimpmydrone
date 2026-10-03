@@ -18,6 +18,9 @@ airspace violations, or any other loss.**
 ```bash
 make build
 make serve          # http://127.0.0.1:8000
+# Optional: pull OSM buildings as keep-outs before planning
+uv run python -m fleet from-geo --geojson ../examples/sites/solar_industrial.geojson \
+  --output-dir ../outputs/site-industrial --vertical solar --osm-buildings
 ```
 
 Optional env:

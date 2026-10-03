@@ -341,6 +341,12 @@ def run_command(
     show_default=True,
 )
 @click.option("--partition", type=click.Choice(["region", "strip"]), default="region")
+@click.option(
+    "--osm-buildings/--no-osm-buildings",
+    default=False,
+    show_default=True,
+    help="Pull OSM building footprints as avoid keep-outs (needs network).",
+)
 @optimizer_options
 def from_geo_command(
     geojson_path: Path,
@@ -352,6 +358,7 @@ def from_geo_command(
     altitude_m: Optional[float],
     coverage_algorithm: str,
     partition: str,
+    osm_buildings: bool,
     drone_cost: float,
     deadline: Optional[float],
     solver_time: float,
@@ -375,11 +382,30 @@ def from_geo_command(
         solver_time=solver_time,
         schedule_mode=schedule_mode,
         deconflict=deconflict,
+        osm_buildings=osm_buildings,
     )
     console.rule(f"Site mission ({vertical})")
     print_summary(result.simulation, output_dir)
     console.print(f"Missions exported under [bold]{output_dir / 'missions'}[/bold]")
     fail_on_problems(result.simulation)
+
+
+@run.command("enrich-osm")
+@click.option("--geojson", "geojson_path", type=PathArg, required=True)
+@click.option("--output", "output_path", type=PathArg, required=True)
+def enrich_osm_command(geojson_path: Path, output_path: Path) -> None:
+    """Add OSM building footprints as avoid polygons (network required)."""
+
+    from .osm import enrich_geojson_with_osm_buildings
+
+    geojson = io.read_json(geojson_path)
+    enriched, report = enrich_geojson_with_osm_buildings(geojson)
+    io.write_json(output_path, enriched)
+    report_path = output_path.with_suffix(".osm.json")
+    io.write_json(report_path, report)
+    console.print(
+        f"Wrote {report['buildings_added']} OSM keep-outs to [bold]{output_path}[/bold]"
+    )
 
 
 @run.command("export")

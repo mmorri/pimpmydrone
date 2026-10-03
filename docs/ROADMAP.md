@@ -99,13 +99,17 @@ short-commute maps.
   1000x1000; encoding moves as direction runs would cut that by an order of
   magnitude.
 - **Parallel region planning.** Regions are independent.
-- **Remove the duplicated `params`** between `map.json` and `params.json`.
-- **Richer visuals**: a sortie Gantt per drone, and a coverage-age heat map.
-- **Real terrain / OSM buildings / wind / NOTAM** — still out of scope; the
-  flat-world disclaimer stands.
+- **Remove the duplicated `params`.** Done: kinematics live only in
+  `params.json`; `map.json` no longer embeds a copy.
+- **Richer visuals.** Done: `coverage_age.png` (first-visit heat map) and
+  `sortie_gantt.png` beside `path.png`.
+- **OSM building keep-outs.** Done: `fleet enrich-osm` and
+  `--osm-buildings` on `from-geo` (Overpass → avoid polygons). Still not DEM /
+  wind / NOTAM — flat-world disclaimer stands.
 
 ## Done
 
+- **Coverage-age heatmap, sortie Gantt, OSM building import, params dedup.**
 - **Sortie scheduling + discrete deconfliction + inspection metrics + QGC
   geofence/AGL export + industrial solar example + dual donation CTAs.**
 - **Mega-cell STC + route shortcutting.** See Phase 2. Auto now compares

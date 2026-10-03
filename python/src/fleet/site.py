@@ -94,6 +94,7 @@ def plan_site(
     solver_time: float = 30.0,
     schedule_mode: str = "sortie",
     deconflict: bool = True,
+    osm_buildings: bool = False,
     simplify_export: bool = True,
     plan_fn=None,
 ) -> SiteMissionResult:
@@ -109,6 +110,16 @@ def plan_site(
         from .cli import plan as plan_fn  # local import avoids a cli↔site cycle
 
     geojson = load_geojson(geojson_path)
+    io.ensure_directory(out_dir)
+    if osm_buildings:
+        from .osm import enrich_geojson_with_osm_buildings
+
+        geojson, osm_report = enrich_geojson_with_osm_buildings(geojson)
+        io.write_json(out_dir / "osm_buildings.json", osm_report)
+        io.write_json(out_dir / "input_enriched.geojson", geojson)
+        # Prefer the enriched geojson as the site input path for reproducibility.
+        geojson_path = out_dir / "input_enriched.geojson"
+        io.write_json(geojson_path, geojson)
     map_path, params_path, geo_path, _geo = write_site_workspace(
         out_dir,
         geojson,
