@@ -1,0 +1,65 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-122.2520, 37.7728],
+          [-122.2506, 37.7728],
+          [-122.2506, 37.7741],
+          [-122.2520, 37.7741],
+          [-122.2520, 37.7728]
+        ]]
+      },
+      "properties": {
+        "class": "fence",
+        "confidence": 0.91,
+        "role": "cover",
+        "source": "yolo"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-122.2513, 37.7734]
+      },
+      "properties": {
+        "class": "person",
+        "confidence": 0.87,
+        "role": "inspect",
+        "source": "yolo",
+        "priority": 0.9
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-122.2510, 37.7737]
+      },
+      "properties": {
+        "class": "vehicle",
+        "confidence": 0.8,
+        "role": "inspect",
+        "source": "yolo"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-122.2520, 37.7728]
+      },
+      "properties": {
+        "class": "depot",
+        "confidence": 1.0,
+        "role": "depot",
+        "source": "manual",
+        "depot": true
+      }
+    }
+  ]
+}

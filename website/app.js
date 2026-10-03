@@ -190,4 +190,208 @@
       ${qgc}
     `;
   }
+
+  // --- Perception Lab -------------------------------------------------
+  const percMapEl = document.getElementById("percMap");
+  let perceptionFC = null;
+  let percLayer = null;
+  let percMap = null;
+  if (percMapEl) {
+    percMap = L.map("percMap").setView([37.7735, -122.2515], 16);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "&copy; OpenStreetMap",
+    }).addTo(percMap);
+  }
+
+  const roleColor = {
+    cover: "#3dff9a",
+    avoid: "#ff5a3d",
+    inspect: "#f0c14b",
+    depot: "#c44dff",
+    track: "#f0c14b",
+  };
+
+  function paintPerception(fc, opts) {
+    const asPlanInput = !opts || opts.asPlanInput !== false;
+    if (asPlanInput) perceptionFC = fc;
+    if (!percMap) return;
+    if (percLayer) percMap.removeLayer(percLayer);
+    percLayer = L.geoJSON(fc, {
+      style(feature) {
+        const role = (feature.properties && feature.properties.role) || "inspect";
+        return {
+          color: roleColor[role] || "#e8e4dc",
+          weight: 2,
+          fillOpacity: role === "avoid" ? 0.35 : 0.2,
+        };
+      },
+      pointToLayer(feature, latlng) {
+        const role = (feature.properties && feature.properties.role) || "inspect";
+        return L.circleMarker(latlng, {
+          radius: 7,
+          color: roleColor[role] || "#e8e4dc",
+          fillColor: roleColor[role] || "#e8e4dc",
+          fillOpacity: 0.85,
+        });
+      },
+      onEachFeature(feature, layer) {
+        const p = feature.properties || {};
+        layer.bindPopup(
+          `<strong>${p.class || "?"}</strong><br/>role=${p.role} · conf=${p.confidence}`
+        );
+      },
+    }).addTo(percMap);
+    try {
+      percMap.fitBounds(percLayer.getBounds(), { padding: [24, 24] });
+    } catch (_) {
+      /* empty */
+    }
+  }
+
+  function showPercReport(report) {
+    const el = document.getElementById("percReport");
+    if (!el) return;
+    el.hidden = false;
+    el.textContent = JSON.stringify(report, null, 2);
+  }
+
+  async function loadDemoPerception() {
+    const ontology = document.getElementById("percOntology").value;
+    const res = await fetch("/api/perception/detect", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        backend: "demo",
+        ontology,
+        accepted_disclaimer: true,
+        center_lon: -122.2515,
+        center_lat: 37.7735,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "demo detect failed");
+    paintPerception(data.perception);
+    const ingest = await fetch("/api/perception/ingest", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        perception: data.perception,
+        ontology,
+        accepted_disclaimer: true,
+      }),
+    });
+    const compiled = await ingest.json();
+    if (ingest.ok) {
+      showPercReport(compiled.report);
+      // Overlay compiled site geometry but keep raw detections for planning.
+      if (compiled.site_geojson) paintPerception(compiled.site_geojson, { asPlanInput: false });
+    }
+  }
+
+  const demoBtn = document.getElementById("percDemoBtn");
+  if (demoBtn) {
+    demoBtn.onclick = async () => {
+      const error = document.getElementById("error");
+      try {
+        await loadDemoPerception();
+      } catch (err) {
+        error.hidden = false;
+        error.textContent = String(err.message || err);
+      }
+    };
+  }
+
+  const cmdBtn = document.getElementById("percCommandBtn");
+  if (cmdBtn) {
+    cmdBtn.onclick = async () => {
+      const error = document.getElementById("error");
+      const command = document.getElementById("percCommand").value.trim();
+      if (!command) {
+        error.hidden = false;
+        error.textContent = "Enter a natural-language command first.";
+        return;
+      }
+      try {
+        const res = await fetch("/api/perception/command", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            command,
+            ontology: document.getElementById("percOntology").value,
+            backend: "vlm",
+            accepted_disclaimer: true,
+            center_lon: -122.2515,
+            center_lat: 37.7735,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "command failed");
+        paintPerception(data.perception);
+      } catch (err) {
+        error.hidden = false;
+        error.textContent = String(err.message || err);
+      }
+    };
+  }
+
+  const percFile = document.getElementById("percFile");
+  if (percFile) {
+    percFile.addEventListener("change", async (ev) => {
+      const file = ev.target.files[0];
+      if (!file) return;
+      const fc = JSON.parse(await file.text());
+      paintPerception(fc);
+    });
+  }
+
+  const percPlanBtn = document.getElementById("percPlanBtn");
+  if (percPlanBtn) {
+    percPlanBtn.onclick = async () => {
+      const error = document.getElementById("error");
+      const result = document.getElementById("result");
+      error.hidden = true;
+      if (!planAccept.checked) {
+        error.hidden = false;
+        error.textContent =
+          "Re-confirm the liability disclaimer before planning from perception.";
+        return;
+      }
+      if (!perceptionFC) {
+        error.hidden = false;
+        error.textContent = "Load demo detections, NL command, or upload GeoJSON first.";
+        return;
+      }
+      const btn = percPlanBtn;
+      btn.disabled = true;
+      btn.textContent = "Customizing…";
+      try {
+        const res = await fetch("/api/plan/from-perception", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            perception: perceptionFC,
+            ontology: document.getElementById("percOntology").value,
+            vertical: document.getElementById("vertical").value || "solar",
+            accepted_disclaimer: true,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          const detail = data.detail || JSON.stringify(data);
+          throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+        }
+        if (data.perception_report) showPercReport(data.perception_report);
+        showResult(data);
+        document.getElementById("planner").scrollIntoView({ behavior: "smooth" });
+      } catch (err) {
+        error.hidden = false;
+        error.textContent = String(err.message || err);
+        result.hidden = true;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Plan from perception";
+      }
+    };
+  }
 })();

@@ -68,39 +68,26 @@ def load_geojson(path: Path) -> dict[str, Any]:
 
 
 def extract_polygons(geojson: dict[str, Any]) -> list[Polygon]:
-    """Pull polygonal geometries out of a Feature, FeatureCollection or Geometry."""
+    """Pull coverage polygons out of a Feature, FeatureCollection or Geometry.
 
-    geometries: list[Any] = []
-    kind = geojson.get("type")
-    if kind == "FeatureCollection":
-        geometries = [feature["geometry"] for feature in geojson.get("features", [])]
-    elif kind == "Feature":
-        geometries = [geojson["geometry"]]
-    elif kind in {"Polygon", "MultiPolygon", "GeometryCollection"}:
-        geometries = [geojson]
-    else:
-        raise ValueError(f"Unsupported GeoJSON type: {kind!r}")
+    When features carry ``properties.role``, only ``cover`` (and untagged)
+    polygons are treated as the coverage area; ``avoid`` polygons are ignored
+    here and handled by :func:`extract_avoid_polygons`.
+    """
 
-    polygons: list[Polygon] = []
-    for geom in geometries:
-        if geom is None:
-            continue
-        shaped = shape(geom)
-        if shaped.is_empty:
-            continue
-        if shaped.geom_type == "Polygon":
-            polygons.append(shaped)
-        elif shaped.geom_type == "MultiPolygon":
-            polygons.extend(shaped.geoms)
-        elif shaped.geom_type == "GeometryCollection":
-            for part in shaped.geoms:
-                if part.geom_type == "Polygon":
-                    polygons.append(part)
-                elif part.geom_type == "MultiPolygon":
-                    polygons.extend(part.geoms)
+    polygons = _polygons_with_roles(geojson, include_roles={"cover", None, ""})
+    if not polygons:
+        # Legacy GeoJSON with no roles: take every polygon.
+        polygons = _polygons_with_roles(geojson, include_roles=None)
     if not polygons:
         raise ValueError("GeoJSON contains no polygonal coverage area")
     return polygons
+
+
+def extract_avoid_polygons(geojson: dict[str, Any]) -> list[Polygon]:
+    """Polygons tagged ``properties.role == 'avoid'`` (keep-out / no-fly)."""
+
+    return _polygons_with_roles(geojson, include_roles={"avoid"})
 
 
 def extract_depot_lonlats(geojson: dict[str, Any]) -> list[tuple[float, float]]:
@@ -118,6 +105,53 @@ def extract_depot_lonlats(geojson: dict[str, Any]) -> list[tuple[float, float]]:
         lon, lat = geom["coordinates"][:2]
         depots.append((float(lon), float(lat)))
     return depots
+
+
+def _polygons_with_roles(
+    geojson: dict[str, Any],
+    *,
+    include_roles: set[str | None] | None,
+) -> list[Polygon]:
+    items: list[tuple[Any, str | None]] = []
+    kind = geojson.get("type")
+    if kind == "FeatureCollection":
+        for feature in geojson.get("features", []):
+            props = feature.get("properties") or {}
+            role = props.get("role")
+            if role is not None:
+                role = str(role)
+            items.append((feature.get("geometry"), role))
+    elif kind == "Feature":
+        props = geojson.get("properties") or {}
+        role = props.get("role")
+        if role is not None:
+            role = str(role)
+        items.append((geojson.get("geometry"), role))
+    elif kind in {"Polygon", "MultiPolygon", "GeometryCollection"}:
+        items.append((geojson, None))
+    else:
+        raise ValueError(f"Unsupported GeoJSON type: {kind!r}")
+
+    polygons: list[Polygon] = []
+    for geom, role in items:
+        if include_roles is not None and role not in include_roles:
+            continue
+        if geom is None:
+            continue
+        shaped = shape(geom)
+        if shaped.is_empty:
+            continue
+        if shaped.geom_type == "Polygon":
+            polygons.append(shaped)
+        elif shaped.geom_type == "MultiPolygon":
+            polygons.extend(shaped.geoms)
+        elif shaped.geom_type == "GeometryCollection":
+            for part in shaped.geoms:
+                if part.geom_type == "Polygon":
+                    polygons.append(part)
+                elif part.geom_type == "MultiPolygon":
+                    polygons.extend(part.geoms)
+    return polygons
 
 
 def choose_cell_size(
@@ -149,6 +183,7 @@ def rasterize_site(
     *,
     cell_size_m: float,
     depot_lonlats: Sequence[tuple[float, float]] | None = None,
+    avoid_polygons: Sequence[Polygon] | None = None,
     vertical: str = "generic",
     altitude_m: float = 40.0,
     seed: int = 0,
@@ -182,12 +217,18 @@ def rasterize_site(
         altitude_m=altitude_m,
     )
 
+    avoid = list(avoid_polygons or [])
     free: list[tuple[int, int]] = []
     obstacles: list[tuple[int, int]] = []
     for y in range(height):
         for x in range(width):
             lon, lat = geo.cell_to_lonlat(x, y)
-            if site.covers(Point(lon, lat)) or site.intersects(_cell_polygon(geo, x, y)):
+            cell_poly = _cell_polygon(geo, x, y)
+            in_site = site.covers(Point(lon, lat)) or site.intersects(cell_poly)
+            in_avoid = any(
+                a.covers(Point(lon, lat)) or a.intersects(cell_poly) for a in avoid
+            )
+            if in_site and not in_avoid:
                 free.append((x, y))
             else:
                 obstacles.append((x, y))
@@ -197,13 +238,15 @@ def rasterize_site(
 
     free_set = set(free)
     depots = _place_depots(geo, free_set, site, depot_lonlats, vertical)
+    no_fly = [_lonlat_poly_to_grid(geo, poly) for poly in avoid]
+    no_fly = [p for p in no_fly if p is not None]
 
     map_payload = {
         "width": width,
         "height": height,
         "seed": seed,
         "obstacles": [cell_to_json(cell) for cell in obstacles],
-        "no_fly": [],
+        "no_fly": no_fly,
         "depots": [cell_to_json(cell) for cell in depots],
         "params": {
             "v": speed,
@@ -241,16 +284,25 @@ def write_site_workspace(
     """Rasterise a site GeoJSON into ``out_dir`` and return artefact paths."""
 
     polygons = extract_polygons(geojson)
+    avoid_polygons = extract_avoid_polygons(geojson)
     site = unary_union(polygons)
     if site.geom_type == "MultiPolygon":
         # Coverage planner expects one connected workspace; take the largest piece.
         site = max(site.geoms, key=lambda g: g.area)
+    if avoid_polygons:
+        avoid_union = unary_union(avoid_polygons)
+        site = site.difference(avoid_union)
+        if site.is_empty:
+            raise ValueError("Avoid zones removed the entire coverage area")
+        if site.geom_type == "MultiPolygon":
+            site = max(site.geoms, key=lambda g: g.area)
     depot_lonlats = extract_depot_lonlats(geojson)
     size = choose_cell_size(site, cell_size_m=cell_size_m, max_cells=max_cells)
     map_payload, params_payload, geo = rasterize_site(
         site,
         cell_size_m=size,
         depot_lonlats=depot_lonlats,
+        avoid_polygons=avoid_polygons,
         vertical=vertical,
         altitude_m=altitude_m,
         seed=seed,
@@ -270,6 +322,23 @@ def write_site_workspace(
     io.write_json(params_path, params_payload)
     io.write_json(geo_path, geo_payload)
     return map_path, params_path, geo_path, geo
+
+
+def _lonlat_poly_to_grid(geo: GeoTransform, poly: Polygon) -> dict[str, Any] | None:
+    """Project a WGS84 polygon into grid-coordinate vertices for ``map.json`` no_fly."""
+
+    if poly.is_empty or poly.geom_type != "Polygon":
+        return None
+    vertices = []
+    for lon, lat in poly.exterior.coords:
+        x, y = geo.lonlat_to_cell(float(lon), float(lat))
+        # Clamp into the grid so the rasteriser always sees something usable.
+        x = max(0, min(geo.width - 1, x))
+        y = max(0, min(geo.height - 1, y))
+        vertices.append({"x": float(x), "y": float(y)})
+    if len(vertices) < 3:
+        return None
+    return {"vertices": vertices}
 
 
 def _cell_polygon(geo: GeoTransform, x: int, y: int) -> Polygon:
@@ -325,6 +394,7 @@ def _unique(cells: Iterable[tuple[int, int]]) -> list[tuple[int, int]]:
 __all__ = [
     "GeoTransform",
     "choose_cell_size",
+    "extract_avoid_polygons",
     "extract_depot_lonlats",
     "extract_polygons",
     "load_geojson",

@@ -374,6 +374,166 @@ def export_command(
         console.print(f"  qgc: {plan}")
 
 
+@run.group("perception")
+def perception_group() -> None:
+    """YOLO / CNN / VLM / domain perception adapters."""
+
+
+@perception_group.command("backends")
+def perception_backends_command() -> None:
+    """List installed / enabled perception backends."""
+
+    from .perception.backends import available_backends
+
+    for row in available_backends():
+        flag = "on" if row["enabled"] else "off"
+        console.print(
+            f"[bold]{row['name']}[/bold]  installed={row['installed']}  "
+            f"enabled={flag}  {row['detail']}"
+        )
+
+
+@perception_group.command("ingest")
+@click.option("--input", "input_path", type=PathArg, required=True)
+@click.option("--output", "output_path", type=PathArg, required=True)
+@click.option("--ontology", default="solar", show_default=True)
+@click.option("--min-confidence", type=float, default=0.25, show_default=True)
+def perception_ingest_command(
+    input_path: Path, output_path: Path, ontology: str, min_confidence: float
+) -> None:
+    """Compile a perception FeatureCollection into site GeoJSON."""
+
+    from .perception.compile import compile_detections
+
+    payload = io.read_json(input_path)
+    compiled = compile_detections(
+        payload, ontology=ontology, min_confidence=min_confidence
+    )
+    io.ensure_directory(output_path.parent)
+    io.write_json(output_path, compiled.site_geojson)
+    report_path = output_path.with_name(output_path.stem + "_report.json")
+    io.write_json(report_path, compiled.report)
+    console.print(f"Wrote site GeoJSON to [bold]{output_path}[/bold]")
+    console.print(f"Report: [bold]{report_path}[/bold]")
+
+
+@perception_group.command("detect")
+@click.option("--backend", default="demo", show_default=True)
+@click.option("--ontology", default="solar", show_default=True)
+@click.option("--output", "output_path", type=PathArg, required=True)
+@click.option("--image", "image_path", type=PathArg, default=None)
+@click.option("--text", default=None)
+@click.option("--lon", type=float, default=-122.2515)
+@click.option("--lat", type=float, default=37.7735)
+def perception_detect_command(
+    backend: str,
+    ontology: str,
+    output_path: Path,
+    image_path: Optional[Path],
+    text: Optional[str],
+    lon: float,
+    lat: float,
+) -> None:
+    """Run a perception backend and write detections GeoJSON."""
+
+    from .perception.backends import run_detect
+    from .perception.backends.base import PerceptionInput
+
+    fc = run_detect(
+        backend,
+        PerceptionInput(
+            ontology=ontology,
+            text=text,
+            image_path=str(image_path) if image_path else None,
+            center_lonlat=(lon, lat),
+        ),
+    )
+    io.ensure_directory(output_path.parent)
+    io.write_json(output_path, fc)
+    console.print(
+        f"Wrote {len(fc.get('features', []))} detections to [bold]{output_path}[/bold]"
+    )
+
+
+@perception_group.command("command")
+@click.option("--text", "command_text", required=True)
+@click.option("--backend", default="vlm", show_default=True)
+@click.option("--ontology", default="solar", show_default=True)
+@click.option("--output", "output_path", type=PathArg, required=True)
+@click.option("--lon", type=float, default=-122.2515)
+@click.option("--lat", type=float, default=37.7735)
+def perception_command_cli(
+    command_text: str,
+    backend: str,
+    ontology: str,
+    output_path: Path,
+    lon: float,
+    lat: float,
+) -> None:
+    """NL flight / survey command → perception FeatureCollection."""
+
+    from .perception.backends import run_detect
+    from .perception.backends.base import PerceptionInput
+
+    try:
+        fc = run_detect(
+            backend,
+            PerceptionInput(
+                ontology=ontology,
+                text=command_text,
+                center_lonlat=(lon, lat),
+            ),
+        )
+    except (KeyError, RuntimeError, ValueError):
+        fc = run_detect(
+            "demo",
+            PerceptionInput(
+                ontology=ontology,
+                text=command_text,
+                center_lonlat=(lon, lat),
+            ),
+        )
+    io.ensure_directory(output_path.parent)
+    io.write_json(output_path, fc)
+    console.print(f"Wrote command detections to [bold]{output_path}[/bold]")
+
+
+@perception_group.command("plan-from-perception")
+@click.option("--input", "input_path", type=PathArg, required=True)
+@click.option("--output-dir", type=PathArg, required=True)
+@click.option("--ontology", default="solar", show_default=True)
+@click.option(
+    "--vertical",
+    type=click.Choice(sorted(VERTICALS)),
+    default="solar",
+    show_default=True,
+)
+@click.option("--min-confidence", type=float, default=0.25, show_default=True)
+def perception_plan_command(
+    input_path: Path,
+    output_dir: Path,
+    ontology: str,
+    vertical: str,
+    min_confidence: float,
+) -> None:
+    """Compile detections and run the full site planner."""
+
+    from .perception.compile import compile_detections
+
+    payload = io.read_json(input_path)
+    compiled = compile_detections(
+        payload, ontology=ontology, min_confidence=min_confidence
+    )
+    io.ensure_directory(output_dir)
+    site_path = output_dir / "site_from_perception.geojson"
+    io.write_json(site_path, compiled.site_geojson)
+    io.write_json(output_dir / "perception_report.json", compiled.report)
+    result = plan_site(site_path, output_dir, vertical=vertical)
+    console.rule(f"Perception mission ({vertical})")
+    print_summary(result.simulation, output_dir)
+    fail_on_problems(result.simulation)
+
+
 @run.command("serve")
 @click.option("--host", default="127.0.0.1", show_default=True)
 @click.option("--port", type=int, default=8000, show_default=True)

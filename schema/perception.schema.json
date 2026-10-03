@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pimpmydrone.org/schema/perception.schema.json",
+  "title": "PimpMyDronePerception",
+  "description": "GeoJSON FeatureCollection of model detections for mission planning.",
+  "type": "object",
+  "required": ["type", "features"],
+  "properties": {
+    "type": { "const": "FeatureCollection" },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "geometry", "properties"],
+        "properties": {
+          "type": { "const": "Feature" },
+          "geometry": {
+            "type": ["object", "null"],
+            "properties": {
+              "type": {
+                "enum": ["Point", "Polygon", "MultiPolygon"]
+              },
+              "coordinates": true
+            },
+            "required": ["type", "coordinates"]
+          },
+          "properties": {
+            "type": "object",
+            "required": ["class", "confidence", "role", "source"],
+            "properties": {
+              "class": { "type": "string", "minLength": 1 },
+              "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+              "role": {
+                "enum": ["cover", "avoid", "inspect", "depot", "track"]
+              },
+              "source": {
+                "enum": ["yolo", "cnn", "vlm", "domain", "manual", "demo"]
+              },
+              "track_id": { "type": ["string", "integer", "null"] },
+              "thermal": { "type": ["boolean", "null"] },
+              "priority": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+              "model": { "type": ["string", "null"] },
+              "frame_id": { "type": ["string", "integer", "null"] },
+              "timestamp": { "type": ["string", "null"] }
+            },
+            "additionalProperties": true
+          }
+        }
+      }
+    }
+  }
+}

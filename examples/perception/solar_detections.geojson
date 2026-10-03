@@ -1,0 +1,73 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-122.2522, 37.7730],
+          [-122.2508, 37.7730],
+          [-122.2508, 37.7740],
+          [-122.2522, 37.7740],
+          [-122.2522, 37.7730]
+        ]]
+      },
+      "properties": {
+        "class": "solar_panel",
+        "confidence": 0.94,
+        "role": "cover",
+        "source": "yolo",
+        "model": "yolov8n-seg"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-122.2514, 37.7736]
+      },
+      "properties": {
+        "class": "hotspot",
+        "confidence": 0.88,
+        "role": "inspect",
+        "source": "domain",
+        "thermal": true,
+        "priority": 0.9
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-122.2510, 37.7733],
+          [-122.2507, 37.7733],
+          [-122.2507, 37.7735],
+          [-122.2510, 37.7735],
+          [-122.2510, 37.7733]
+        ]]
+      },
+      "properties": {
+        "class": "vehicle",
+        "confidence": 0.81,
+        "role": "avoid",
+        "source": "yolo"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-122.2522, 37.7730]
+      },
+      "properties": {
+        "class": "depot",
+        "confidence": 1.0,
+        "role": "depot",
+        "source": "manual",
+        "depot": true
+      }
+    }
+  ]
+}

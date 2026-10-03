@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="/assets/styles.css?v=0.3.2" />
+  <link rel="stylesheet" href="/assets/styles.css?v=0.4.0" />
   <meta property="og:title" content="PimpMyDrone — custom multi-drone coverage" />
   <meta property="og:description" content="Free experimental multi-drone coverage planner. Donations welcome. Fly at your own risk." />
   <meta property="og:image" content="/assets/img/hero-hangar.jpg" />
@@ -43,6 +43,7 @@
     </div>
     <nav>
       <a href="#planner">Planner</a>
+      <a href="#perception">Perception</a>
       <a href="#gallery">Gallery</a>
       <a href="/legal">Legal</a>
       <a href="/donate">Donate</a>
@@ -108,6 +109,50 @@
       </div>
     </section>
 
+    <section id="perception" class="perception-lab">
+      <div class="perception-inner">
+        <h2>Perception Lab</h2>
+        <p class="lede">
+          Plug YOLO, tiny ONNX CNNs, VLMs, or domain models into the hangar.
+          Detections become cover / avoid / inspect geometry — then the planner
+          chromes out the mission. Experimental. Not sense-and-avoid.
+        </p>
+        <div class="role-legend" aria-label="Detection roles">
+          <span class="role cover">cover</span>
+          <span class="role avoid">avoid</span>
+          <span class="role inspect">inspect</span>
+          <span class="role depot">depot</span>
+        </div>
+        <div class="perception-grid">
+          <div class="perception-controls">
+            <label for="percOntology">Ontology</label>
+            <select id="percOntology">
+              <option value="solar" selected>solar / infra</option>
+              <option value="security">security</option>
+              <option value="ag">ag / crop</option>
+              <option value="thermal">thermal</option>
+              <option value="wildlife">wildlife</option>
+            </select>
+            <label for="percCommand">Natural-language command</label>
+            <input id="percCommand" type="text" placeholder="survey panels, avoid trucks" />
+            <label for="percFile">Or upload detections GeoJSON</label>
+            <input id="percFile" type="file" accept=".json,.geojson,application/geo+json,application/json" />
+            <div class="hero-actions">
+              <button id="percDemoBtn" class="btn" type="button">Load demo detections</button>
+              <button id="percCommandBtn" class="btn ghost" type="button">Run NL command</button>
+              <button id="percPlanBtn" class="btn" type="button">Plan from perception</button>
+            </div>
+            <p class="hint">
+              Requires the liability checkbox in the planner panel.
+              CV/VLM outputs are untrusted — verify every keep-out before arming.
+            </p>
+            <pre id="percReport" class="perc-report" hidden></pre>
+          </div>
+          <div id="percMap" class="perc-map" aria-label="Perception overlay map"></div>
+        </div>
+      </div>
+    </section>
+
     <section id="planner" class="planner">
       <div class="panel">
         <h2>Hangar planner</h2>
@@ -151,13 +196,14 @@
             <li>Battery-aware tours with a discrete simulator</li>
             <li>QGC / GeoJSON / CSV draft exports</li>
             <li>Donation-funded hangar — free to run locally or here</li>
+            <li>Perception adapters for YOLO / ONNX / VLM / domain models</li>
           </ul>
         </div>
         <div>
           <h3>Not in the build</h3>
           <ul>
             <li>A certified autopilot or UTM product</li>
-            <li>Airspace, terrain, or obstacle clearance</li>
+            <li>Airspace, terrain, or certified sense-and-avoid</li>
             <li>Spatial deconfliction between drones</li>
             <li>A paid SLA, warranty, TV-show affiliation, or insurance</li>
           </ul>
@@ -173,6 +219,6 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <script src="/assets/app.js?v=0.3.2"></script>
+  <script src="/assets/app.js?v=0.4.0"></script>
 </body>
 </html>

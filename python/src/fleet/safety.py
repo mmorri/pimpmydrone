@@ -55,6 +55,7 @@ def build_safety_report(
     geo: dict[str, Any] | None,
     manifest: dict[str, Any] | None,
     vertical: str,
+    perception: dict[str, Any] | None = None,
 ) -> str:
     """Markdown report that must travel with every downloadable mission."""
 
@@ -77,11 +78,12 @@ def build_safety_report(
         "- [ ] Battery, wind, weather, and daylight are within my aircraft limits.",
         "- [ ] I have a lost-link and low-battery procedure; I am ready to take manual control.",
         "- [ ] If using more than one aircraft, I have a separation / deconfliction plan.",
+        "- [ ] If perception / CV / VLM detections shaped this plan, I verified every keep-out and target on the map.",
         "- [ ] I accept that this tool authors accept **no responsibility** for the flight.",
         "",
     ]
 
-    warnings = collect_warnings(metrics=metrics, geo=geo)
+    warnings = collect_warnings(metrics=metrics, geo=geo, perception=perception)
     lines.append("## Automated warnings from this run")
     lines.append("")
     if warnings:
@@ -90,6 +92,31 @@ def build_safety_report(
     else:
         lines.append("- No automated warnings beyond the hard disclaimer above.")
     lines.append("")
+
+    if perception:
+        counts = perception.get("counts") or {}
+        lines.extend(
+            [
+                "## Perception (experimental — not sense-and-avoid)",
+                "",
+                perception.get(
+                    "disclaimer",
+                    "Computer vision / VLM outputs are untrusted inputs.",
+                ),
+                "",
+                f"- Ontology: `{perception.get('ontology', '?')}`",
+                f"- Sources: {', '.join(perception.get('sources') or []) or 'n/a'}",
+                f"- Cover detections: {counts.get('cover', 0)}",
+                f"- Avoid / keep-out: {counts.get('avoid', 0)}",
+                f"- Inspect targets: {counts.get('inspect', 0)}",
+                f"- Depots from perception: {counts.get('depot', 0)}",
+                "",
+                "False positives and false negatives are expected. This stack is "
+                "**not** a certified sense-and-avoid, detect-and-avoid, or "
+                "people-counting product.",
+                "",
+            ]
+        )
 
     if metrics:
         cov = metrics.get("coverage", {})
@@ -161,8 +188,14 @@ def collect_warnings(
     *,
     metrics: dict[str, Any] | None,
     geo: dict[str, Any] | None,
+    perception: dict[str, Any] | None = None,
 ) -> list[str]:
     warnings: list[str] = []
+    if perception:
+        warnings.append(
+            "Mission geometry was influenced by perception detections "
+            "(YOLO/CNN/VLM/domain) — verify cover/avoid/inspect on a real map before arming."
+        )
     if not metrics:
         warnings.append("No simulator metrics were attached to this export.")
         return warnings
@@ -210,10 +243,15 @@ def write_safety_bundle(
     geo: dict[str, Any] | None,
     manifest: dict[str, Any] | None,
     vertical: str,
+    perception: dict[str, Any] | None = None,
 ) -> Path:
     io.ensure_directory(out_dir)
     report = build_safety_report(
-        metrics=metrics, geo=geo, manifest=manifest, vertical=vertical
+        metrics=metrics,
+        geo=geo,
+        manifest=manifest,
+        vertical=vertical,
+        perception=perception,
     )
     path = out_dir / "SAFETY_REPORT.md"
     path.write_text(report, encoding="utf-8")

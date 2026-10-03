@@ -1,0 +1,68 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-122.2521, 37.7731],
+          [-122.2509, 37.7731],
+          [-122.2509, 37.7739],
+          [-122.2521, 37.7739],
+          [-122.2521, 37.7731]
+        ]]
+      },
+      "properties": {
+        "class": "crop_stress",
+        "confidence": 0.83,
+        "role": "cover",
+        "source": "domain"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-122.2515, 37.7735]
+      },
+      "properties": {
+        "class": "smoke",
+        "confidence": 0.93,
+        "role": "inspect",
+        "source": "cnn",
+        "thermal": true,
+        "priority": 1.0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-122.2512, 37.7736]
+      },
+      "properties": {
+        "class": "flame",
+        "confidence": 0.9,
+        "role": "inspect",
+        "source": "domain",
+        "thermal": true,
+        "priority": 1.0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-122.2521, 37.7731]
+      },
+      "properties": {
+        "class": "depot",
+        "confidence": 1.0,
+        "role": "depot",
+        "source": "manual",
+        "depot": true
+      }
+    }
+  ]
+}

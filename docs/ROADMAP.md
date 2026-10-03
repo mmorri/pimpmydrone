@@ -100,6 +100,9 @@ fixed before it runs and the stage is really a scheduler.
 
 ## Done
 
+- **Perception + ML adapters.** Shared detection GeoJSON, solar/security/ag/thermal/wildlife
+  ontologies, compile→site (cover/avoid/inspect), YOLO / ONNX / VLM / domain
+  backends, API/CLI, and hangar Perception Lab. Not sense-and-avoid.
 - **Per-region pattern choice.** The two coverage patterns win on different
   terrain, and the crossover happens within a single map, not just between
   maps. `--coverage-algorithm auto` (now the default) plans a region with both

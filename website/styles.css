@@ -336,6 +336,74 @@ select, input[type="number"], input[type="file"], input[type="text"], input[type
   letter-spacing: 0.02em;
   animation: plan-pulse 1.4s ease-in-out infinite;
 }
+.perception-lab {
+  padding: 1.5rem 1.5rem 0.5rem;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background:
+    linear-gradient(120deg, rgba(61, 255, 154, 0.05), transparent 40%),
+    rgba(0, 0, 0, 0.2);
+}
+.perception-inner h2 {
+  font-family: "Bebas Neue", Impact, sans-serif;
+  font-size: 2rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 0 0 0.35rem;
+}
+.role-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0.85rem 0 1rem;
+}
+.role {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.28rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+.role.cover { color: var(--go); border-color: rgba(61, 255, 154, 0.45); }
+.role.avoid { color: var(--stop); border-color: rgba(255, 90, 61, 0.45); }
+.role.inspect { color: var(--gold); border-color: rgba(240, 193, 75, 0.45); }
+.role.depot { color: var(--neon); border-color: rgba(196, 77, 255, 0.45); }
+.perception-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) 1fr;
+  gap: 1rem;
+}
+@media (max-width: 900px) {
+  .perception-grid { grid-template-columns: 1fr; }
+}
+.perception-controls {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 1rem 1.1rem 1.2rem;
+}
+.perc-map {
+  min-height: 360px;
+  height: min(50vh, 480px);
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  overflow: hidden;
+  background: #0c0c12;
+}
+.perc-report {
+  margin-top: 0.85rem;
+  padding: 0.7rem 0.8rem;
+  background: #0c0c12;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--chrome);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.75rem;
+  white-space: pre-wrap;
+  max-height: 180px;
+  overflow: auto;
+}
 @keyframes plan-pulse {
   0%, 100% { opacity: 0.55; }
   50% { opacity: 1; }

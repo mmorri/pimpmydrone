@@ -41,7 +41,19 @@ You must:
 2. check airspace, weather, NOTAMs, and local rules yourself;
 3. inspect every waypoint in your own ground control station before arming;
 4. maintain visual line of sight / approved BVLOS procedures as required;
-5. never treat coverage % or “simulation OK” as a flight clearance.
+5. never treat coverage % or “simulation OK” as a flight clearance;
+6. treat any computer-vision, YOLO, CNN, thermal, or VLM/SLM detections that
+   shaped a plan as **untrusted suggestions** — not sense-and-avoid, not
+   people-counting certification, and not a substitute for your own survey.
+
+## Perception / ML inputs
+
+Optional perception adapters accept detections from third-party models
+(Ultralytics YOLO, ONNX CNNs, llama.cpp / vLLM / Ollama VLMs, domain plugins).
+Those models, weights, prompts, and georeferencing transforms are outside this
+project’s control. **False positives and false negatives are expected.** Authors
+accept **no liability** for missions planned from bad detections, missed
+obstacles, misclassified people or wildlife, or hallucinated VLM geometry.
 
 ## No paid warranty
 

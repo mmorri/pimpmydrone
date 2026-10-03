@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Added
+
+- **Perception Lab (0.4.0):** YOLO / ONNX CNN / VLM / domain adapters, shared
+  detection schema, class→role ontologies, compile-to-site GeoJSON, API + CLI,
+  hangar Perception Lab UI. CV outputs are untrusted — not sense-and-avoid.
+
 ### Changed
 
 - Mid-tour battery recalls now recharge at the **nearest depot** (cheapest

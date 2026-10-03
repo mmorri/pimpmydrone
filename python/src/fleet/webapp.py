@@ -48,14 +48,58 @@ class PlanRequest(BaseModel):
     accepted_disclaimer: bool = False
 
 
+class PerceptionIngestRequest(BaseModel):
+    perception: dict[str, Any]
+    ontology: str = Field(default="solar")
+    role_map: Optional[dict[str, str]] = None
+    min_confidence: float = Field(default=0.25, ge=0, le=1)
+    accepted_disclaimer: bool = False
+
+
+class PerceptionDetectRequest(BaseModel):
+    backend: str = Field(default="demo")
+    ontology: str = Field(default="solar")
+    text: Optional[str] = None
+    image_b64: Optional[str] = None
+    image_url: Optional[str] = None
+    center_lon: Optional[float] = None
+    center_lat: Optional[float] = None
+    frame_georef: Optional[dict[str, float]] = None
+    accepted_disclaimer: bool = False
+
+
+class PerceptionCommandRequest(BaseModel):
+    command: str
+    ontology: str = Field(default="solar")
+    backend: str = Field(default="vlm")
+    image_b64: Optional[str] = None
+    center_lon: Optional[float] = None
+    center_lat: Optional[float] = None
+    accepted_disclaimer: bool = False
+
+
+class PlanFromPerceptionRequest(BaseModel):
+    perception: dict[str, Any]
+    ontology: str = Field(default="solar")
+    vertical: str = Field(default="solar")
+    role_map: Optional[dict[str, str]] = None
+    min_confidence: float = Field(default=0.25, ge=0, le=1)
+    cell_size_m: Optional[float] = None
+    max_drones: Optional[int] = Field(default=None, ge=1, le=12)
+    battery: Optional[float] = Field(default=None, gt=0)
+    altitude_m: Optional[float] = Field(default=None, gt=0, le=120)
+    accepted_disclaimer: bool = False
+
+
 def create_app() -> FastAPI:
     app = FastAPI(
         title="PimpMyDrone",
         description=(
-            "Experimental multi-drone coverage planner. Free forever. "
-            "Donations welcome. Authors accept no responsibility for flights."
+            "Experimental multi-drone coverage planner with perception adapters "
+            "(YOLO / CNN / VLM / domain). Free forever. Donations welcome. "
+            "Authors accept no responsibility for flights."
         ),
-        version="0.3.3",
+        version="0.4.0",
     )
     app.add_middleware(
         CORSMiddleware,
@@ -99,9 +143,10 @@ def create_app() -> FastAPI:
         return {
             "status": "ok",
             "product": "pimpmydrone",
-            "version": "0.3.3",
+            "version": "0.4.0",
             "monetization": "donations",
             "max_cells": MAX_CELLS,
+            "perception": True,
         }
 
     @app.get("/api/config")
@@ -143,6 +188,132 @@ def create_app() -> FastAPI:
             battery=body.battery,
             altitude_m=body.altitude_m,
         )
+
+    @app.get("/api/perception/backends")
+    def perception_backends() -> dict[str, Any]:
+        from .perception.backends import available_backends
+
+        return {"backends": available_backends()}
+
+    @app.get("/api/perception/ontology")
+    def perception_ontology() -> dict[str, Any]:
+        from .perception.ontology import ontology_catalog
+
+        return ontology_catalog()
+
+    @app.post("/api/perception/ingest")
+    def perception_ingest(body: PerceptionIngestRequest) -> dict[str, Any]:
+        _require_disclaimer(body.accepted_disclaimer)
+        from .perception.compile import compile_detections
+        from .perception.schema import validate_perception
+
+        errors = validate_perception(body.perception)
+        if errors:
+            raise HTTPException(400, "; ".join(errors[:8]))
+        try:
+            compiled = compile_detections(
+                body.perception,
+                ontology=body.ontology,
+                role_map=body.role_map,
+                min_confidence=body.min_confidence,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return {
+            "site_geojson": compiled.site_geojson,
+            "report": compiled.report,
+            "normalized": compiled.normalized,
+            "disclaimer": DISCLAIMER_SHORT,
+        }
+
+    @app.post("/api/perception/detect")
+    def perception_detect(body: PerceptionDetectRequest) -> dict[str, Any]:
+        _require_disclaimer(body.accepted_disclaimer)
+        from .perception.backends import run_detect
+        from .perception.backends.base import PerceptionInput
+
+        center = None
+        if body.center_lon is not None and body.center_lat is not None:
+            center = (body.center_lon, body.center_lat)
+        try:
+            fc = run_detect(
+                body.backend,
+                PerceptionInput(
+                    ontology=body.ontology,
+                    text=body.text,
+                    image_b64=body.image_b64,
+                    image_url=body.image_url,
+                    center_lonlat=center,
+                    frame_georef=body.frame_georef,
+                ),
+            )
+        except (KeyError, RuntimeError, ValueError) as exc:
+            raise HTTPException(400, str(exc)) from exc
+        return {"perception": fc, "backend": body.backend}
+
+    @app.post("/api/perception/command")
+    def perception_command(body: PerceptionCommandRequest) -> dict[str, Any]:
+        _require_disclaimer(body.accepted_disclaimer)
+        from .perception.backends import run_detect
+        from .perception.backends.base import PerceptionInput
+
+        center = None
+        if body.center_lon is not None and body.center_lat is not None:
+            center = (body.center_lon, body.center_lat)
+        backend = body.backend
+        try:
+            fc = run_detect(
+                backend,
+                PerceptionInput(
+                    ontology=body.ontology,
+                    text=body.command,
+                    image_b64=body.image_b64,
+                    center_lonlat=center,
+                ),
+            )
+        except (KeyError, RuntimeError, ValueError):
+            # Always usable hangar path.
+            fc = run_detect(
+                "demo",
+                PerceptionInput(
+                    ontology=body.ontology,
+                    text=body.command,
+                    center_lonlat=center,
+                ),
+            )
+            backend = "demo"
+        return {"perception": fc, "backend": backend, "command": body.command}
+
+    @app.post("/api/plan/from-perception")
+    def plan_from_perception(body: PlanFromPerceptionRequest) -> dict[str, Any]:
+        _require_disclaimer(body.accepted_disclaimer)
+        from .perception.compile import compile_detections
+
+        try:
+            compiled = compile_detections(
+                body.perception,
+                ontology=body.ontology,
+                role_map=body.role_map,
+                min_confidence=body.min_confidence,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        result = _run_job(
+            compiled.site_geojson,
+            vertical=body.vertical,
+            cell_size_m=body.cell_size_m,
+            max_drones=body.max_drones,
+            battery=body.battery,
+            altitude_m=body.altitude_m,
+            perception_report=compiled.report,
+        )
+        # Persist perception artefacts alongside the job.
+        job = _job_dir(result["job_id"])
+        io.write_json(job / "perception.json", body.perception)
+        io.write_json(job / "perception_report.json", compiled.report)
+        io.write_json(job / "site_from_perception.geojson", compiled.site_geojson)
+        result["perception_report"] = compiled.report
+        return result
 
     @app.post("/api/plan/upload")
     async def plan_upload(
@@ -275,6 +446,7 @@ def _run_job(
     max_drones: Optional[int],
     battery: Optional[float],
     altitude_m: Optional[float],
+    perception_report: Optional[dict[str, Any]] = None,
 ) -> dict[str, Any]:
     if vertical not in VERTICALS:
         raise HTTPException(400, f"Unknown vertical {vertical!r}")
@@ -304,7 +476,21 @@ def _run_job(
 
     metrics = result.metrics
     geo_payload = io.read_json(out_dir / "geo.json")
-    warnings = collect_warnings(metrics=metrics, geo=geo_payload)
+    if perception_report:
+        from .safety import write_safety_bundle
+
+        io.write_json(out_dir / "perception_report.json", perception_report)
+        write_safety_bundle(
+            out_dir / "missions",
+            metrics=metrics,
+            geo=geo_payload,
+            manifest=result.manifest,
+            vertical=vertical,
+            perception=perception_report,
+        )
+    warnings = collect_warnings(
+        metrics=metrics, geo=geo_payload, perception=perception_report
+    )
     return {
         "job_id": job_id,
         "vertical": vertical,

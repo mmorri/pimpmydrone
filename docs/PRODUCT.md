@@ -40,6 +40,13 @@ uv run python -m fleet from-geo --geojson ../examples/sites/solar_farm.geojson \
   --output-dir ../outputs/site-solar --vertical solar
 ```
 
+## Perception / ML adapters
+
+YOLO, ONNX CNNs, VLMs, and domain plugins feed a shared detection schema.
+See [`docs/PERCEPTION.md`](PERCEPTION.md). Hangar UI: `#perception`.
+
+CV/VLM outputs are **untrusted** and are not sense-and-avoid.
+
 ## What “good enough to ask for donations” means here
 
 - Planner + simulator still verify coverage.
