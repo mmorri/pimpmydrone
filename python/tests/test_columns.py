@@ -119,9 +119,7 @@ def test_generate_columns_seeds_planner_regions():
 
 def test_set_partition_covers_exactly_once():
     tours = [make_tour(i, 10.0) for i in range(3)]
-    tasks = [
-        TourTask(i, 10.0, 2.0, 1, tour_depot(t), t) for i, t in enumerate(tours)
-    ]
+    tasks = [TourTask(i, 10.0, 2.0, 1, tour_depot(t), t) for i, t in enumerate(tours)]
     columns = generate_columns(tasks, max_drones=3)
     selected, _, drones, makespan = solve_set_partition(
         tasks, columns, max_drones=3, time_limit=5
@@ -140,12 +138,8 @@ def test_lp_duals_and_pricing_from_singletons():
         TourTask(i, float(t["cost"]["time"]), 2.0, 1, tour_depot(t), t)
         for i, t in enumerate(tours)
     ]
-    singletons = [
-        Column((t.index,), t.duration, t.depot) for t in tasks
-    ]
-    duals = solve_rmp_lp_duals(
-        tasks, singletons, max_drones=2, drone_cost=1.0
-    )
+    singletons = [Column((t.index,), t.duration, t.depot) for t in tasks]
+    duals = solve_rmp_lp_duals(tasks, singletons, max_drones=2, drone_cost=1.0)
     assert duals is not None
     assert len(duals) == 4
     priced = price_columns(
@@ -157,9 +151,7 @@ def test_lp_duals_and_pricing_from_singletons():
 
 def test_column_generation_runs_pricing_loop():
     tours = [make_tour(i, 10.0) for i in range(3)]
-    tasks = [
-        TourTask(i, 10.0, 2.0, 1, tour_depot(t), t) for i, t in enumerate(tours)
-    ]
+    tasks = [TourTask(i, 10.0, 2.0, 1, tour_depot(t), t) for i, t in enumerate(tours)]
     result = solve_column_generation(tasks, max_drones=3, time_limit=5)
     assert result.pricing_rounds >= 1
     assert result.columns_generated >= 3

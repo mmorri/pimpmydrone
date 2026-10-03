@@ -14,7 +14,12 @@ from typing import Any, Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse
+from fastapi.responses import (
+    FileResponse,
+    HTMLResponse,
+    JSONResponse,
+    PlainTextResponse,
+)
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -25,22 +30,20 @@ from .site import VERTICALS, plan_site
 ROOT = Path(__file__).resolve().parents[3]
 WEBSITE_DIR = Path(os.environ.get("FLEET_WEBSITE", ROOT / "website"))
 STATIC_DIR = Path(__file__).resolve().parent / "static"
-JOBS_ROOT = Path(os.environ.get("FLEET_JOBS", Path(tempfile.gettempdir()) / "fleet-jobs"))
+JOBS_ROOT = Path(
+    os.environ.get("FLEET_JOBS", Path(tempfile.gettempdir()) / "fleet-jobs")
+)
 # Fair-use cap so a public demo cannot melt a laptop — not a paywall.
 MAX_CELLS = int(os.environ.get("FLEET_MAX_CELLS", "8000"))
 MAX_UPLOAD_BYTES = int(os.environ.get("FLEET_MAX_UPLOAD_BYTES", str(2_000_000)))
-DONATE_URL = os.environ.get(
-    "FLEET_DONATE_URL", "https://github.com/sponsors/mmorri"
-)
-DONATE_ALT_URL = os.environ.get(
-    "FLEET_DONATE_ALT_URL", "https://ko-fi.com/pimpmydrone"
-)
-GITHUB_URL = os.environ.get(
-    "FLEET_GITHUB_URL", "https://github.com/mmorri/pimpmydrone"
-)
+DONATE_URL = os.environ.get("FLEET_DONATE_URL", "https://github.com/sponsors/mmorri")
+DONATE_ALT_URL = os.environ.get("FLEET_DONATE_ALT_URL", "https://ko-fi.com/pimpmydrone")
+GITHUB_URL = os.environ.get("FLEET_GITHUB_URL", "https://github.com/mmorri/pimpmydrone")
 JOB_TTL_SECONDS = int(os.environ.get("FLEET_JOB_TTL_SECONDS", str(24 * 3600)))
 RATE_LIMIT_PER_MIN = int(os.environ.get("FLEET_RATE_LIMIT_PER_MIN", "12"))
-_CORS = [o.strip() for o in os.environ.get("FLEET_CORS_ORIGINS", "*").split(",") if o.strip()]
+_CORS = [
+    o.strip() for o in os.environ.get("FLEET_CORS_ORIGINS", "*").split(",") if o.strip()
+]
 
 
 class PlanRequest(BaseModel):
@@ -119,7 +122,7 @@ def create_app() -> FastAPI:
     async def rate_limit_plans(request, call_next):
         path = request.url.path
         if request.method == "POST" and path.startswith("/api/plan"):
-            client = (request.client.host if request.client else "unknown")
+            client = request.client.host if request.client else "unknown"
             now = time.time()
             window = hit_log.setdefault(client, [])
             hit_log[client] = [t for t in window if now - t < 60.0]

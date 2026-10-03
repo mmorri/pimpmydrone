@@ -101,9 +101,7 @@ def generate_columns(
         depot = group[0].depot
         if any(t.depot != depot for t in group):
             continue
-        ordered = [
-            t.index for t in sorted(group, key=lambda t: (-t.duration, t.index))
-        ]
+        ordered = [t.index for t in sorted(group, key=lambda t: (-t.duration, t.index))]
         add(ordered, depot)
 
     for depot, group in by_depot.items():
@@ -284,7 +282,7 @@ def price_columns(
         by_depot.setdefault(task.depot, []).append(task)
 
     candidates: List[Tuple[float, Column]] = []
-    for depot, group in by_depot.items():
+    for _depot, group in by_depot.items():
         for rc, col in _price_depot(group, duals, drone_weight, drone_dual):
             if col.key in existing:
                 continue
@@ -364,7 +362,10 @@ def solve_set_partition(
     deadline: Optional[float] = None,
     time_limit: float = 30.0,
 ) -> Tuple[List[Column], float, int, float]:
-    """Pick columns covering each sortie once. Returns selected, obj, drones, makespan."""
+    """Pick columns covering each sortie once.
+
+    Returns selected columns, objective, drone count, and makespan.
+    """
 
     if not tasks:
         raise ValueError("No tasks to cover")
@@ -384,7 +385,9 @@ def solve_set_partition(
 
     # Each sortie in exactly one selected column.
     for s in range(n_sorties):
-        covering = [select[c] for c, col in enumerate(columns) if s in col.sortie_indices]
+        covering = [
+            select[c] for c, col in enumerate(columns) if s in col.sortie_indices
+        ]
         if not covering:
             raise RuntimeError(f"Sortie {s} has no covering column")
         model.AddExactlyOne(covering)
@@ -483,7 +486,9 @@ def solve_column_generation(
     )
 
 
-def columns_to_tours(selected: Sequence[Column], tasks: Sequence[TourTask]) -> List[dict]:
+def columns_to_tours(
+    selected: Sequence[Column], tasks: Sequence[TourTask]
+) -> List[dict]:
     """Materialise selected columns as merged drone tours."""
 
     tours: List[dict] = []

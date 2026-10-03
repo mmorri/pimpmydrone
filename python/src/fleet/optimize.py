@@ -91,9 +91,7 @@ class TourOptimizer:
         self.mode = mode
         self.deconflict = deconflict
         units = (
-            split_into_sorties(tours)
-            if mode in {"sortie", "columns"}
-            else list(tours)
+            split_into_sorties(tours) if mode in {"sortie", "columns"} else list(tours)
         )
         self.tasks = [
             TourTask(
@@ -398,7 +396,10 @@ def merge_tours(
             )
             next_index += 1
         for segment in tour["segments"]:
-            if segment["from"] not in index_mapping or segment["to"] not in index_mapping:
+            if (
+                segment["from"] not in index_mapping
+                or segment["to"] not in index_mapping
+            ):
                 continue
             merged_segments.append(
                 {

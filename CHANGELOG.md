@@ -7,6 +7,8 @@
 - **Competing partition families** (`--partition auto`): plan both region and
   strip, optimize each, keep the better objective, and record the winner in
   `partition_choice.json`. The hangar web planner uses `auto` by default.
+- **Docker CI** (`.github/workflows/docker.yml`): build the hangar image and
+  probe `/api/health`.
 - **Column set-partitioning** (`--schedule-mode columns`): generate same-depot
   sortie packs (including planner region groups), enrich with iterative LP dual
   pricing against a separable-cost GLOP RMP, then solve a set-partitioning

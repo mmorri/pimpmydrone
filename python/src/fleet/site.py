@@ -104,7 +104,9 @@ def plan_site(
     """
 
     if vertical not in VERTICALS:
-        raise ValueError(f"Unknown vertical {vertical!r}; choose from {sorted(VERTICALS)}")
+        raise ValueError(
+            f"Unknown vertical {vertical!r}; choose from {sorted(VERTICALS)}"
+        )
     preset = VERTICALS[vertical]
     stock_plan = None
     if plan_fn is None:
