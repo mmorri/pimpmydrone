@@ -4,6 +4,9 @@
 
 ### Changed
 
+- **Lawnmower comparison** (`benchmarks/lawnmower.md`): industrial solar ties a
+  pure boustrophedon (same 458 s makespan). Across the October matrix, auto
+  flies 15.8% less than boustro-only.
 - **Benchmark refresh** (2026-10-03): matrix length **-19.2%**, makespan
   **-29.7%**, commute **52.7%** (was 56.9%). Sortie merges that hop between
   nearest-depot recharges now insert an obstacle-aware deadhead so the

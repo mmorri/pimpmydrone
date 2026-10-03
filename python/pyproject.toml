@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fleet"
-version = "0.5.10"
+version = "0.5.11"
 description = "Experimental multi-drone coverage planner — free, donation-funded, fly at your own risk"
 readme = "README.md"
 authors = [{name = "Maurizio Morri", email = "maurizio.morri@protonmail.com"}]

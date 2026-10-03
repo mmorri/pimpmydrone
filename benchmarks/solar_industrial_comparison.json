@@ -1,0 +1,33 @@
+{
+  "site": "examples/sites/solar_industrial.geojson",
+  "vertical": "solar",
+  "partition": "auto",
+  "auto": {
+    "label": "auto (mega-STC/boustro mix)",
+    "coverage_pct": 100.0,
+    "inspection_pct": 100.0,
+    "makespan_s": 457.75,
+    "total_length": 9498.0,
+    "drones": 4,
+    "commute_share": 0.02284691514002948,
+    "deconflicted": true,
+    "partition_family": "region",
+    "ok": true
+  },
+  "lawnmower": {
+    "label": "boustro only",
+    "coverage_pct": 100.0,
+    "inspection_pct": 100.0,
+    "makespan_s": 457.75,
+    "total_length": 9482.0,
+    "drones": 4,
+    "commute_share": 0.0007382408774520143,
+    "deconflicted": true,
+    "partition_family": null,
+    "ok": true
+  },
+  "length_improvement_pct": -0.17,
+  "makespan_improvement_pct": 0.0,
+  "generated": "2026-10-03",
+  "note": "Roomy solar battery on this polygon: commute is about 2%, so auto and pure boustrophedon tie. A negative length_improvement_pct means auto flew more."
+}

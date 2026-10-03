@@ -117,7 +117,7 @@
       </ol>
       <p class="hint">
         Full adapter docs (YOLO, ONNX, llama.cpp / vLLM, domain plugins):
-        <a id="percDocs" href="https://github.com/mmorri/pimpmydrone/blob/fix/coverage-pipeline/docs/PERCEPTION.md" target="_blank" rel="noopener">docs/PERCEPTION.md</a>
+        <a id="percDocs" href="https://github.com/mmorri/pimpmydrone/blob/master/docs/PERCEPTION.md" target="_blank" rel="noopener">docs/PERCEPTION.md</a>
       </p>
     </section>
 
@@ -138,6 +138,17 @@
           <li>Inspect points visible in the bundle for the hotspot follow-up.</li>
           <li>You still treat the export as a <em>draft</em> until GCS review is done.</li>
         </ul>
+      </div>
+      <div class="guide-callout">
+        <h3>What we measured (2026-10-03)</h3>
+        <p>
+          On this industrial polygon the solar battery is roomy (commute about 2%),
+          so auto and a pure lawnmower <strong>tie</strong>: same 458&nbsp;s makespan,
+          flight within 0.2%. Pattern mixing pays on the bench matrix instead:
+          auto flies <strong>15.8% less</strong> than boustro-only across 12 map/seed
+          pairs, and about 21–24% less on cluttered and 100×100 maps.
+          Numbers: <code>benchmarks/lawnmower.md</code>.
+        </p>
       </div>
     </section>
 

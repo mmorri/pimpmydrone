@@ -72,7 +72,10 @@ short-commute maps.
   `open-40` seed 1 this cut STC flight from ~6544 to ~2618 steps at 100% coverage.
 - **Route shortcutting.** Done: drop revisit loops whose interior cells still
   appear elsewhere, then re-patch any cells the shortcut uniquely removed.
-- **Per-region pattern choice** is done: see below.
+- **Per-region pattern choice** is done: see below. On the October matrix,
+  auto flies **15.8% less** than boustro-only (12/12 rows shorter). The bundled
+  industrial solar polygon ties a lawnmower — commute there is ~2%, so mixing
+  patterns has nothing to cut. See `benchmarks/lawnmower.md`.
 
 ## Phase 3 — Give the optimizer a real decision
 
