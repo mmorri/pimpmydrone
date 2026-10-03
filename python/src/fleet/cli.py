@@ -23,6 +23,7 @@ console = Console()
 
 # Repository layout: <root>/python/src/fleet/cli.py. Both locations can be
 # overridden so the package also works when installed outside the checkout.
+# parents[0]=.../fleet, [1]=.../src, [2]=.../python, [3]=repo root
 ROOT = Path(os.environ.get("FLEET_ROOT", Path(__file__).resolve().parents[3]))
 OUTPUTS = Path(os.environ.get("FLEET_OUTPUTS", ROOT / "outputs"))
 HASKELL_BIN = Path(os.environ.get("FLEET_HASKELL_BIN", ROOT / "haskell" / "bin"))
