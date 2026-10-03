@@ -82,7 +82,7 @@ def optimizer_options(fn):
             type=click.Choice(["sortie", "tour", "columns"]),
             default="sortie",
             show_default=True,
-            help="sortie (default), tour (whole regions), or columns (set-partition packs).",
+            help="sortie (default), tour (whole regions), or columns (region-seeded + priced set-partition).",
         ),
         click.option(
             "--deconflict/--no-deconflict",

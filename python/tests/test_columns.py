@@ -1,8 +1,15 @@
-"""Column pool + set-partitioning schedule mode."""
+"""Column pool + set-partitioning schedule mode with dual pricing."""
 
 from __future__ import annotations
 
-from fleet.columns import generate_columns, solve_set_partition
+from fleet.columns import (
+    Column,
+    generate_columns,
+    price_columns,
+    solve_column_generation,
+    solve_rmp_lp_duals,
+    solve_set_partition,
+)
 from fleet.optimize import TourOptimizer, TourTask, tour_depot
 
 
@@ -84,6 +91,27 @@ def test_generate_columns_covers_every_sortie_as_singleton():
     assert len(singletons) == 4
 
 
+def test_generate_columns_seeds_planner_regions():
+    """Same-depot sorties from one planner region become a seed column."""
+
+    tours = [make_tour(i, 10.0) for i in range(4)]
+    tasks = [
+        TourTask(
+            i,
+            10.0,
+            2.0,
+            1,
+            tour_depot(t),
+            t,
+            region_id=0 if i < 3 else 1,
+        )
+        for i, t in enumerate(tours)
+    ]
+    columns = generate_columns(tasks, max_drones=2)
+    region_pack = {0, 1, 2}
+    assert any(set(c.sortie_indices) == region_pack for c in columns)
+
+
 def test_set_partition_covers_exactly_once():
     tours = [make_tour(i, 10.0) for i in range(3)]
     tasks = [
@@ -99,3 +127,45 @@ def test_set_partition_covers_exactly_once():
     assert sorted(seen) == [0, 1, 2]
     assert drones == 3
     assert abs(makespan - 10.0) < 1e-6
+
+
+def test_lp_duals_and_pricing_from_singletons():
+    tours = [make_tour(i, float(4 + i)) for i in range(4)]
+    tasks = [
+        TourTask(i, float(t["cost"]["time"]), 2.0, 1, tour_depot(t), t)
+        for i, t in enumerate(tours)
+    ]
+    singletons = [
+        Column((t.index,), t.duration, t.depot) for t in tasks
+    ]
+    duals = solve_rmp_lp_duals(
+        tasks, singletons, max_drones=2, drone_cost=1.0
+    )
+    assert duals is not None
+    assert len(duals) == 4
+    priced = price_columns(
+        tasks, duals, drone_weight=1.0, existing={c.key: c for c in singletons}
+    )
+    # With only singletons in the RMP, multi-sortie packs should price in.
+    assert any(len(c.sortie_indices) > 1 for c in priced)
+
+
+def test_column_generation_runs_pricing_loop():
+    tours = [make_tour(i, 10.0) for i in range(3)]
+    tasks = [
+        TourTask(i, 10.0, 2.0, 1, tour_depot(t), t) for i, t in enumerate(tours)
+    ]
+    result = solve_column_generation(tasks, max_drones=3, time_limit=5)
+    assert result.pricing_rounds >= 1
+    assert result.columns_generated >= 3
+    assert result.drone_count == 3
+    assert abs(result.makespan - 10.0) < 1e-6
+
+
+def test_columns_mode_reports_pricing_stats():
+    tours = [make_tour(i, 10.0) for i in range(3)]
+    result = TourOptimizer(
+        tours, max_drones=3, time_limit=5, mode="columns", deconflict=False
+    ).solve()
+    assert result.pricing_rounds is not None and result.pricing_rounds >= 1
+    assert result.columns_added_by_pricing is not None

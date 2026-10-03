@@ -5,8 +5,9 @@
 ### Added
 
 - **Column set-partitioning** (`--schedule-mode columns`): generate same-depot
-  sortie packs and solve a set-partitioning master over that pool
-  (`fleet.columns`).
+  sortie packs (including planner region groups), enrich with iterative LP dual
+  pricing against a separable-cost GLOP RMP, then solve a set-partitioning
+  CP-SAT master (`fleet.columns`).
 - **Flat-array depot field** (`Algorithm.Flood.DepotField`): cheapest-return
   Dijkstra in unboxed vectors indexed by `y * width + x` (+ heading).
 - **Parallel region planning**: `coverage-planner` builds shared depot fields

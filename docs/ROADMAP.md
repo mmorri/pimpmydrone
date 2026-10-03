@@ -79,10 +79,11 @@ short-commute maps.
   split into CP-SAT tasks so drones can interleave work from the same depot.
   `--schedule-mode tour` keeps the old whole-region behaviour.
 - **Column set-partitioning.** Done (opt-in `--schedule-mode columns`): generate
-  same-depot sortie packs (singletons, LPT bins, small combinations), then
-  solve a set-partitioning CP-SAT master so each sortie is covered once.
-  Iterative dual pricing and folding region partitioning into the column
-  pool are still open.
+  same-depot sortie packs, enrich them with LP dual pricing (GLOP RMP →
+  negative reduced-cost columns), then solve a set-partitioning CP-SAT master.
+  Planner regions are folded into the seed pool (per-region columns). Trying
+  alternate partitions (e.g. strip vs region) as competing column families is
+  still open.
 
 ## Phase 4 — Scale and fidelity
 

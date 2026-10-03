@@ -6,8 +6,9 @@ ends at its depot, possibly with mid-tour recharge stops. The optimizer can:
 * **tour mode** (legacy): assign whole region tours to drones;
 * **sortie mode** (default): split each tour at recharge stops so drones can
   share a region's work and interleave sorties, subject to depot affinity;
-* **columns mode**: generate same-depot sortie packs and solve a
-  set-partitioning master (column-generation style) over that pool.
+* **columns mode**: generate same-depot sortie packs (seeded with planner
+  regions), enrich them via LP dual pricing, then solve a set-partitioning
+  master over that pool.
 
 All modes minimise ``makespan + drone_cost * drones`` (or drones-first under
 a deadline). After scheduling, :func:`fleet.deconflict.deconflict_tours`
@@ -37,6 +38,7 @@ class TourTask:
     turns: int
     depot: Tuple[int, int]
     tour: dict
+    region_id: Optional[int] = None
 
 
 @dataclass
@@ -50,6 +52,8 @@ class OptimizerResult:
     mode: str = "sortie"
     columns_generated: int | None = None
     columns_selected: int | None = None
+    pricing_rounds: int | None = None
+    columns_added_by_pricing: int | None = None
 
 
 class TourOptimizer:
@@ -89,6 +93,7 @@ class TourOptimizer:
                 turns=int(tour["cost"].get("turns", 0)),
                 depot=tour_depot(tour),
                 tour=tour,
+                region_id=tour_region_id(tour),
             )
             for i, tour in enumerate(units)
         ]
@@ -103,22 +108,17 @@ class TourOptimizer:
         return self._solve_intervals()
 
     def _solve_columns(self) -> OptimizerResult:
-        from .columns import (
-            columns_to_tours,
-            generate_columns,
-            solve_set_partition,
-        )
+        from .columns import columns_to_tours, solve_column_generation
 
-        columns = generate_columns(self.tasks, max_drones=self.max_drones)
-        selected, objective, drone_count, makespan_s = solve_set_partition(
+        cg = solve_column_generation(
             self.tasks,
-            columns,
             max_drones=self.max_drones,
             drone_cost=self.drone_cost,
             deadline=self.deadline,
             time_limit=self.time_limit,
         )
-        optimized = columns_to_tours(selected, self.tasks)
+        optimized = columns_to_tours(cg.selected, self.tasks)
+        makespan_s = cg.makespan
         deconflict_info = None
         if self.deconflict and len(optimized) > 1:
             result = deconflict_tours(optimized)
@@ -129,14 +129,16 @@ class TourOptimizer:
             )
         return OptimizerResult(
             tours=optimized,
-            objective_value=objective,
-            drone_count=drone_count,
+            objective_value=cg.objective_value,
+            drone_count=cg.drone_count,
             makespan=makespan_s,
             total_length=sum(task.length for task in self.tasks),
             deconflict=deconflict_info,
             mode=self.mode,
-            columns_generated=len(columns),
-            columns_selected=len(selected),
+            columns_generated=cg.columns_generated,
+            columns_selected=cg.columns_selected,
+            pricing_rounds=cg.pricing_rounds,
+            columns_added_by_pricing=cg.columns_added_by_pricing,
         )
 
     def _solve_intervals(self) -> OptimizerResult:
@@ -278,9 +280,10 @@ def split_into_sorties(tours: List[dict]) -> List[dict]:
         waypoints = sorted(tour.get("waypoints") or [], key=lambda wp: wp["index"])
         if len(waypoints) < 2:
             continue
+        region = tour_region_id(tour)
         stops = sorted(set(tour.get("recharge_stops") or []))
         if not stops:
-            sorties.append(_slice_tour(tour, waypoints, len(sorties)))
+            sorties.append(_slice_tour(tour, waypoints, len(sorties), region))
             continue
         bounds: List[int] = []
         for idx in [waypoints[0]["index"], *stops, waypoints[-1]["index"]]:
@@ -291,11 +294,26 @@ def split_into_sorties(tours: List[dict]) -> List[dict]:
             window = [wp for wp in waypoints if start_idx <= wp["index"] <= end_idx]
             if len(window) < 2:
                 continue
-            sorties.append(_slice_tour(tour, window, len(sorties)))
+            sorties.append(_slice_tour(tour, window, len(sorties), region))
     return sorties if sorties else list(tours)
 
 
-def _slice_tour(tour: dict, window: List[dict], drone_hint: int) -> dict:
+def tour_region_id(tour: dict) -> Optional[int]:
+    """Planner region id, preserved across sortie splits when present."""
+
+    if "region_id" in tour and tour["region_id"] is not None:
+        return int(tour["region_id"])
+    if "drone_id" in tour and tour["drone_id"] is not None:
+        return int(tour["drone_id"])
+    return None
+
+
+def _slice_tour(
+    tour: dict,
+    window: List[dict],
+    drone_hint: int,
+    region_id: Optional[int] = None,
+) -> dict:
     """Extract a contiguous waypoint window as its own tour with remapped ids."""
 
     index_map = {wp["index"]: i for i, wp in enumerate(window)}
@@ -326,13 +344,16 @@ def _slice_tour(tour: dict, window: List[dict], drone_hint: int) -> dict:
     ) * (len(window) / max(len(tour.get("waypoints") or [1]), 1))
     turns = sum(int(s.get("turn_cost", 0) > 0) for s in segs)
     duration = max((wp["t"] for wp in new_wps), default=0.0) or 1.0
-    return {
+    sliced = {
         "drone_id": drone_hint,
         "waypoints": new_wps,
         "segments": segs,
         "recharge_stops": [],
         "cost": {"time": duration, "turns": turns, "length": length},
     }
+    if region_id is not None:
+        sliced["region_id"] = region_id
+    return sliced
 
 
 def merge_tours(
@@ -428,4 +449,5 @@ __all__ = [
     "OptimizerResult",
     "merge_tours",
     "split_into_sorties",
+    "tour_region_id",
 ]
