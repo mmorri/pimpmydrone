@@ -535,6 +535,7 @@ def _run_job(
             max_drones=max_drones,
             battery=battery,
             altitude_m=altitude_m,
+            partition="auto",
         )
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(400, str(exc)) from exc

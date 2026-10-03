@@ -44,6 +44,10 @@ Enable [GitHub Sponsors](https://github.com/sponsors/mmorri) and/or
 make site
 uv run python -m fleet from-geo --geojson ../examples/sites/solar_farm.geojson \
   --output-dir ../outputs/site-solar --vertical solar
+# Compare region vs strip partitions and keep the better schedule:
+uv run python -m fleet from-geo --geojson ../examples/sites/solar_farm.geojson \
+  --output-dir ../outputs/site-solar-auto --vertical solar \
+  --partition auto --schedule-mode columns
 ```
 
 ## Perception / ML adapters

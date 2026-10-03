@@ -169,11 +169,14 @@ def plan_site(
             deconflict=deconflict,
         )
         promote_partition_family(out_dir, pick.family)
-        io.write_json(
-            out_dir / "partition_choice.json",
-            {"family": pick.family, "scores": pick.scores, "mode": schedule_mode},
-        )
+        choice = {
+            "family": pick.family,
+            "scores": pick.scores,
+            "mode": schedule_mode,
+        }
+        io.write_json(out_dir / "partition_choice.json", choice)
     else:
+        choice = None
         plan_fn(map_path, params_path, initial, coverage_algorithm, partition)
         optimize_file(
             initial,
@@ -204,6 +207,9 @@ def plan_site(
         metrics_path,
         skipped_path=out_dir / "skipped.json",
     )
+    if choice is not None:
+        simulation.metrics["partition"] = choice
+        io.write_json(metrics_path, simulation.metrics)
     visualize(map_path, optimized, png_path, None)
     manifest = export_all(
         optimized,

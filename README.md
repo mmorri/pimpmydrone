@@ -19,7 +19,7 @@ generate ──► partition ──► plan ──► optimize ──► simulat
 | Stage | Where | What it does |
 | --- | --- | --- |
 | generate | `python/src/fleet/generate_map.py` | Random obstacles, star-shaped no-fly polygons, depots on free cells; writes `map.json` + `params.json`. |
-| partition | `haskell/src/Partition/` | Splits the cells **reachable from the depots** into one connected region per drone. `region` (default) grows regions round-robin from the depots and farthest-point seeds so sizes stay balanced; `strip` cuts vertical strips. |
+| partition | `haskell/src/Partition/` | Splits the cells **reachable from the depots** into one connected region per drone. `region` (default) grows regions from depot/far seeds with cost balancing; `strip` cuts vertical strips; `auto` plans both and keeps the better optimized schedule. |
 | plan | `haskell/src/Coverage/` | Builds a coverage route per region (`stc`: 2×2 mega-cell spanning-tree cover, `boustro`: lawnmower sweep, `auto`: mega-STC / fine-STC / boustro, keeping the faster -- the default) then short-cuts useless revisit loops. `Coverage.Repair` turns the route into a timed tour with battery-aware recharges. |
 | optimize | `python/src/fleet/optimize.py` | CP-SAT model assigning tours to physical drones (a drone may fly several tours back to back after recharging), never mixing depots. Objective: `makespan + drone_cost · drones`, or drones-first under `--deadline`. |
 | simulate | `python/src/fleet/simulate.py` | Replays the tours and checks continuity, obstacle avoidance, per-sortie battery budget and coverage of every reachable cell. Unreachable pockets are reported, not counted as gaps. |

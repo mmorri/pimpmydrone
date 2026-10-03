@@ -150,10 +150,11 @@ uv run python -m fleet perception plan-from-perception \
   --input ../examples/perception/solar_detections.geojson \
   --output-dir ../outputs/case-solar --vertical solar
 
-# Or polygon-only
+# Or polygon-only (auto picks region vs strip)
 uv run python -m fleet from-geo \
   --geojson ../examples/sites/solar_farm.geojson \
-  --output-dir ../outputs/site-solar --vertical solar</pre>
+  --output-dir ../outputs/site-solar --vertical solar \
+  --partition auto</pre>
       <p class="hint">
         Local UI: <code>make serve</code> → <code>http://127.0.0.1:8000</code>.
       </p>
