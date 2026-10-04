@@ -149,6 +149,8 @@ def test_api_config_is_donation_funded() -> None:
     assert 'id="osmBuildings"' in home.text
     assert 'id="exampleSite"' in home.text
     assert 'href="/fields"' in home.text
+    assert "Browse crop fields" in home.text
+    assert 'class="find-fields"' in home.text
     fields_page = client.get("/fields")
     assert fields_page.status_code == 200
     assert 'id="fieldCatalog"' in fields_page.text

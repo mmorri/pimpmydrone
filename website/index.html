@@ -4,11 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PimpMyDrone — customize your multi-drone coverage plans</title>
-  <meta name="description" content="Free experimental multi-drone coverage planning with garage-glam energy. Donations welcome. We accept no responsibility for flights or damage. Not affiliated with any TV show." />
+  <meta name="description" content="Free experimental multi-drone coverage planning, plus a crop-field catalog for California and the northern plains. Donations welcome. We accept no responsibility for flights or damage." />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="/assets/styles.css?v=0.4.1" />
+  <link rel="stylesheet" href="/assets/styles.css?v=0.5.15" />
   <meta property="og:title" content="PimpMyDrone — custom multi-drone coverage" />
   <meta property="og:description" content="Free experimental multi-drone coverage planner. Donations welcome. Fly at your own risk." />
   <meta property="og:image" content="/assets/img/hero-hangar.jpg" />
@@ -44,7 +44,7 @@
     <nav>
       <a href="#planner">Planner</a>
       <a href="#perception">Perception</a>
-      <a href="/fields">Fields</a>
+      <a href="/fields">Crop fields</a>
       <a href="/guide">Guide</a>
       <a href="#gallery">Gallery</a>
       <a href="/legal">Legal</a>
@@ -74,6 +74,7 @@
         </p>
         <div class="hero-actions">
           <a class="btn" href="#planner">Customize my mission</a>
+          <a class="btn ghost" href="/fields">Browse crop fields</a>
           <a class="btn ghost" href="/guide">Case study guide</a>
           <a class="btn ghost" href="/donate">Tip the shop</a>
         </div>
@@ -88,6 +89,14 @@
       </div>
       <a class="btn ghost" href="/legal">Full legal text</a>
     </aside>
+
+    <section class="find-fields" aria-label="Crop fields">
+      <div>
+        <h2>Crop fields</h2>
+        <p>California orchards, plus corn, soy, wheat, and sugar beets in Iowa, Minnesota, and the Dakotas. Grouped by state and crop. Open a block and the planner draws its flight lines.</p>
+      </div>
+      <a class="btn" href="/fields">Browse crop fields</a>
+    </section>
 
     <section id="gallery" class="gallery">
       <h2>From the shop floor</h2>
@@ -173,7 +182,7 @@
           <option value="">Draw or upload your own…</option>
           <optgroup label="Demos" id="demoSites"></optgroup>
         </select>
-        <p class="hint">Crop fields for California and the northern plains are on the <a href="/fields">fields page</a>, grouped by state and crop.</p>
+        <a class="btn ghost" href="/fields">Browse crop fields</a>
         <button id="loadExampleBtn" class="btn ghost" type="button">Load site on map</button>
 
         <label for="scheduleMode">Schedule mode</label>
@@ -223,6 +232,7 @@
             <li>Battery-aware tours with a discrete simulator</li>
             <li>Region vs strip partition auto-pick + optional column scheduling</li>
             <li>Optional OSM building keep-outs via Overpass</li>
+            <li><a href="/fields">Crop-field catalog</a> — California plus a northern-plains sample, by state and crop</li>
             <li>Discrete same-cell / same-time deconfliction (sim only)</li>
             <li>QGC / GeoJSON / CSV draft exports</li>
             <li>Donation-funded hangar — free to run locally or here</li>
@@ -243,12 +253,12 @@
   </main>
 
   <footer class="foot">
-    <p>© PimpMyDrone contributors · MIT · original hangar-glam design · <a href="/legal">No warranty / no liability</a> · <a href="/donate">Donate</a><br />
+    <p>© PimpMyDrone contributors · MIT · original hangar-glam design · <a href="/fields">Crop fields</a> · <a href="/legal">No warranty / no liability</a> · <a href="/donate">Donate</a><br />
     Not affiliated with MTV or any television program.</p>
   </footer>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <script src="/assets/app.js?v=0.5.14"></script>
+  <script src="/assets/app.js?v=0.5.15"></script>
 </body>
 </html>

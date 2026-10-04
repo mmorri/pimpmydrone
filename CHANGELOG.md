@@ -14,6 +14,9 @@
 
 ### Added
 
+- **Crop fields are on the homepage**: nav label, hero button, a band under the
+  disclaimer, the planner, the guide, and the footer. The catalog is no longer
+  only a quiet “Fields” link.
 - **US field sample** (`examples/sites/csb/2024/`): USDA NASS Crop Sequence
   Boundaries 2024 for Minnesota, Iowa, North Dakota, and South Dakota, grouped
   by state and crop. The fields page filters by state. California stays on the
