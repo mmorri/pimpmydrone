@@ -19,7 +19,11 @@
     Corn: "#f0c14b",
     Soybeans: "#3dff9a",
     "Spring wheat": "#e8e4dc",
+    "Winter wheat": "#e6c35c",
     "Sugar beets": "#ff4d9a",
+    Cotton: "#d7d2c8",
+    Rice: "#7ec8ff",
+    Peanuts: "#d4a574",
   };
 
   const map = L.map(mapEl).setView([39.8, -98.6], 4);

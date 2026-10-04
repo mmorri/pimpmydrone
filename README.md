@@ -45,11 +45,14 @@ make test                        # QuickCheck properties + pytest (incl. end-to-
 make serve                       # http://127.0.0.1:8000 — disclaimer gate, then planner
 make site                        # examples/sites/solar_farm.geojson → outputs/site-solar/
 # California crop fields: examples/sites/dwr/2023/<county>/<crop>/<field>.geojson
-# USDA sample (MN, IA, ND, SD): examples/sites/csb/2024/<state>/<crop>/<field>.geojson
+# USDA sample: examples/sites/csb/2024/<state>/<crop>/<field>.geojson
 # Orchard crops follow the long axis; row crops keep the east-west auto sweep.
-# Refresh samples (does not download statewide or national files):
+# Refresh the map-service states (MN, IA, ND, SD):
 #   python3 tools/fetch_dwr_fields.py
 #   python3 tools/fetch_csb_fields.py
+# More states (AR, GA, IL, KS, NE, TX) from a local cache of the national gdb,
+# which is not committed:
+#   python3 tools/fetch_csb_fields.py --national
 ```
 
 The public site is **donation-funded** (no subscriptions). Authors **accept no

@@ -10,7 +10,16 @@ from __future__ import annotations
 from typing import Any
 
 _ORCHARD = {"almonds", "pistachios", "walnuts", "grapes"}
-_OPEN = {"corn", "soybeans", "spring wheat", "winter wheat", "sugar beets"}
+_OPEN = {
+    "corn",
+    "soybeans",
+    "spring wheat",
+    "winter wheat",
+    "sugar beets",
+    "cotton",
+    "rice",
+    "peanuts",
+}
 
 
 def style_for_crop(crop: str | None) -> dict[str, str]:

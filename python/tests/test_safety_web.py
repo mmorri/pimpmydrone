@@ -181,7 +181,19 @@ def test_api_lists_dwr_fields_by_county_and_crop() -> None:
     client = TestClient(create_app())
     catalog = client.get("/api/fields").json()
     states = {row["state"] for row in catalog["states"]}
-    assert {"California", "Iowa", "Minnesota", "North Dakota", "South Dakota"} <= states
+    assert {
+        "California",
+        "Arkansas",
+        "Georgia",
+        "Illinois",
+        "Iowa",
+        "Kansas",
+        "Minnesota",
+        "Nebraska",
+        "North Dakota",
+        "South Dakota",
+        "Texas",
+    } <= states
     california = next(row for row in catalog["states"] if row["state"] == "California")
     counties = {row["county"] for row in california["counties"]}
     assert {"Fresno", "Kern", "Tulare"} <= counties
@@ -201,6 +213,12 @@ def test_api_lists_dwr_fields_by_county_and_crop() -> None:
     minnesota = next(row for row in catalog["states"] if row["state"] == "Minnesota")
     corn = next(crop for crop in minnesota["crops"] if crop["crop"] == "Corn")
     assert corn["flight_style"] == "open-field"
+    texas = next(row for row in catalog["states"] if row["state"] == "Texas")
+    cotton = next(crop for crop in texas["crops"] if crop["crop"] == "Cotton")
+    assert cotton["flight_style"] == "open-field"
+    arkansas = next(row for row in catalog["states"] if row["state"] == "Arkansas")
+    rice = next(crop for crop in arkansas["crops"] if crop["crop"] == "Rice")
+    assert rice["flight_style"] == "open-field"
     csb = client.get(f"/api/fields/{corn['fields'][0]['id']}")
     assert csb.status_code == 200
     assert csb.json()["type"] == "FeatureCollection"

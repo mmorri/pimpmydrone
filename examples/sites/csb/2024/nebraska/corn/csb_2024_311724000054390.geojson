@@ -1,0 +1,107 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Adams Nebraska corn \u00b7 29.4 ac",
+        "role": "cover",
+        "source": "USDA NASS Crop Sequence Boundaries 2024",
+        "year": 2024,
+        "state": "Nebraska",
+        "county": "Adams",
+        "crop": "Corn",
+        "crop_code": 1,
+        "unique_id": "311724000054390",
+        "acres": 29.41,
+        "vertical": "generic",
+        "sample": "national-gdb"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -98.42006,
+              40.56688
+            ],
+            [
+              -98.42006,
+              40.56661
+            ],
+            [
+              -98.41844,
+              40.56661
+            ],
+            [
+              -98.41844,
+              40.56302
+            ],
+            [
+              -98.4188,
+              40.56302
+            ],
+            [
+              -98.4188,
+              40.56239
+            ],
+            [
+              -98.41844,
+              40.56239
+            ],
+            [
+              -98.41844,
+              40.56077
+            ],
+            [
+              -98.42042,
+              40.56077
+            ],
+            [
+              -98.42042,
+              40.56275
+            ],
+            [
+              -98.42069,
+              40.56275
+            ],
+            [
+              -98.42069,
+              40.56625
+            ],
+            [
+              -98.42096,
+              40.56625
+            ],
+            [
+              -98.42096,
+              40.56661
+            ],
+            [
+              -98.42069,
+              40.56688
+            ],
+            [
+              -98.42006,
+              40.56688
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "depot": true,
+        "role": "depot"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -98.42042,
+          40.56077
+        ]
+      }
+    }
+  ]
+}

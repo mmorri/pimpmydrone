@@ -1,0 +1,111 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Faulkner Arkansas rice \u00b7 20.7 ac",
+        "role": "cover",
+        "source": "USDA NASS Crop Sequence Boundaries 2024",
+        "year": 2024,
+        "state": "Arkansas",
+        "county": "Faulkner",
+        "crop": "Rice",
+        "crop_code": 3,
+        "unique_id": "051724000016328",
+        "acres": 20.69,
+        "vertical": "generic",
+        "sample": "national-gdb"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -92.42527,
+              35.1542
+            ],
+            [
+              -92.42464,
+              35.15357
+            ],
+            [
+              -92.42464,
+              35.15294
+            ],
+            [
+              -92.425,
+              35.15294
+            ],
+            [
+              -92.425,
+              35.15267
+            ],
+            [
+              -92.42949,
+              35.15267
+            ],
+            [
+              -92.42949,
+              35.15294
+            ],
+            [
+              -92.43012,
+              35.15294
+            ],
+            [
+              -92.43012,
+              35.1533
+            ],
+            [
+              -92.42859,
+              35.15357
+            ],
+            [
+              -92.42832,
+              35.15384
+            ],
+            [
+              -92.42832,
+              35.1542
+            ],
+            [
+              -92.42769,
+              35.15447
+            ],
+            [
+              -92.42707,
+              35.15447
+            ],
+            [
+              -92.42644,
+              35.1551
+            ],
+            [
+              -92.42527,
+              35.1551
+            ],
+            [
+              -92.42527,
+              35.1542
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "depot": true,
+        "role": "depot"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -92.43012,
+          35.15294
+        ]
+      }
+    }
+  ]
+}

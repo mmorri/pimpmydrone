@@ -14,6 +14,11 @@
 
 ### Added
 
+- **More of the country, still a sample.** Arkansas rice, Georgia peanuts,
+  Illinois corn and soy, Kansas winter wheat, Nebraska corn, and Texas cotton
+  are read from the national 2024 geodatabase by `tools/fetch_csb_fields.py
+  --national`. The geodatabase stays in a local cache, not in git. The fields
+  page lists them with the states the public map service already served.
 - **Crop flight styles**: almonds, pistachios, walnuts, and grapes get boustrophedon
   rows along the long axis of the block. Corn, soy, wheat, and beets keep the
   east-west auto sweep. The fields page and the plan result name the style.

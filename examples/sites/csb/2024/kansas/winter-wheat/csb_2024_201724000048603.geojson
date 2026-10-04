@@ -1,0 +1,115 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Cowley Kansas winter wheat \u00b7 18.8 ac",
+        "role": "cover",
+        "source": "USDA NASS Crop Sequence Boundaries 2024",
+        "year": 2024,
+        "state": "Kansas",
+        "county": "Cowley",
+        "crop": "Winter wheat",
+        "crop_code": 24,
+        "unique_id": "201724000048603",
+        "acres": 18.78,
+        "vertical": "generic",
+        "sample": "national-gdb"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -96.6268,
+              37.24226
+            ],
+            [
+              -96.6268,
+              37.24199
+            ],
+            [
+              -96.62707,
+              37.24199
+            ],
+            [
+              -96.62707,
+              37.24163
+            ],
+            [
+              -96.62599,
+              37.24163
+            ],
+            [
+              -96.62596,
+              37.24112
+            ],
+            [
+              -96.62617,
+              37.24073
+            ],
+            [
+              -96.62923,
+              37.24073
+            ],
+            [
+              -96.62923,
+              37.241
+            ],
+            [
+              -96.62869,
+              37.24163
+            ],
+            [
+              -96.62869,
+              37.24261
+            ],
+            [
+              -96.62896,
+              37.24261
+            ],
+            [
+              -96.63021,
+              37.24324
+            ],
+            [
+              -96.63021,
+              37.24396
+            ],
+            [
+              -96.62743,
+              37.24387
+            ],
+            [
+              -96.62743,
+              37.24288
+            ],
+            [
+              -96.62707,
+              37.24261
+            ],
+            [
+              -96.6268,
+              37.24226
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "depot": true,
+        "role": "depot"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -96.62923,
+          37.24073
+        ]
+      }
+    }
+  ]
+}

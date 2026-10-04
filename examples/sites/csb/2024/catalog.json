@@ -3,8 +3,251 @@
   "year": 2024,
   "service": "https://services3.arcgis.com/g6eV2CrSSwCZj8Mc/arcgis/rest/services/NASS_Crop_Sequence_Boundaries_2024/FeatureServer",
   "attribution": "USDA National Agricultural Statistics Service, Crop Sequence Boundaries 2024. Synthetic field polygons from the Cropland Data Layer for the lower 48. This is a public sample, not the national file.",
-  "organization": "examples/sites/csb/2024/<state>/<crop>/<field>.geojson. California orchards stay in the DWR 2023 catalog.",
+  "organization": "examples/sites/csb/2024/<state>/<crop>/<field>.geojson. California orchards stay in the DWR 2023 catalog. States the feature service does not serve are read from a local cache of the national geodatabase, which is not in git.",
   "states": [
+    {
+      "state": "Arkansas",
+      "fips": "05",
+      "sample": "national-gdb",
+      "source": "USDA NASS Crop Sequence Boundaries 2024",
+      "crops": [
+        {
+          "crop": "Rice",
+          "code": 3,
+          "slug": "rice",
+          "fields": [
+            {
+              "id": "csb_2024_051724000016328",
+              "unique_id": "051724000016328",
+              "acres": 20.69,
+              "state": "Arkansas",
+              "county": "Faulkner",
+              "crop": "Rice",
+              "code": 3,
+              "vertical": "generic",
+              "path": "arkansas/rice/csb_2024_051724000016328.geojson"
+            },
+            {
+              "id": "csb_2024_051724000016352",
+              "unique_id": "051724000016352",
+              "acres": 29.46,
+              "state": "Arkansas",
+              "county": "Faulkner",
+              "crop": "Rice",
+              "code": 3,
+              "vertical": "generic",
+              "path": "arkansas/rice/csb_2024_051724000016352.geojson"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "state": "Georgia",
+      "fips": "13",
+      "sample": "national-gdb",
+      "source": "USDA NASS Crop Sequence Boundaries 2024",
+      "crops": [
+        {
+          "crop": "Peanuts",
+          "code": 10,
+          "slug": "peanuts",
+          "fields": [
+            {
+              "id": "csb_2024_131724000228472",
+              "unique_id": "131724000228472",
+              "acres": 18.2,
+              "state": "Georgia",
+              "county": "Effingham",
+              "crop": "Peanuts",
+              "code": 10,
+              "vertical": "generic",
+              "path": "georgia/peanuts/csb_2024_131724000228472.geojson"
+            },
+            {
+              "id": "csb_2024_131724000097174",
+              "unique_id": "131724000097174",
+              "acres": 31.47,
+              "state": "Georgia",
+              "county": "Bryan",
+              "crop": "Peanuts",
+              "code": 10,
+              "vertical": "generic",
+              "path": "georgia/peanuts/csb_2024_131724000097174.geojson"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "state": "Illinois",
+      "fips": "17",
+      "sample": "national-gdb",
+      "source": "USDA NASS Crop Sequence Boundaries 2024",
+      "crops": [
+        {
+          "crop": "Corn",
+          "code": 1,
+          "slug": "corn",
+          "fields": [
+            {
+              "id": "csb_2024_171724000037140",
+              "unique_id": "171724000037140",
+              "acres": 21.34,
+              "state": "Illinois",
+              "county": "Madison",
+              "crop": "Corn",
+              "code": 1,
+              "vertical": "generic",
+              "path": "illinois/corn/csb_2024_171724000037140.geojson"
+            },
+            {
+              "id": "csb_2024_171724000037241",
+              "unique_id": "171724000037241",
+              "acres": 31.14,
+              "state": "Illinois",
+              "county": "Madison",
+              "crop": "Corn",
+              "code": 1,
+              "vertical": "generic",
+              "path": "illinois/corn/csb_2024_171724000037241.geojson"
+            }
+          ]
+        },
+        {
+          "crop": "Soybeans",
+          "code": 5,
+          "slug": "soybeans",
+          "fields": [
+            {
+              "id": "csb_2024_171724000037162",
+              "unique_id": "171724000037162",
+              "acres": 19.49,
+              "state": "Illinois",
+              "county": "Madison",
+              "crop": "Soybeans",
+              "code": 5,
+              "vertical": "generic",
+              "path": "illinois/soybeans/csb_2024_171724000037162.geojson"
+            },
+            {
+              "id": "csb_2024_171724000037146",
+              "unique_id": "171724000037146",
+              "acres": 30.28,
+              "state": "Illinois",
+              "county": "Madison",
+              "crop": "Soybeans",
+              "code": 5,
+              "vertical": "generic",
+              "path": "illinois/soybeans/csb_2024_171724000037146.geojson"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "state": "Iowa",
+      "fips": "19",
+      "source": "USDA NASS Crop Sequence Boundaries 2024",
+      "crops": [
+        {
+          "crop": "Corn",
+          "code": 1,
+          "slug": "corn",
+          "fields": [
+            {
+              "id": "csb_2024_191724001290337",
+              "unique_id": "191724001290337",
+              "acres": 18.06,
+              "state": "Iowa",
+              "county": "Osceola",
+              "crop": "Corn",
+              "code": 1,
+              "vertical": "generic",
+              "path": "iowa/corn/csb_2024_191724001290337.geojson"
+            },
+            {
+              "id": "csb_2024_191724008967950",
+              "unique_id": "191724008967950",
+              "acres": 27.56,
+              "state": "Iowa",
+              "county": "Howard",
+              "crop": "Corn",
+              "code": 1,
+              "vertical": "generic",
+              "path": "iowa/corn/csb_2024_191724008967950.geojson"
+            }
+          ]
+        },
+        {
+          "crop": "Soybeans",
+          "code": 5,
+          "slug": "soybeans",
+          "fields": [
+            {
+              "id": "csb_2024_191724004468094",
+              "unique_id": "191724004468094",
+              "acres": 18.5,
+              "state": "Iowa",
+              "county": "Winnebago",
+              "crop": "Soybeans",
+              "code": 5,
+              "vertical": "generic",
+              "path": "iowa/soybeans/csb_2024_191724004468094.geojson"
+            },
+            {
+              "id": "csb_2024_191724001290317",
+              "unique_id": "191724001290317",
+              "acres": 28.19,
+              "state": "Iowa",
+              "county": "Osceola",
+              "crop": "Soybeans",
+              "code": 5,
+              "vertical": "generic",
+              "path": "iowa/soybeans/csb_2024_191724001290317.geojson"
+            }
+          ]
+        }
+      ],
+      "sample": "feature-service"
+    },
+    {
+      "state": "Kansas",
+      "fips": "20",
+      "sample": "national-gdb",
+      "source": "USDA NASS Crop Sequence Boundaries 2024",
+      "crops": [
+        {
+          "crop": "Winter wheat",
+          "code": 24,
+          "slug": "winter-wheat",
+          "fields": [
+            {
+              "id": "csb_2024_201724000048603",
+              "unique_id": "201724000048603",
+              "acres": 18.78,
+              "state": "Kansas",
+              "county": "Cowley",
+              "crop": "Winter wheat",
+              "code": 24,
+              "vertical": "generic",
+              "path": "kansas/winter-wheat/csb_2024_201724000048603.geojson"
+            },
+            {
+              "id": "csb_2024_201724000048212",
+              "unique_id": "201724000048212",
+              "acres": 28.44,
+              "state": "Kansas",
+              "county": "Elk",
+              "crop": "Winter wheat",
+              "code": 24,
+              "vertical": "generic",
+              "path": "kansas/winter-wheat/csb_2024_201724000048212.geojson"
+            }
+          ]
+        }
+      ]
+    },
     {
       "state": "Minnesota",
       "fips": "27",
@@ -126,11 +369,13 @@
             }
           ]
         }
-      ]
+      ],
+      "sample": "feature-service"
     },
     {
-      "state": "Iowa",
-      "fips": "19",
+      "state": "Nebraska",
+      "fips": "31",
+      "sample": "national-gdb",
       "source": "USDA NASS Crop Sequence Boundaries 2024",
       "crops": [
         {
@@ -139,55 +384,26 @@
           "slug": "corn",
           "fields": [
             {
-              "id": "csb_2024_191724001290337",
-              "unique_id": "191724001290337",
-              "acres": 18.06,
-              "state": "Iowa",
-              "county": "Osceola",
+              "id": "csb_2024_311724000054450",
+              "unique_id": "311724000054450",
+              "acres": 19.53,
+              "state": "Nebraska",
+              "county": "Adams",
               "crop": "Corn",
               "code": 1,
               "vertical": "generic",
-              "path": "iowa/corn/csb_2024_191724001290337.geojson"
+              "path": "nebraska/corn/csb_2024_311724000054450.geojson"
             },
             {
-              "id": "csb_2024_191724008967950",
-              "unique_id": "191724008967950",
-              "acres": 27.56,
-              "state": "Iowa",
-              "county": "Howard",
+              "id": "csb_2024_311724000054390",
+              "unique_id": "311724000054390",
+              "acres": 29.41,
+              "state": "Nebraska",
+              "county": "Adams",
               "crop": "Corn",
               "code": 1,
               "vertical": "generic",
-              "path": "iowa/corn/csb_2024_191724008967950.geojson"
-            }
-          ]
-        },
-        {
-          "crop": "Soybeans",
-          "code": 5,
-          "slug": "soybeans",
-          "fields": [
-            {
-              "id": "csb_2024_191724004468094",
-              "unique_id": "191724004468094",
-              "acres": 18.5,
-              "state": "Iowa",
-              "county": "Winnebago",
-              "crop": "Soybeans",
-              "code": 5,
-              "vertical": "generic",
-              "path": "iowa/soybeans/csb_2024_191724004468094.geojson"
-            },
-            {
-              "id": "csb_2024_191724001290317",
-              "unique_id": "191724001290317",
-              "acres": 28.19,
-              "state": "Iowa",
-              "county": "Osceola",
-              "crop": "Soybeans",
-              "code": 5,
-              "vertical": "generic",
-              "path": "iowa/soybeans/csb_2024_191724001290317.geojson"
+              "path": "nebraska/corn/csb_2024_311724000054390.geojson"
             }
           ]
         }
@@ -216,7 +432,8 @@
             }
           ]
         }
-      ]
+      ],
+      "sample": "feature-service"
     },
     {
       "state": "South Dakota",
@@ -278,6 +495,44 @@
               "code": 5,
               "vertical": "generic",
               "path": "south-dakota/soybeans/csb_2024_461724002642020.geojson"
+            }
+          ]
+        }
+      ],
+      "sample": "feature-service"
+    },
+    {
+      "state": "Texas",
+      "fips": "48",
+      "sample": "national-gdb",
+      "source": "USDA NASS Crop Sequence Boundaries 2024",
+      "crops": [
+        {
+          "crop": "Cotton",
+          "code": 2,
+          "slug": "cotton",
+          "fields": [
+            {
+              "id": "csb_2024_481724000010184",
+              "unique_id": "481724000010184",
+              "acres": 20.14,
+              "state": "Texas",
+              "county": "Schleicher",
+              "crop": "Cotton",
+              "code": 2,
+              "vertical": "generic",
+              "path": "texas/cotton/csb_2024_481724000010184.geojson"
+            },
+            {
+              "id": "csb_2024_481724000027586",
+              "unique_id": "481724000027586",
+              "acres": 29.41,
+              "state": "Texas",
+              "county": "Schleicher",
+              "crop": "Cotton",
+              "code": 2,
+              "vertical": "generic",
+              "path": "texas/cotton/csb_2024_481724000027586.geojson"
             }
           ]
         }
