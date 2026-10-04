@@ -59,6 +59,7 @@ JOBS_ROOT = Path(
 )
 # Fair-use cap so a public demo cannot melt a laptop — not a paywall.
 MAX_CELLS = int(os.environ.get("FLEET_MAX_CELLS", "8000"))
+MAX_RANCH_FIELDS = int(os.environ.get("FLEET_MAX_RANCH_FIELDS", "4"))
 MAX_UPLOAD_BYTES = int(os.environ.get("FLEET_MAX_UPLOAD_BYTES", str(2_000_000)))
 DONATE_URL = os.environ.get("FLEET_DONATE_URL", "https://github.com/sponsors/mmorri")
 DONATE_ALT_URL = os.environ.get("FLEET_DONATE_ALT_URL", "https://ko-fi.com/pimpmydrone")
@@ -124,6 +125,7 @@ def field_catalog() -> dict[str, Any]:
 
 def _walk_fields(catalog: dict[str, Any]):
     for state in catalog.get("states") or []:
+        state_name = str(state.get("state") or "")
         prefix = "dwr/2023" if state.get("counties") else "csb/2024"
         buckets = []
         for county in state.get("counties") or []:
@@ -131,12 +133,12 @@ def _walk_fields(catalog: dict[str, Any]):
         buckets.extend(state.get("crops") or [])
         for crop in buckets:
             for field in crop.get("fields") or []:
-                yield prefix, field
+                yield prefix, state_name, field
 
 
 def _field_index(catalog: dict[str, Any]) -> dict[str, dict[str, Any]]:
     index: dict[str, dict[str, Any]] = {}
-    for prefix, field in _walk_fields(catalog):
+    for prefix, state_name, field in _walk_fields(catalog):
         field_id = str(field.get("id") or "")
         rel = str(field.get("path") or "")
         if not FIELD_ID.fullmatch(field_id):
@@ -145,8 +147,14 @@ def _field_index(catalog: dict[str, Any]) -> dict[str, dict[str, Any]]:
             continue
         stored = dict(field)
         stored["path"] = f"{prefix}/{rel}"
+        stored["state"] = str(field.get("state") or state_name)
         index[field_id] = stored
     return index
+
+
+def _place_slug(value: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", (value or "").lower()).strip("-")
+    return slug or "field"
 
 
 def field_geojson(field_id: str) -> dict[str, Any]:
@@ -171,6 +179,14 @@ def parse_schedule_mode(value: Optional[str]) -> str:
             f"Unknown schedule_mode {value!r}; choose from {list(SCHEDULE_MODES)}",
         )
     return mode
+
+
+class RanchRequest(BaseModel):
+    field_ids: list[str] = Field(min_length=1, max_length=8)
+    schedule_mode: ScheduleMode = "sortie"
+    altitude_m: Optional[float] = Field(default=None, gt=0, le=120)
+    max_drones: Optional[int] = Field(default=None, ge=1, le=12)
+    accepted_disclaimer: bool = False
 
 
 class PlanRequest(BaseModel):
@@ -238,7 +254,7 @@ def create_app() -> FastAPI:
             "(YOLO / CNN / VLM / domain). Free forever. Donations welcome. "
             "Authors accept no responsibility for flights."
         ),
-        version="0.5.15",
+        version="0.5.16",
     )
     app.add_middleware(
         CORSMiddleware,
@@ -324,7 +340,9 @@ def create_app() -> FastAPI:
         return {
             "status": "ok",
             "product": "pimpmydrone",
-            "version": "0.5.15",
+            "version": "0.5.16",
+            "hangar_ranch": True,
+            "hangar_max_ranch_fields": MAX_RANCH_FIELDS,
             "monetization": "donations",
             "max_cells": MAX_CELLS,
             "perception": True,
@@ -380,6 +398,16 @@ def create_app() -> FastAPI:
     @app.get("/api/fields/{field_id}")
     def field_site(field_id: str) -> dict[str, Any]:
         return field_geojson(field_id)
+
+    @app.post("/api/plan-ranch")
+    def plan_ranch(body: RanchRequest) -> dict[str, Any]:
+        _require_disclaimer(body.accepted_disclaimer)
+        return _run_ranch(
+            body.field_ids,
+            schedule_mode=parse_schedule_mode(body.schedule_mode),
+            altitude_m=body.altitude_m,
+            max_drones=body.max_drones,
+        )
 
     @app.get("/api/verticals")
     def verticals() -> dict[str, Any]:
@@ -636,6 +664,7 @@ def _inject_config(html: str) -> str:
                 "donate_alt_url": DONATE_ALT_URL,
                 "github_url": GITHUB_URL,
                 "max_cells": MAX_CELLS,
+                "max_ranch_fields": MAX_RANCH_FIELDS,
                 "disclaimer_short": DISCLAIMER_SHORT,
             }
         )
@@ -677,6 +706,128 @@ def _cleanup_jobs() -> None:
                 shutil.rmtree(child, ignore_errors=True)
         except OSError:
             continue
+
+
+def _run_ranch(
+    field_ids: list[str],
+    *,
+    schedule_mode: str,
+    altitude_m: Optional[float],
+    max_drones: Optional[int],
+) -> dict[str, Any]:
+    """Plan each field on its own and keep flight lines in state/crop/field folders."""
+    ordered: list[str] = []
+    seen: set[str] = set()
+    for raw in field_ids:
+        field_id = (raw or "").strip()
+        if field_id in seen:
+            continue
+        seen.add(field_id)
+        ordered.append(field_id)
+    if not ordered:
+        raise HTTPException(400, "Pick at least one field")
+    if len(ordered) > MAX_RANCH_FIELDS:
+        raise HTTPException(
+            400,
+            f"This hangar plans at most {MAX_RANCH_FIELDS} fields in one ranch. "
+            "Run a larger set locally.",
+        )
+    index = _field_index(field_catalog())
+    missing = [field_id for field_id in ordered if field_id not in index]
+    if missing:
+        raise HTTPException(404, f"Unknown field {missing[0]}")
+
+    job_id = f"ranch-{int(time.time())}-{uuid.uuid4().hex[:8]}"
+    _cleanup_jobs()
+    out_dir = _job_dir(job_id)
+    io.ensure_directory(out_dir)
+    (out_dir / "DISCLAIMER.txt").write_text(DISCLAIMER_FULL, encoding="utf-8")
+
+    planned: list[dict[str, Any]] = []
+    for field_id in ordered:
+        meta = index[field_id]
+        state = str(meta.get("state") or "field")
+        crop = str(meta.get("crop") or "crop")
+        folder = f"{_place_slug(state)}/{_place_slug(crop)}/{field_id}"
+        field_dir = out_dir / folder
+        io.ensure_directory(field_dir)
+        geojson = field_geojson(field_id)
+        io.write_json(field_dir / "input.geojson", geojson)
+        vertical = str(meta.get("vertical") or "generic")
+        if vertical not in VERTICALS:
+            vertical = "generic"
+        try:
+            result = plan_site(
+                field_dir / "input.geojson",
+                field_dir,
+                vertical=vertical,
+                max_cells=MAX_CELLS,
+                max_drones=max_drones,
+                altitude_m=altitude_m,
+                partition="auto",
+                schedule_mode=schedule_mode,
+            )
+        except Exception as exc:  # noqa: BLE001
+            planned.append(
+                {
+                    "id": field_id,
+                    "state": state,
+                    "crop": crop,
+                    "county": meta.get("county"),
+                    "folder": folder,
+                    "ok": False,
+                    "error": str(exc),
+                }
+            )
+            continue
+        metrics = result.metrics
+        planned.append(
+            {
+                "id": field_id,
+                "state": state,
+                "crop": crop,
+                "county": meta.get("county"),
+                "acres": meta.get("acres"),
+                "folder": folder,
+                "ok": bool(result.simulation.ok),
+                "coverage_pct": metrics["coverage"]["percentage"],
+                "makespan": metrics["makespan"],
+                "drones": metrics["drones"]["used"],
+                "total_length": metrics["total_length"],
+            }
+        )
+
+    if not any(row.get("ok") for row in planned):
+        detail = "; ".join(
+            f"{row['id']}: {row.get('error', 'plan failed')}" for row in planned
+        )
+        raise HTTPException(400, detail or "Ranch plan failed")
+
+    states = {row["state"] for row in planned}
+    crops = {row["crop"] for row in planned}
+    if len(states) == 1 and len(crops) == 1:
+        bundle_name = (
+            f"{_place_slug(next(iter(states)))}-{_place_slug(next(iter(crops)))}.zip"
+        )
+    else:
+        bundle_name = f"ranch-{len(planned)}-fields.zip"
+    summary = {
+        "job_id": job_id,
+        "schedule_mode": schedule_mode,
+        "max_cells": MAX_CELLS,
+        "fields": planned,
+    }
+    io.write_json(out_dir / "ranch.json", summary)
+    return {
+        **summary,
+        "ok": all(row.get("ok") for row in planned),
+        "field_count": len(planned),
+        "max_fields": MAX_RANCH_FIELDS,
+        "bundle_url": f"/api/jobs/{job_id}/bundle.zip",
+        "bundle_name": bundle_name,
+        "disclaimer": DISCLAIMER_SHORT,
+        "donate_url": DONATE_URL,
+    }
 
 
 def _run_job(

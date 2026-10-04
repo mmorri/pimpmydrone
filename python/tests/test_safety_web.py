@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import io
+import zipfile
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -155,6 +157,7 @@ def test_api_config_is_donation_funded() -> None:
     assert fields_page.status_code == 200
     assert 'id="fieldCatalog"' in fields_page.text
     assert 'id="fieldMap"' in fields_page.text
+    assert 'id="ranchPlan"' in fields_page.text
     assert 'id="altitudeM"' in home.text
     assert "pack sorties" in home.text.lower()
     assert "osm buildings" in home.text.lower()
@@ -202,6 +205,50 @@ def test_api_lists_dwr_fields_by_county_and_crop() -> None:
     assert client.get("/api/fields/dwr_2023_notreal").status_code == 404
     assert client.get("/api/fields/dwr_1999_1").status_code == 404
     assert client.get("/api/fields/csb_1999_1").status_code == 404
+
+
+def test_api_plans_a_ranch_per_field() -> None:
+    client = TestClient(create_app())
+    refused = client.post(
+        "/api/plan-ranch",
+        json={"field_ids": ["dwr_2023_1020339"], "accepted_disclaimer": False},
+    )
+    assert refused.status_code == 400
+    too_many = client.post(
+        "/api/plan-ranch",
+        json={
+            "field_ids": [f"dwr_2023_{i}" for i in range(6)],
+            "accepted_disclaimer": True,
+        },
+    )
+    assert too_many.status_code == 400
+    unknown = client.post(
+        "/api/plan-ranch",
+        json={"field_ids": ["dwr_2023_1"], "accepted_disclaimer": True},
+    )
+    assert unknown.status_code == 404
+    res = client.post(
+        "/api/plan-ranch",
+        json={
+            "field_ids": ["dwr_2023_1020339", "csb_2024_271724010507790"],
+            "accepted_disclaimer": True,
+        },
+    )
+    assert res.status_code == 200, res.text
+    body = res.json()
+    assert body["ok"] is True
+    assert body["field_count"] == 2
+    folders = {row["folder"] for row in body["fields"]}
+    assert "california/almonds/dwr_2023_1020339" in folders
+    assert "minnesota/corn/csb_2024_271724010507790" in folders
+    assert all(row["coverage_pct"] == 100 for row in body["fields"])
+    bundle = client.get(body["bundle_url"])
+    assert bundle.status_code == 200
+    archive = zipfile.ZipFile(io.BytesIO(bundle.content))
+    names = archive.namelist()
+    assert any(name.endswith("california/almonds/dwr_2023_1020339/missions/SAFETY_REPORT.md") or "california/almonds/dwr_2023_1020339/" in name for name in names)
+    assert any("minnesota/corn/csb_2024_271724010507790/" in name for name in names)
+    assert any(name.endswith("ranch.json") for name in names)
 
 
 def test_api_rejects_unknown_schedule_mode() -> None:

@@ -7,7 +7,7 @@
   <meta name="description" content="California DWR fields and a USDA Crop Sequence Boundaries sample, grouped by state and crop." />
   <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="/assets/styles.css?v=0.5.15" />
+  <link rel="stylesheet" href="/assets/styles.css?v=0.5.16" />
 </head>
 <body class="doc">
   <header class="top">
@@ -31,7 +31,8 @@
     <p class="lede">
       California blocks are surveyed DWR 2023 fields, still grouped by county.
       Iowa, Minnesota, North Dakota, and South Dakota are USDA 2024 crop-sequence
-      polygons. Pick a state, then a field. Flight lines are drawn for that field only.
+      polygons. Check several blocks to plan them as one ranch. Each field keeps
+      its own flight lines, filed by state and crop.
     </p>
     <aside class="guide-warn" aria-label="Disclaimer">
       <strong>Not a flight clearance.</strong> These boundaries are a public sample.
@@ -47,6 +48,15 @@
     <p id="fieldPick" class="field-pick" hidden>
       <a id="fieldPlan" class="btn" href="/#planner">Plan flight lines</a>
     </p>
+    <div id="ranchBar" class="ranch-bar" hidden>
+      <label class="gate-check compact">
+        <input type="checkbox" id="ranchAccept" />
+        <span>I re-confirm the <a href="/legal">disclaimer</a> for this ranch.</span>
+      </label>
+      <button id="ranchPlan" class="btn" type="button">Plan ranch</button>
+      <p id="ranchStatus" class="hint"></p>
+      <div id="ranchResult" hidden></div>
+    </div>
   </article>
 
   <footer class="foot">
@@ -59,6 +69,6 @@
   </footer>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="/assets/fields.js?v=0.5.14"></script>
+  <script src="/assets/fields.js?v=0.5.16"></script>
 </body>
 </html>

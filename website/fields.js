@@ -29,6 +29,8 @@
   }).addTo(map);
 
   const layers = new Map();
+  const ranchIds = new Set();
+  const ranchMax = Number(cfg.max_ranch_fields) || 4;
   let selected = "";
   let stateFilter = "All";
 
@@ -79,6 +81,13 @@
     const list = document.createElement("ul");
     for (const field of crop.fields || []) {
       const item = document.createElement("li");
+      item.className = "field-line";
+      const box = document.createElement("input");
+      box.type = "checkbox";
+      box.className = "field-check";
+      box.checked = ranchIds.has(field.id);
+      box.setAttribute("aria-label", `Include ${fieldLabel(field, true)} in the ranch`);
+      box.addEventListener("change", () => toggleRanch(field.id, box));
       const button = document.createElement("button");
       button.type = "button";
       button.className = "field-row";
@@ -86,6 +95,7 @@
       if (field.id === selected) button.classList.add("is-selected");
       button.textContent = fieldLabel(field, showCounty);
       button.addEventListener("click", () => selectField(field.id));
+      item.appendChild(box);
       item.appendChild(button);
       list.appendChild(item);
     }
@@ -174,6 +184,80 @@
     }
     return jobs;
   }
+
+  function toggleRanch(id, box) {
+    const status = document.getElementById("ranchStatus");
+    if (box.checked && ranchIds.size >= ranchMax) {
+      box.checked = false;
+      if (status) {
+        status.textContent = `This hangar plans at most ${ranchMax} fields in one ranch.`;
+      }
+      return;
+    }
+    if (box.checked) ranchIds.add(id);
+    else ranchIds.delete(id);
+    if (status) status.textContent = "";
+    syncRanch();
+  }
+
+  function syncRanch() {
+    const bar = document.getElementById("ranchBar");
+    const button = document.getElementById("ranchPlan");
+    if (!bar || !button) return;
+    const count = ranchIds.size;
+    bar.hidden = count === 0;
+    button.textContent = count === 1 ? "Plan 1 field" : `Plan ranch (${count})`;
+  }
+
+  async function planRanch() {
+    const status = document.getElementById("ranchStatus");
+    const result = document.getElementById("ranchResult");
+    const button = document.getElementById("ranchPlan");
+    const accept = document.getElementById("ranchAccept");
+    if (!accept || !accept.checked) {
+      if (status) status.textContent = "Re-confirm the disclaimer before planning a ranch.";
+      return;
+    }
+    if (button) button.disabled = true;
+    if (status) status.textContent = `Planning ${ranchIds.size} field${ranchIds.size === 1 ? "" : "s"}…`;
+    if (result) result.hidden = true;
+    try {
+      const res = await fetch("/api/plan-ranch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          field_ids: [...ranchIds],
+          accepted_disclaimer: true,
+          schedule_mode: "sortie",
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Ranch plan failed");
+      const lines = (data.fields || [])
+        .map((field) => {
+          if (!field.ok) return `<li>${field.folder}: ${field.error || "failed"}</li>`;
+          const coverage = Number(field.coverage_pct);
+          const makespan = Number(field.makespan);
+          return `<li>${field.folder} — ${coverage.toFixed(0)}% — ${makespan.toFixed(0)} s</li>`;
+        })
+        .join("");
+      if (result) {
+        result.hidden = false;
+        result.innerHTML = `
+          <ul class="ranch-list">${lines}</ul>
+          <p><a class="btn" href="${data.bundle_url}" download="${data.bundle_name || "ranch.zip"}">Download ranch</a></p>
+        `;
+      }
+      if (status) status.textContent = data.ok ? "Ranch planned." : "Ranch planned with a field that did not finish.";
+    } catch (err) {
+      if (status) status.textContent = String(err.message || err);
+    } finally {
+      if (button) button.disabled = false;
+    }
+  }
+
+  const ranchButton = document.getElementById("ranchPlan");
+  if (ranchButton) ranchButton.addEventListener("click", planRanch);
 
   async function load() {
     const res = await fetch("/api/fields");

@@ -14,6 +14,9 @@
 
 ### Added
 
+- **Ranch planner** (`/api/plan-ranch`): check up to four catalog fields and
+  plan each block on its own. The zip files flight lines under
+  `<state>/<crop>/<field>/`. The fields page is the picker.
 - **Crop fields are on the homepage**: nav label, hero button, a band under the
   disclaimer, the planner, the guide, and the footer. The catalog is no longer
   only a quiet “Fields” link.

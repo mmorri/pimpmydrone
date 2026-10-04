@@ -582,6 +582,18 @@ select, input[type="number"], input[type="file"], input[type="text"], input[type
   text-transform: uppercase;
 }
 .field-county ul { list-style: none; margin: 0; padding: 0; }
+.field-line { display: flex; align-items: center; gap: 0.35rem; }
+.field-check { accent-color: var(--gold); }
+.field-line .field-row { width: auto; flex: 1; }
+.ranch-bar {
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--gold);
+  border-radius: 8px;
+  background: var(--bg-2);
+}
+.ranch-list { margin: 0.6rem 0 0; padding-left: 1.1rem; color: var(--chrome); line-height: 1.45; }
+.ranch-list a { color: var(--gold); }
 .field-row {
   width: 100%;
   text-align: left;
