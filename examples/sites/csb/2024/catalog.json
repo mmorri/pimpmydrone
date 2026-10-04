@@ -1,0 +1,287 @@
+{
+  "source": "USDA NASS Crop Sequence Boundaries 2024",
+  "year": 2024,
+  "service": "https://services3.arcgis.com/g6eV2CrSSwCZj8Mc/arcgis/rest/services/NASS_Crop_Sequence_Boundaries_2024/FeatureServer",
+  "attribution": "USDA National Agricultural Statistics Service, Crop Sequence Boundaries 2024. Synthetic field polygons from the Cropland Data Layer for the lower 48. This is a public sample, not the national file.",
+  "organization": "examples/sites/csb/2024/<state>/<crop>/<field>.geojson. California orchards stay in the DWR 2023 catalog.",
+  "states": [
+    {
+      "state": "Minnesota",
+      "fips": "27",
+      "source": "USDA NASS Crop Sequence Boundaries 2024",
+      "crops": [
+        {
+          "crop": "Corn",
+          "code": 1,
+          "slug": "corn",
+          "fields": [
+            {
+              "id": "csb_2024_271724010507790",
+              "unique_id": "271724010507790",
+              "acres": 18.0,
+              "state": "Minnesota",
+              "county": "Todd",
+              "crop": "Corn",
+              "code": 1,
+              "vertical": "generic",
+              "path": "minnesota/corn/csb_2024_271724010507790.geojson"
+            },
+            {
+              "id": "csb_2024_271724000362089",
+              "unique_id": "271724000362089",
+              "acres": 27.0,
+              "state": "Minnesota",
+              "county": "Sibley",
+              "crop": "Corn",
+              "code": 1,
+              "vertical": "generic",
+              "path": "minnesota/corn/csb_2024_271724000362089.geojson"
+            }
+          ]
+        },
+        {
+          "crop": "Soybeans",
+          "code": 5,
+          "slug": "soybeans",
+          "fields": [
+            {
+              "id": "csb_2024_271724011140980",
+              "unique_id": "271724011140980",
+              "acres": 18.0,
+              "state": "Minnesota",
+              "county": "Stevens",
+              "crop": "Soybeans",
+              "code": 5,
+              "vertical": "generic",
+              "path": "minnesota/soybeans/csb_2024_271724011140980.geojson"
+            },
+            {
+              "id": "csb_2024_271724003609509",
+              "unique_id": "271724003609509",
+              "acres": 27.0,
+              "state": "Minnesota",
+              "county": "Dakota",
+              "crop": "Soybeans",
+              "code": 5,
+              "vertical": "generic",
+              "path": "minnesota/soybeans/csb_2024_271724003609509.geojson"
+            }
+          ]
+        },
+        {
+          "crop": "Spring wheat",
+          "code": 23,
+          "slug": "spring-wheat",
+          "fields": [
+            {
+              "id": "csb_2024_271724000115704",
+              "unique_id": "271724000115704",
+              "acres": 18.0,
+              "state": "Minnesota",
+              "county": "Lac qui Parle",
+              "crop": "Spring wheat",
+              "code": 23,
+              "vertical": "generic",
+              "path": "minnesota/spring-wheat/csb_2024_271724000115704.geojson"
+            },
+            {
+              "id": "csb_2024_271724004506651",
+              "unique_id": "271724004506651",
+              "acres": 27.0,
+              "state": "Minnesota",
+              "county": "Clay",
+              "crop": "Spring wheat",
+              "code": 23,
+              "vertical": "generic",
+              "path": "minnesota/spring-wheat/csb_2024_271724004506651.geojson"
+            }
+          ]
+        },
+        {
+          "crop": "Sugar beets",
+          "code": 41,
+          "slug": "sugar-beets",
+          "fields": [
+            {
+              "id": "csb_2024_271724000362086",
+              "unique_id": "271724000362086",
+              "acres": 18.01,
+              "state": "Minnesota",
+              "county": "Sibley",
+              "crop": "Sugar beets",
+              "code": 41,
+              "vertical": "generic",
+              "path": "minnesota/sugar-beets/csb_2024_271724000362086.geojson"
+            },
+            {
+              "id": "csb_2024_271724004510263",
+              "unique_id": "271724004510263",
+              "acres": 27.0,
+              "state": "Minnesota",
+              "county": "Wilkin",
+              "crop": "Sugar beets",
+              "code": 41,
+              "vertical": "generic",
+              "path": "minnesota/sugar-beets/csb_2024_271724004510263.geojson"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "state": "Iowa",
+      "fips": "19",
+      "source": "USDA NASS Crop Sequence Boundaries 2024",
+      "crops": [
+        {
+          "crop": "Corn",
+          "code": 1,
+          "slug": "corn",
+          "fields": [
+            {
+              "id": "csb_2024_191724001290337",
+              "unique_id": "191724001290337",
+              "acres": 18.06,
+              "state": "Iowa",
+              "county": "Osceola",
+              "crop": "Corn",
+              "code": 1,
+              "vertical": "generic",
+              "path": "iowa/corn/csb_2024_191724001290337.geojson"
+            },
+            {
+              "id": "csb_2024_191724008967950",
+              "unique_id": "191724008967950",
+              "acres": 27.56,
+              "state": "Iowa",
+              "county": "Howard",
+              "crop": "Corn",
+              "code": 1,
+              "vertical": "generic",
+              "path": "iowa/corn/csb_2024_191724008967950.geojson"
+            }
+          ]
+        },
+        {
+          "crop": "Soybeans",
+          "code": 5,
+          "slug": "soybeans",
+          "fields": [
+            {
+              "id": "csb_2024_191724004468094",
+              "unique_id": "191724004468094",
+              "acres": 18.5,
+              "state": "Iowa",
+              "county": "Winnebago",
+              "crop": "Soybeans",
+              "code": 5,
+              "vertical": "generic",
+              "path": "iowa/soybeans/csb_2024_191724004468094.geojson"
+            },
+            {
+              "id": "csb_2024_191724001290317",
+              "unique_id": "191724001290317",
+              "acres": 28.19,
+              "state": "Iowa",
+              "county": "Osceola",
+              "crop": "Soybeans",
+              "code": 5,
+              "vertical": "generic",
+              "path": "iowa/soybeans/csb_2024_191724001290317.geojson"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "state": "North Dakota",
+      "fips": "38",
+      "source": "USDA NASS Crop Sequence Boundaries 2024",
+      "crops": [
+        {
+          "crop": "Spring wheat",
+          "code": 23,
+          "slug": "spring-wheat",
+          "fields": [
+            {
+              "id": "csb_2024_381724003042832",
+              "unique_id": "381724003042832",
+              "acres": 19.0,
+              "state": "North Dakota",
+              "county": "Walsh",
+              "crop": "Spring wheat",
+              "code": 23,
+              "vertical": "generic",
+              "path": "north-dakota/spring-wheat/csb_2024_381724003042832.geojson"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "state": "South Dakota",
+      "fips": "46",
+      "source": "USDA NASS Crop Sequence Boundaries 2024",
+      "crops": [
+        {
+          "crop": "Corn",
+          "code": 1,
+          "slug": "corn",
+          "fields": [
+            {
+              "id": "csb_2024_461724007376663",
+              "unique_id": "461724007376663",
+              "acres": 19.36,
+              "state": "South Dakota",
+              "county": "Minnehaha",
+              "crop": "Corn",
+              "code": 1,
+              "vertical": "generic",
+              "path": "south-dakota/corn/csb_2024_461724007376663.geojson"
+            },
+            {
+              "id": "csb_2024_461724005067891",
+              "unique_id": "461724005067891",
+              "acres": 29.31,
+              "state": "South Dakota",
+              "county": "Moody",
+              "crop": "Corn",
+              "code": 1,
+              "vertical": "generic",
+              "path": "south-dakota/corn/csb_2024_461724005067891.geojson"
+            }
+          ]
+        },
+        {
+          "crop": "Soybeans",
+          "code": 5,
+          "slug": "soybeans",
+          "fields": [
+            {
+              "id": "csb_2024_461724002641876",
+              "unique_id": "461724002641876",
+              "acres": 18.48,
+              "state": "South Dakota",
+              "county": "Deuel",
+              "crop": "Soybeans",
+              "code": 5,
+              "vertical": "generic",
+              "path": "south-dakota/soybeans/csb_2024_461724002641876.geojson"
+            },
+            {
+              "id": "csb_2024_461724002642020",
+              "unique_id": "461724002642020",
+              "acres": 27.64,
+              "state": "South Dakota",
+              "county": "Deuel",
+              "crop": "Soybeans",
+              "code": 5,
+              "vertical": "generic",
+              "path": "south-dakota/soybeans/csb_2024_461724002642020.geojson"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

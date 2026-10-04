@@ -45,7 +45,10 @@ make test                        # QuickCheck properties + pytest (incl. end-to-
 make serve                       # http://127.0.0.1:8000 — disclaimer gate, then planner
 make site                        # examples/sites/solar_farm.geojson → outputs/site-solar/
 # California crop fields: examples/sites/dwr/2023/<county>/<crop>/<field>.geojson
-# Refresh the sample (does not download the statewide layer): python3 tools/fetch_dwr_fields.py
+# USDA sample (MN, IA, ND, SD): examples/sites/csb/2024/<state>/<crop>/<field>.geojson
+# Refresh samples (does not download statewide or national files):
+#   python3 tools/fetch_dwr_fields.py
+#   python3 tools/fetch_csb_fields.py
 ```
 
 The public site is **donation-funded** (no subscriptions). Authors **accept no

@@ -1,0 +1,90 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Clay Minnesota spring wheat \u00b7 27.0 ac",
+        "role": "cover",
+        "source": "USDA NASS Crop Sequence Boundaries 2024",
+        "year": 2024,
+        "state": "Minnesota",
+        "county": "Clay",
+        "crop": "Spring wheat",
+        "crop_code": 23,
+        "unique_id": "271724004506651",
+        "acres": 27.0,
+        "vertical": "generic"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -96.51756,
+              46.8166
+            ],
+            [
+              -96.51756,
+              46.81597
+            ],
+            [
+              -96.51819,
+              46.81597
+            ],
+            [
+              -96.51855,
+              46.81534
+            ],
+            [
+              -96.51855,
+              46.81507
+            ],
+            [
+              -96.52169,
+              46.81507
+            ],
+            [
+              -96.52169,
+              46.81471
+            ],
+            [
+              -96.52546,
+              46.81471
+            ],
+            [
+              -96.52546,
+              46.81597
+            ],
+            [
+              -96.52582,
+              46.81597
+            ],
+            [
+              -96.52582,
+              46.8166
+            ],
+            [
+              -96.51756,
+              46.8166
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "depot": true,
+        "role": "depot"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -96.52546,
+          46.81471
+        ]
+      }
+    }
+  ]
+}

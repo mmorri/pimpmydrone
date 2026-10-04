@@ -16,9 +16,13 @@
     Pistachios: "#c44dff",
     Grapes: "#3dff9a",
     Walnuts: "#e8e4dc",
+    Corn: "#f0c14b",
+    Soybeans: "#3dff9a",
+    "Spring wheat": "#e8e4dc",
+    "Sugar beets": "#ff4d9a",
   };
 
-  const map = L.map(mapEl).setView([36.5, -119.6], 8);
+  const map = L.map(mapEl).setView([39.8, -98.6], 4);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
     attribution: "&copy; OpenStreetMap",
@@ -26,7 +30,7 @@
 
   const layers = new Map();
   let selected = "";
-  let countyFilter = "All";
+  let stateFilter = "All";
 
   function colorFor(crop) {
     return CROP_COLOR[crop] || "#ff4d9a";
@@ -60,96 +64,128 @@
     }
   }
 
-  function renderList(counties) {
+  function fieldLabel(field, showCounty) {
+    const acres = Number(field.acres);
+    const size = Number.isFinite(acres) ? `${acres.toFixed(1)} ac` : field.id;
+    if (showCounty && field.county) return `${field.county} · ${size}`;
+    return size;
+  }
+
+  function addCrop(parent, crop, showCounty) {
+    const cropHead = document.createElement("h3");
+    cropHead.textContent = crop.crop;
+    cropHead.style.color = colorFor(crop.crop);
+    parent.appendChild(cropHead);
+    const list = document.createElement("ul");
+    for (const field of crop.fields || []) {
+      const item = document.createElement("li");
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "field-row";
+      button.dataset.id = field.id;
+      if (field.id === selected) button.classList.add("is-selected");
+      button.textContent = fieldLabel(field, showCounty);
+      button.addEventListener("click", () => selectField(field.id));
+      item.appendChild(button);
+      list.appendChild(item);
+    }
+    parent.appendChild(list);
+  }
+
+  function renderList(states) {
     catalogEl.replaceChildren();
-    for (const county of counties) {
-      if (countyFilter !== "All" && county.county !== countyFilter) continue;
+    for (const state of states) {
+      if (stateFilter !== "All" && state.state !== stateFilter) continue;
       const section = document.createElement("section");
       section.className = "field-county";
       const heading = document.createElement("h2");
-      heading.textContent = county.county;
+      heading.textContent = state.state;
       section.appendChild(heading);
-      for (const crop of county.crops || []) {
-        const cropHead = document.createElement("h3");
-        cropHead.textContent = crop.crop;
-        cropHead.style.color = colorFor(crop.crop);
-        section.appendChild(cropHead);
-        const list = document.createElement("ul");
-        for (const field of crop.fields || []) {
-          const item = document.createElement("li");
-          const button = document.createElement("button");
-          button.type = "button";
-          button.className = "field-row";
-          button.dataset.id = field.id;
-          if (field.id === selected) button.classList.add("is-selected");
-          const acres = Number(field.acres);
-          button.textContent = Number.isFinite(acres)
-            ? `${acres.toFixed(1)} ac`
-            : field.id;
-          button.addEventListener("click", () => selectField(field.id));
-          item.appendChild(button);
-          list.appendChild(item);
+      if (state.counties) {
+        for (const county of state.counties) {
+          const place = document.createElement("p");
+          place.className = "field-place";
+          place.textContent = county.county;
+          section.appendChild(place);
+          for (const crop of county.crops || []) addCrop(section, crop, false);
         }
-        section.appendChild(list);
+      } else {
+        for (const crop of state.crops || []) addCrop(section, crop, true);
       }
       catalogEl.appendChild(section);
     }
   }
 
-  function renderFilters(counties) {
+  function showState(name) {
+    layers.forEach((entry) => {
+      const show = name === "All" || entry.state === name;
+      if (show) entry.layer.addTo(map);
+      else map.removeLayer(entry.layer);
+    });
+    const visible = [...layers.values()].filter(
+      (entry) => name === "All" || entry.state === name
+    );
+    if (visible.length) {
+      const group = L.featureGroup(visible.map((entry) => entry.layer));
+      map.fitBounds(group.getBounds(), { padding: [24, 24] });
+    }
+  }
+
+  function renderFilters(states) {
     if (!filtersEl) return;
-    const names = ["All", ...counties.map((row) => row.county)];
+    const names = ["All", ...states.map((row) => row.state)];
     filtersEl.replaceChildren();
     for (const name of names) {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "field-filter";
       button.textContent = name;
-      button.setAttribute("aria-pressed", name === countyFilter ? "true" : "false");
+      button.setAttribute("aria-pressed", name === stateFilter ? "true" : "false");
       button.addEventListener("click", () => {
-        countyFilter = name;
+        stateFilter = name;
         filtersEl.querySelectorAll(".field-filter").forEach((el) => {
           el.setAttribute("aria-pressed", el.textContent === name ? "true" : "false");
         });
-        renderList(counties);
-        const visible = [...layers.values()].filter(
-          (entry) => countyFilter === "All" || entry.county === countyFilter
-        );
-        layers.forEach((entry) => {
-          const show = countyFilter === "All" || entry.county === countyFilter;
-          if (show) entry.layer.addTo(map);
-          else map.removeLayer(entry.layer);
-        });
-        if (visible.length) {
-          const group = L.featureGroup(visible.map((entry) => entry.layer));
-          map.fitBounds(group.getBounds(), { padding: [24, 24] });
-        }
+        renderList(states);
+        showState(name);
       });
       filtersEl.appendChild(button);
     }
+  }
+
+  function jobsFor(states) {
+    const jobs = [];
+    for (const state of states) {
+      const groups = state.counties
+        ? state.counties.flatMap((county) =>
+            (county.crops || []).map((crop) => ({ place: county.county, crop }))
+          )
+        : (state.crops || []).map((crop) => ({ place: "", crop }));
+      for (const group of groups) {
+        for (const field of group.crop.fields || []) {
+          jobs.push({
+            state: state.state,
+            place: group.place || field.county || "",
+            crop: group.crop.crop,
+            field,
+          });
+        }
+      }
+    }
+    return jobs;
   }
 
   async function load() {
     const res = await fetch("/api/fields");
     const catalog = await res.json();
     if (!res.ok) throw new Error(catalog.detail || "Could not load fields");
-    if (sourceEl) {
-      sourceEl.textContent = catalog.attribution || catalog.source || "";
-    }
-    const counties = catalog.counties || [];
-    renderFilters(counties);
-    renderList(counties);
+    if (sourceEl) sourceEl.textContent = catalog.attribution || "";
+    const states = catalog.states || [];
+    renderFilters(states);
+    renderList(states);
 
-    const jobs = [];
-    for (const county of counties) {
-      for (const crop of county.crops || []) {
-        for (const field of crop.fields || []) {
-          jobs.push({ county: county.county, crop: crop.crop, field });
-        }
-      }
-    }
     const geos = await Promise.all(
-      jobs.map(async (job) => {
+      jobsFor(states).map(async (job) => {
         const geoRes = await fetch(`/api/fields/${encodeURIComponent(job.field.id)}`);
         const geo = await geoRes.json();
         if (!geoRes.ok) return null;
@@ -159,7 +195,7 @@
     for (const row of geos) {
       if (!row) continue;
       const acres = Number(row.field.acres);
-      const label = `${row.county} ${row.crop.toLowerCase()} · ${
+      const label = `${row.place} ${row.state} ${row.crop.toLowerCase()} · ${
         Number.isFinite(acres) ? acres.toFixed(1) : "?"
       } ac`;
       const cover = {
@@ -173,12 +209,14 @@
       });
       layer.on("click", () => selectField(row.field.id));
       layer.addTo(map);
-      layers.set(row.field.id, { layer, crop: row.crop, county: row.county, label });
+      layers.set(row.field.id, {
+        layer,
+        crop: row.crop,
+        state: row.state,
+        label,
+      });
     }
-    if (layers.size) {
-      const group = L.featureGroup([...layers.values()].map((entry) => entry.layer));
-      map.fitBounds(group.getBounds(), { padding: [24, 24] });
-    }
+    if (layers.size) showState("All");
   }
 
   load().catch((err) => {

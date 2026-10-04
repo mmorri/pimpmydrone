@@ -1,0 +1,86 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Walsh North Dakota spring wheat \u00b7 19.0 ac",
+        "role": "cover",
+        "source": "USDA NASS Crop Sequence Boundaries 2024",
+        "year": 2024,
+        "state": "North Dakota",
+        "county": "Walsh",
+        "crop": "Spring wheat",
+        "crop_code": 23,
+        "unique_id": "381724003042832",
+        "acres": 19.0,
+        "vertical": "generic"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -97.13215,
+              48.20764
+            ],
+            [
+              -97.13215,
+              48.20737
+            ],
+            [
+              -97.13251,
+              48.20737
+            ],
+            [
+              -97.13251,
+              48.20701
+            ],
+            [
+              -97.13718,
+              48.20701
+            ],
+            [
+              -97.13817,
+              48.20665
+            ],
+            [
+              -97.13853,
+              48.20629
+            ],
+            [
+              -97.14015,
+              48.20629
+            ],
+            [
+              -97.14015,
+              48.208
+            ],
+            [
+              -97.13215,
+              48.208
+            ],
+            [
+              -97.13215,
+              48.20764
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "depot": true,
+        "role": "depot"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -97.14015,
+          48.20629
+        ]
+      }
+    }
+  ]
+}

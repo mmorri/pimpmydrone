@@ -1,0 +1,94 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Lac qui Parle Minnesota spring wheat \u00b7 18.0 ac",
+        "role": "cover",
+        "source": "USDA NASS Crop Sequence Boundaries 2024",
+        "year": 2024,
+        "state": "Minnesota",
+        "county": "Lac qui Parle",
+        "crop": "Spring wheat",
+        "crop_code": 23,
+        "unique_id": "271724000115704",
+        "acres": 18.0,
+        "vertical": "generic"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -96.12503,
+              45.13142
+            ],
+            [
+              -96.12503,
+              45.1298
+            ],
+            [
+              -96.12566,
+              45.12953
+            ],
+            [
+              -96.12728,
+              45.12953
+            ],
+            [
+              -96.12988,
+              45.13043
+            ],
+            [
+              -96.13051,
+              45.13043
+            ],
+            [
+              -96.13114,
+              45.1298
+            ],
+            [
+              -96.13177,
+              45.1298
+            ],
+            [
+              -96.13177,
+              45.13043
+            ],
+            [
+              -96.13114,
+              45.13106
+            ],
+            [
+              -96.12701,
+              45.13106
+            ],
+            [
+              -96.12701,
+              45.13142
+            ],
+            [
+              -96.12503,
+              45.13142
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "depot": true,
+        "role": "depot"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -96.13177,
+          45.1298
+        ]
+      }
+    }
+  ]
+}

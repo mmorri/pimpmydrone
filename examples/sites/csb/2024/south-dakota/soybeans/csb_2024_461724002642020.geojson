@@ -1,0 +1,114 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Deuel South Dakota soybeans \u00b7 27.6 ac",
+        "role": "cover",
+        "source": "USDA NASS Crop Sequence Boundaries 2024",
+        "year": 2024,
+        "state": "South Dakota",
+        "county": "Deuel",
+        "crop": "Soybeans",
+        "crop_code": 5,
+        "unique_id": "461724002642020",
+        "acres": 27.64,
+        "vertical": "generic"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -96.4561,
+              44.71023
+            ],
+            [
+              -96.45484,
+              44.71023
+            ],
+            [
+              -96.45484,
+              44.71059
+            ],
+            [
+              -96.45089,
+              44.71059
+            ],
+            [
+              -96.45053,
+              44.71023
+            ],
+            [
+              -96.45053,
+              44.70996
+            ],
+            [
+              -96.45089,
+              44.70996
+            ],
+            [
+              -96.45089,
+              44.70861
+            ],
+            [
+              -96.45125,
+              44.70861
+            ],
+            [
+              -96.45188,
+              44.70825
+            ],
+            [
+              -96.45511,
+              44.70825
+            ],
+            [
+              -96.45511,
+              44.70861
+            ],
+            [
+              -96.45583,
+              44.70897
+            ],
+            [
+              -96.45709,
+              44.70897
+            ],
+            [
+              -96.45745,
+              44.70924
+            ],
+            [
+              -96.45745,
+              44.71023
+            ],
+            [
+              -96.45646,
+              44.71023
+            ],
+            [
+              -96.4561,
+              44.71023
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "depot": true,
+        "role": "depot"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -96.45745,
+          44.70924
+        ]
+      }
+    }
+  ]
+}

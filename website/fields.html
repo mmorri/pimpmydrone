@@ -3,17 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>California fields — PimpMyDrone</title>
-  <meta name="description" content="DWR 2023 California crop fields, grouped by county and crop, ready to plan as flight lines." />
+  <title>US crop fields — PimpMyDrone</title>
+  <meta name="description" content="California DWR fields and a USDA Crop Sequence Boundaries sample, grouped by state and crop." />
   <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="/assets/styles.css?v=0.5.13" />
+  <link rel="stylesheet" href="/assets/styles.css?v=0.5.14" />
 </head>
 <body class="doc">
   <header class="top">
     <div class="brand">
       <a href="/" class="logo">PimpMyDrone</a>
-      <span class="tag">DWR 2023 · county / crop</span>
+      <span class="tag">state / crop · public sample</span>
     </div>
     <nav>
       <a href="/#planner">Planner</a>
@@ -26,11 +26,12 @@
   </header>
 
   <article class="doc-card fields-card">
-    <p class="gate-kicker">Field catalog · not the whole state</p>
-    <h1>California crop fields<br /><span class="accent">by county and crop</span></h1>
+    <p class="gate-kicker">Field catalog · not the national file</p>
+    <h1>US crop fields<br /><span class="accent">by state and crop</span></h1>
     <p class="lede">
-      Each block is one DWR 2023 field polygon. Pick a county, then a field, and
-      open it in the planner. Flight lines are drawn for that field only.
+      California blocks are surveyed DWR 2023 fields, still grouped by county.
+      Iowa, Minnesota, North Dakota, and South Dakota are USDA 2024 crop-sequence
+      polygons. Pick a state, then a field. Flight lines are drawn for that field only.
     </p>
     <aside class="guide-warn" aria-label="Disclaimer">
       <strong>Not a flight clearance.</strong> These boundaries are a public sample.
@@ -38,7 +39,7 @@
       <a href="/legal">/legal</a> before you arm anything.
     </aside>
     <p id="fieldSource" class="hint"></p>
-    <div id="fieldFilters" class="field-filters" role="tablist" aria-label="County"></div>
+    <div id="fieldFilters" class="field-filters" role="tablist" aria-label="State"></div>
     <div class="field-layout">
       <div id="fieldCatalog" class="field-catalog" aria-live="polite"></div>
       <div id="fieldMap" class="field-map" role="region" aria-label="Field map"></div>
@@ -58,6 +59,6 @@
   </footer>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="/assets/fields.js?v=0.5.13"></script>
+  <script src="/assets/fields.js?v=0.5.14"></script>
 </body>
 </html>

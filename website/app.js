@@ -155,7 +155,7 @@
     select.addEventListener("change", applyExample);
     if (btn) btn.addEventListener("click", applyExample);
     const fieldId = new URLSearchParams(location.search).get("field") || "";
-    if (/^dwr_[0-9]{4}_[0-9]+$/.test(fieldId)) {
+    if (/^(dwr|csb)_[0-9]{4}_[0-9]+$/.test(fieldId)) {
       try {
         const res = await fetch(`/api/fields/${encodeURIComponent(fieldId)}`);
         const geo = await res.json();

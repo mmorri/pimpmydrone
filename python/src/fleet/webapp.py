@@ -31,7 +31,8 @@ ROOT = Path(__file__).resolve().parents[3]
 WEBSITE_DIR = Path(os.environ.get("FLEET_WEBSITE", ROOT / "website"))
 EXAMPLES_DIR = ROOT / "examples" / "sites"
 DWR_DIR = EXAMPLES_DIR / "dwr" / "2023"
-FIELD_ID = re.compile(r"dwr_[0-9]{4}_[0-9]+")
+CSB_DIR = EXAMPLES_DIR / "csb" / "2024"
+FIELD_ID = re.compile(r"(dwr|csb)_[0-9]{4}_[0-9]+")
 EXAMPLE_SITES = (
     {
         "id": "solar_farm",
@@ -91,21 +92,60 @@ def example_geojson(site_id: str) -> dict[str, Any]:
     return io.read_json(path)
 
 
-def field_catalog() -> dict[str, Any]:
-    path = DWR_DIR / "catalog.json"
+def _read_catalog(path: Path) -> dict[str, Any]:
     if not path.is_file():
-        return {"counties": [], "year": 2023}
+        return {}
     return io.read_json(path)
+
+
+def field_catalog() -> dict[str, Any]:
+    """California survey fields plus the USDA sample, grouped by state."""
+    dwr = _read_catalog(DWR_DIR / "catalog.json")
+    csb = _read_catalog(CSB_DIR / "catalog.json")
+    states: list[dict[str, Any]] = []
+    if dwr.get("counties"):
+        states.append(
+            {
+                "state": "California",
+                "source": dwr.get("source") or "DWR Statewide Crop Mapping 2023",
+                "counties": dwr["counties"],
+            }
+        )
+    states.extend(csb.get("states") or [])
+    return {
+        "attribution": (
+            "California: Department of Water Resources, Statewide Crop Mapping "
+            "2023. Other states: USDA NASS Crop Sequence Boundaries 2024 "
+            "(synthetic polygons). A public sample, not the national file."
+        ),
+        "states": states,
+    }
+
+
+def _walk_fields(catalog: dict[str, Any]):
+    for state in catalog.get("states") or []:
+        prefix = "dwr/2023" if state.get("counties") else "csb/2024"
+        buckets = []
+        for county in state.get("counties") or []:
+            buckets.extend(county.get("crops") or [])
+        buckets.extend(state.get("crops") or [])
+        for crop in buckets:
+            for field in crop.get("fields") or []:
+                yield prefix, field
 
 
 def _field_index(catalog: dict[str, Any]) -> dict[str, dict[str, Any]]:
     index: dict[str, dict[str, Any]] = {}
-    for county in catalog.get("counties") or []:
-        for crop in county.get("crops") or []:
-            for field in crop.get("fields") or []:
-                field_id = str(field.get("id") or "")
-                if FIELD_ID.fullmatch(field_id):
-                    index[field_id] = field
+    for prefix, field in _walk_fields(catalog):
+        field_id = str(field.get("id") or "")
+        rel = str(field.get("path") or "")
+        if not FIELD_ID.fullmatch(field_id):
+            continue
+        if not re.fullmatch(r"[a-z0-9_./-]+", rel) or ".." in rel.split("/"):
+            continue
+        stored = dict(field)
+        stored["path"] = f"{prefix}/{rel}"
+        index[field_id] = stored
     return index
 
 
@@ -114,10 +154,10 @@ def field_geojson(field_id: str) -> dict[str, Any]:
         raise HTTPException(404, "Unknown field")
     field = _field_index(field_catalog()).get(field_id)
     rel = str((field or {}).get("path") or "")
-    if field is None or not re.fullmatch(r"[a-z0-9_./-]+", rel) or ".." in rel.split("/"):
+    if field is None or ".." in rel.split("/"):
         raise HTTPException(404, "Unknown field")
-    path = (DWR_DIR / rel).resolve()
-    root = DWR_DIR.resolve()
+    path = (EXAMPLES_DIR / rel).resolve()
+    root = EXAMPLES_DIR.resolve()
     if not path.is_relative_to(root) or not path.is_file():
         raise HTTPException(404, "Unknown field")
     return io.read_json(path)
@@ -198,7 +238,7 @@ def create_app() -> FastAPI:
             "(YOLO / CNN / VLM / domain). Free forever. Donations welcome. "
             "Authors accept no responsibility for flights."
         ),
-        version="0.5.13",
+        version="0.5.14",
     )
     app.add_middleware(
         CORSMiddleware,
@@ -284,7 +324,7 @@ def create_app() -> FastAPI:
         return {
             "status": "ok",
             "product": "pimpmydrone",
-            "version": "0.5.13",
+            "version": "0.5.14",
             "monetization": "donations",
             "max_cells": MAX_CELLS,
             "perception": True,

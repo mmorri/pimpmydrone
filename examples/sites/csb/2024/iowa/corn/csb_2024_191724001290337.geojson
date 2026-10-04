@@ -1,0 +1,74 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Osceola Iowa corn \u00b7 18.1 ac",
+        "role": "cover",
+        "source": "USDA NASS Crop Sequence Boundaries 2024",
+        "year": 2024,
+        "state": "Iowa",
+        "county": "Osceola",
+        "crop": "Corn",
+        "crop_code": 1,
+        "unique_id": "191724001290337",
+        "acres": 18.06,
+        "vertical": "generic"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -95.43136,
+              43.50008
+            ],
+            [
+              -95.42988,
+              43.50004
+            ],
+            [
+              -95.42988,
+              43.49555
+            ],
+            [
+              -95.43158,
+              43.49555
+            ],
+            [
+              -95.43158,
+              43.49851
+            ],
+            [
+              -95.43185,
+              43.49851
+            ],
+            [
+              -95.43185,
+              43.50013
+            ],
+            [
+              -95.43136,
+              43.50008
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "depot": true,
+        "role": "depot"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -95.43158,
+          43.49555
+        ]
+      }
+    }
+  ]
+}

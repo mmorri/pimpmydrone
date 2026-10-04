@@ -1,0 +1,94 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Stevens Minnesota soybeans \u00b7 18.0 ac",
+        "role": "cover",
+        "source": "USDA NASS Crop Sequence Boundaries 2024",
+        "year": 2024,
+        "state": "Minnesota",
+        "county": "Stevens",
+        "crop": "Soybeans",
+        "crop_code": 5,
+        "unique_id": "271724011140980",
+        "acres": 18.0,
+        "vertical": "generic"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -95.84139,
+              45.70856
+            ],
+            [
+              -95.84121,
+              45.70856
+            ],
+            [
+              -95.84121,
+              45.70758
+            ],
+            [
+              -95.84175,
+              45.70758
+            ],
+            [
+              -95.84175,
+              45.70793
+            ],
+            [
+              -95.84903,
+              45.70793
+            ],
+            [
+              -95.84903,
+              45.70758
+            ],
+            [
+              -95.84975,
+              45.70758
+            ],
+            [
+              -95.84975,
+              45.70829
+            ],
+            [
+              -95.84939,
+              45.70829
+            ],
+            [
+              -95.84939,
+              45.70892
+            ],
+            [
+              -95.84238,
+              45.70892
+            ],
+            [
+              -95.84139,
+              45.70856
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "depot": true,
+        "role": "depot"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -95.84975,
+          45.70758
+        ]
+      }
+    }
+  ]
+}

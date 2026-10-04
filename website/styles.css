@@ -531,6 +531,13 @@ select, input[type="number"], input[type="file"], input[type="text"], input[type
   padding-right: 0.2rem;
 }
 .field-county { margin: 0 0 1rem; }
+.field-place {
+  margin: 0.65rem 0 0.15rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
 .field-county h2 {
   margin: 0 0 0.35rem;
   font-family: "Bebas Neue", Impact, sans-serif;

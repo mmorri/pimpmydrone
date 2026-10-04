@@ -14,6 +14,11 @@
 
 ### Added
 
+- **US field sample** (`examples/sites/csb/2024/`): USDA NASS Crop Sequence
+  Boundaries 2024 for Minnesota, Iowa, North Dakota, and South Dakota, grouped
+  by state and crop. The fields page filters by state. California stays on the
+  surveyed DWR layer. The ~3.5 GB national file is not vendored; the public
+  feature service only answers for those four states.
 - **Fields page** (`/fields`): county and crop browser for the DWR 2023 sample,
   with a map. Opening a field loads it in the planner (`/?field=`). The planner
   dropdown keeps the demo sites.

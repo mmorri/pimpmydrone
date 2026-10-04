@@ -175,9 +175,12 @@ def test_api_lists_and_serves_example_sites() -> None:
 def test_api_lists_dwr_fields_by_county_and_crop() -> None:
     client = TestClient(create_app())
     catalog = client.get("/api/fields").json()
-    counties = {row["county"] for row in catalog["counties"]}
+    states = {row["state"] for row in catalog["states"]}
+    assert {"California", "Iowa", "Minnesota", "North Dakota", "South Dakota"} <= states
+    california = next(row for row in catalog["states"] if row["state"] == "California")
+    counties = {row["county"] for row in california["counties"]}
     assert {"Fresno", "Kern", "Tulare"} <= counties
-    fresno = next(row for row in catalog["counties"] if row["county"] == "Fresno")
+    fresno = next(row for row in california["counties"] if row["county"] == "Fresno")
     crops = {crop["crop"] for crop in fresno["crops"]}
     assert {"Almonds", "Pistachios", "Grapes"} <= crops
     field_id = fresno["crops"][0]["fields"][0]["id"]
@@ -188,9 +191,15 @@ def test_api_lists_dwr_fields_by_county_and_crop() -> None:
     roles = {feat["properties"].get("role") for feat in body["features"]}
     assert "cover" in roles
     assert "depot" in roles
+    minnesota = next(row for row in catalog["states"] if row["state"] == "Minnesota")
+    corn = next(crop for crop in minnesota["crops"] if crop["crop"] == "Corn")
+    csb = client.get(f"/api/fields/{corn['fields'][0]['id']}")
+    assert csb.status_code == 200
+    assert csb.json()["type"] == "FeatureCollection"
     assert client.get("/api/fields/../secret").status_code == 404
     assert client.get("/api/fields/dwr_2023_notreal").status_code == 404
     assert client.get("/api/fields/dwr_1999_1").status_code == 404
+    assert client.get("/api/fields/csb_1999_1").status_code == 404
 
 
 def test_api_rejects_unknown_schedule_mode() -> None:
