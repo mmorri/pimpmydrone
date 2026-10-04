@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import io
 import zipfile
+from io import BytesIO
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -188,6 +188,8 @@ def test_api_lists_dwr_fields_by_county_and_crop() -> None:
     fresno = next(row for row in california["counties"] if row["county"] == "Fresno")
     crops = {crop["crop"] for crop in fresno["crops"]}
     assert {"Almonds", "Pistachios", "Grapes"} <= crops
+    almonds = next(crop for crop in fresno["crops"] if crop["crop"] == "Almonds")
+    assert almonds["flight_style"] == "orchard"
     field_id = fresno["crops"][0]["fields"][0]["id"]
     geo = client.get(f"/api/fields/{field_id}")
     assert geo.status_code == 200
@@ -198,6 +200,7 @@ def test_api_lists_dwr_fields_by_county_and_crop() -> None:
     assert "depot" in roles
     minnesota = next(row for row in catalog["states"] if row["state"] == "Minnesota")
     corn = next(crop for crop in minnesota["crops"] if crop["crop"] == "Corn")
+    assert corn["flight_style"] == "open-field"
     csb = client.get(f"/api/fields/{corn['fields'][0]['id']}")
     assert csb.status_code == 200
     assert csb.json()["type"] == "FeatureCollection"
@@ -239,12 +242,15 @@ def test_api_plans_a_ranch_per_field() -> None:
     assert body["ok"] is True
     assert body["field_count"] == 2
     folders = {row["folder"] for row in body["fields"]}
+    styles = {row["folder"]: row["flight_style"] for row in body["fields"]}
+    assert styles["california/almonds/dwr_2023_1020339"] == "orchard"
+    assert styles["minnesota/corn/csb_2024_271724010507790"] == "open-field"
     assert "california/almonds/dwr_2023_1020339" in folders
     assert "minnesota/corn/csb_2024_271724010507790" in folders
     assert all(row["coverage_pct"] == 100 for row in body["fields"])
     bundle = client.get(body["bundle_url"])
     assert bundle.status_code == 200
-    archive = zipfile.ZipFile(io.BytesIO(bundle.content))
+    archive = zipfile.ZipFile(BytesIO(bundle.content))
     names = archive.namelist()
     assert any(name.endswith("california/almonds/dwr_2023_1020339/missions/SAFETY_REPORT.md") or "california/almonds/dwr_2023_1020339/" in name for name in names)
     assert any("minnesota/corn/csb_2024_271724010507790/" in name for name in names)

@@ -14,6 +14,11 @@
 
 ### Added
 
+- **Crop flight styles**: almonds, pistachios, walnuts, and grapes get boustrophedon
+  rows along the long axis of the block. Corn, soy, wheat, and beets keep the
+  east-west auto sweep. The fields page and the plan result name the style.
+  One Fresno almond block flew less that way; Minnesota corn ties the generic
+  plan on length (`benchmarks/flight_style.md`).
 - **Ranch planner** (`/api/plan-ranch`): check up to four catalog fields and
   plan each block on its own. The zip files flight lines under
   `<state>/<crop>/<field>/`. The fields page is the picker.

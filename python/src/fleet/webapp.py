@@ -25,6 +25,7 @@ from pydantic import BaseModel, Field
 
 from . import io
 from .safety import DISCLAIMER_FULL, DISCLAIMER_SHORT, collect_warnings
+from .flight_style import style_for_crop, style_from_geojson
 from .site import VERTICALS, plan_site
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -99,6 +100,26 @@ def _read_catalog(path: Path) -> dict[str, Any]:
     return io.read_json(path)
 
 
+def _annotate_crop(crop: dict[str, Any]) -> dict[str, Any]:
+    info = style_for_crop(str(crop.get("crop") or ""))
+    return {**crop, "flight_style": info["style"], "flight_reason": info["reason"]}
+
+
+def _annotate_state(state: dict[str, Any]) -> dict[str, Any]:
+    copied = dict(state)
+    if copied.get("counties"):
+        copied["counties"] = [
+            {
+                **county,
+                "crops": [_annotate_crop(crop) for crop in county.get("crops") or []],
+            }
+            for county in copied["counties"]
+        ]
+    if copied.get("crops"):
+        copied["crops"] = [_annotate_crop(crop) for crop in copied["crops"]]
+    return copied
+
+
 def field_catalog() -> dict[str, Any]:
     """California survey fields plus the USDA sample, grouped by state."""
     dwr = _read_catalog(DWR_DIR / "catalog.json")
@@ -106,13 +127,15 @@ def field_catalog() -> dict[str, Any]:
     states: list[dict[str, Any]] = []
     if dwr.get("counties"):
         states.append(
-            {
-                "state": "California",
-                "source": dwr.get("source") or "DWR Statewide Crop Mapping 2023",
-                "counties": dwr["counties"],
-            }
+            _annotate_state(
+                {
+                    "state": "California",
+                    "source": dwr.get("source") or "DWR Statewide Crop Mapping 2023",
+                    "counties": dwr["counties"],
+                }
+            )
         )
-    states.extend(csb.get("states") or [])
+    states.extend(_annotate_state(state) for state in csb.get("states") or [])
     return {
         "attribution": (
             "California: Department of Water Resources, Statewide Crop Mapping "
@@ -254,7 +277,7 @@ def create_app() -> FastAPI:
             "(YOLO / CNN / VLM / domain). Free forever. Donations welcome. "
             "Authors accept no responsibility for flights."
         ),
-        version="0.5.16",
+        version="0.5.17",
     )
     app.add_middleware(
         CORSMiddleware,
@@ -340,7 +363,7 @@ def create_app() -> FastAPI:
         return {
             "status": "ok",
             "product": "pimpmydrone",
-            "version": "0.5.16",
+            "version": "0.5.17",
             "hangar_ranch": True,
             "hangar_max_ranch_fields": MAX_RANCH_FIELDS,
             "monetization": "donations",
@@ -756,6 +779,7 @@ def _run_ranch(
         vertical = str(meta.get("vertical") or "generic")
         if vertical not in VERTICALS:
             vertical = "generic"
+        style = style_for_crop(crop)
         try:
             result = plan_site(
                 field_dir / "input.geojson",
@@ -766,6 +790,9 @@ def _run_ranch(
                 altitude_m=altitude_m,
                 partition="auto",
                 schedule_mode=schedule_mode,
+                coverage_algorithm=style["coverage_algorithm"],
+                align=style["align"],
+                flight_style=style,
             )
         except Exception as exc:  # noqa: BLE001
             planned.append(
@@ -774,10 +801,12 @@ def _run_ranch(
                     "state": state,
                     "crop": crop,
                     "county": meta.get("county"),
-                    "folder": folder,
-                    "ok": False,
-                    "error": str(exc),
-                }
+                "folder": folder,
+                "flight_style": style["style"],
+                "flight_reason": style["reason"],
+                "ok": False,
+                "error": str(exc),
+            }
             )
             continue
         metrics = result.metrics
@@ -789,6 +818,8 @@ def _run_ranch(
                 "county": meta.get("county"),
                 "acres": meta.get("acres"),
                 "folder": folder,
+                "flight_style": style["style"],
+                "flight_reason": style["reason"],
                 "ok": bool(result.simulation.ok),
                 "coverage_pct": metrics["coverage"]["percentage"],
                 "makespan": metrics["makespan"],
@@ -853,6 +884,7 @@ def _run_job(
     io.ensure_directory(out_dir)
     io.write_json(out_dir / "input.geojson", geojson)
     (out_dir / "DISCLAIMER.txt").write_text(DISCLAIMER_FULL, encoding="utf-8")
+    style = style_from_geojson(geojson)
 
     try:
         result = plan_site(
@@ -867,6 +899,9 @@ def _run_job(
             partition="auto",
             schedule_mode=schedule_mode,
             osm_buildings=osm_buildings,
+            coverage_algorithm=style["coverage_algorithm"],
+            align=style["align"],
+            flight_style=style,
         )
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(400, str(exc)) from exc
@@ -909,6 +944,8 @@ def _run_job(
         "partition_family": partition.get("family"),
         "partition_scores": partition.get("scores"),
         "schedule_mode": schedule_mode,
+        "flight_style": style["style"],
+        "flight_reason": style["reason"],
         "osm_buildings": None if osm_report is None else osm_report.get("buildings_added"),
         "osm_ok": None if osm_report is None else osm_report.get("ok"),
         "makespan": metrics["makespan"],

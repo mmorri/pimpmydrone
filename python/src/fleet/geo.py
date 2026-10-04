@@ -28,21 +28,40 @@ class GeoTransform:
     height: int
     vertical: str = "generic"
     altitude_m: float = 40.0
+    # Grid +x / +y as unit vectors in local east/north metres.
+    # Identity keeps rows east-west. Orchard plans point +x along the long axis.
+    axis_x_east: float = 1.0
+    axis_x_north: float = 0.0
+    axis_y_east: float = 0.0
+    axis_y_north: float = 1.0
+    align: str = "east-west"
+    long_axis_deg: float = 0.0
 
     @property
     def metres_per_deg_lon(self) -> float:
         return _METRES_PER_DEG_LAT * max(0.2, math.cos(math.radians(self.origin_lat)))
 
-    def cell_to_lonlat(self, x: int, y: int) -> tuple[float, float]:
-        east_m = (x + 0.5) * self.cell_size_m
-        north_m = (y + 0.5) * self.cell_size_m
-        lon = self.origin_lon + east_m / self.metres_per_deg_lon
-        lat = self.origin_lat + north_m / _METRES_PER_DEG_LAT
+    def _lonlat_of(self, east_m: float, north_m: float) -> tuple[float, float]:
+        world_east = east_m * self.axis_x_east + north_m * self.axis_y_east
+        world_north = east_m * self.axis_x_north + north_m * self.axis_y_north
+        lon = self.origin_lon + world_east / self.metres_per_deg_lon
+        lat = self.origin_lat + world_north / _METRES_PER_DEG_LAT
         return lon, lat
 
+    def _metres_of(self, lon: float, lat: float) -> tuple[float, float]:
+        world_east = (lon - self.origin_lon) * self.metres_per_deg_lon
+        world_north = (lat - self.origin_lat) * _METRES_PER_DEG_LAT
+        det = self.axis_x_east * self.axis_y_north - self.axis_x_north * self.axis_y_east
+        det = det if abs(det) > 1e-12 else 1.0
+        east_m = (world_east * self.axis_y_north - world_north * self.axis_y_east) / det
+        north_m = (self.axis_x_east * world_north - self.axis_x_north * world_east) / det
+        return east_m, north_m
+
+    def cell_to_lonlat(self, x: int, y: int) -> tuple[float, float]:
+        return self._lonlat_of((x + 0.5) * self.cell_size_m, (y + 0.5) * self.cell_size_m)
+
     def lonlat_to_cell(self, lon: float, lat: float) -> tuple[int, int]:
-        east_m = (lon - self.origin_lon) * self.metres_per_deg_lon
-        north_m = (lat - self.origin_lat) * _METRES_PER_DEG_LAT
+        east_m, north_m = self._metres_of(lon, lat)
         x = int(east_m // self.cell_size_m)
         y = int(north_m // self.cell_size_m)
         return x, y
@@ -60,6 +79,12 @@ class GeoTransform:
             height=int(payload["height"]),
             vertical=str(payload.get("vertical", "generic")),
             altitude_m=float(payload.get("altitude_m", 40.0)),
+            axis_x_east=float(payload.get("axis_x_east", 1.0)),
+            axis_x_north=float(payload.get("axis_x_north", 0.0)),
+            axis_y_east=float(payload.get("axis_y_east", 0.0)),
+            axis_y_north=float(payload.get("axis_y_north", 1.0)),
+            align=str(payload.get("align", "east-west")),
+            long_axis_deg=float(payload.get("long_axis_deg", 0.0)),
         )
 
 
@@ -193,6 +218,7 @@ def rasterize_site(
     takeoff_cost: float = 10.0,
     landing_cost: float = 10.0,
     max_drones: int = 4,
+    align: str = "east-west",
 ) -> tuple[dict[str, Any], dict[str, Any], GeoTransform]:
     """Convert a WGS84 polygon into ``map.json`` / ``params.json`` + geo metadata."""
 
@@ -201,10 +227,28 @@ def rasterize_site(
     pad_m = cell_size_m
     mid_lat = (miny + maxy) / 2.0
     m_per_lon = _METRES_PER_DEG_LAT * max(0.2, math.cos(math.radians(mid_lat)))
-    origin_lon = minx - pad_m / m_per_lon
-    origin_lat = miny - pad_m / _METRES_PER_DEG_LAT
-    width_m = (maxx - minx) * m_per_lon + 2 * pad_m
-    height_m = (maxy - miny) * _METRES_PER_DEG_LAT + 2 * pad_m
+    axes = (1.0, 0.0, 0.0, 1.0)
+    long_axis_deg = 0.0
+    if align == "long-axis":
+        lon0, lat0, axes, long_axis_deg = _long_axis_frame(site, m_per_lon)
+        projected = [_project_metres(lon, lat, lon0, lat0, m_per_lon, axes) for lon, lat in site.exterior.coords]
+        min_gx = min(p[0] for p in projected)
+        max_gx = max(p[0] for p in projected)
+        min_gy = min(p[1] for p in projected)
+        max_gy = max(p[1] for p in projected)
+        origin_gx = min_gx - pad_m
+        origin_gy = min_gy - pad_m
+        origin_east = origin_gx * axes[0] + origin_gy * axes[2]
+        origin_north = origin_gx * axes[1] + origin_gy * axes[3]
+        origin_lon = lon0 + origin_east / m_per_lon
+        origin_lat = lat0 + origin_north / _METRES_PER_DEG_LAT
+        width_m = (max_gx - min_gx) + 2 * pad_m
+        height_m = (max_gy - min_gy) + 2 * pad_m
+    else:
+        origin_lon = minx - pad_m / m_per_lon
+        origin_lat = miny - pad_m / _METRES_PER_DEG_LAT
+        width_m = (maxx - minx) * m_per_lon + 2 * pad_m
+        height_m = (maxy - miny) * _METRES_PER_DEG_LAT + 2 * pad_m
     width = max(2, int(math.ceil(width_m / cell_size_m)))
     height = max(2, int(math.ceil(height_m / cell_size_m)))
 
@@ -216,6 +260,12 @@ def rasterize_site(
         height=height,
         vertical=vertical,
         altitude_m=altitude_m,
+        axis_x_east=axes[0],
+        axis_x_north=axes[1],
+        axis_y_east=axes[2],
+        axis_y_north=axes[3],
+        align=align,
+        long_axis_deg=round(long_axis_deg, 2),
     )
 
     avoid = list(avoid_polygons or [])
@@ -275,6 +325,7 @@ def write_site_workspace(
     takeoff_cost: float = 10.0,
     landing_cost: float = 10.0,
     max_drones: int = 4,
+    align: str = "east-west",
 ) -> tuple[Path, Path, Path, GeoTransform]:
     """Rasterise a site GeoJSON into ``out_dir`` and return artefact paths."""
 
@@ -306,6 +357,7 @@ def write_site_workspace(
         takeoff_cost=takeoff_cost,
         landing_cost=landing_cost,
         max_drones=max_drones,
+        align=align,
     )
     io.ensure_directory(out_dir)
     map_path = out_dir / "map.json"
@@ -354,11 +406,53 @@ def _lonlat_poly_to_grid(geo: GeoTransform, poly: Polygon) -> dict[str, Any] | N
 
 
 def _cell_polygon(geo: GeoTransform, x: int, y: int) -> Polygon:
-    lon0 = geo.origin_lon + x * geo.cell_size_m / geo.metres_per_deg_lon
-    lat0 = geo.origin_lat + y * geo.cell_size_m / _METRES_PER_DEG_LAT
-    lon1 = geo.origin_lon + (x + 1) * geo.cell_size_m / geo.metres_per_deg_lon
-    lat1 = geo.origin_lat + (y + 1) * geo.cell_size_m / _METRES_PER_DEG_LAT
-    return Polygon([(lon0, lat0), (lon1, lat0), (lon1, lat1), (lon0, lat1)])
+    corners = [
+        geo._lonlat_of(x * geo.cell_size_m, y * geo.cell_size_m),
+        geo._lonlat_of((x + 1) * geo.cell_size_m, y * geo.cell_size_m),
+        geo._lonlat_of((x + 1) * geo.cell_size_m, (y + 1) * geo.cell_size_m),
+        geo._lonlat_of(x * geo.cell_size_m, (y + 1) * geo.cell_size_m),
+    ]
+    return Polygon(corners)
+
+
+def _long_axis_frame(
+    site: Polygon, m_per_lon: float
+) -> tuple[float, float, tuple[float, float, float, float], float]:
+    """Point grid +x along the longest side of the block."""
+    minx, miny, maxx, maxy = site.bounds
+    lon0 = (minx + maxx) / 2.0
+    lat0 = (miny + maxy) / 2.0
+    rect = site.minimum_rotated_rectangle
+    coords = list(rect.exterior.coords)
+    best_len = 0.0
+    best_de, best_dn = 1.0, 0.0
+    for start, end in zip(coords, coords[1:], strict=False):
+        de = (end[0] - start[0]) * m_per_lon
+        dn = (end[1] - start[1]) * _METRES_PER_DEG_LAT
+        length = math.hypot(de, dn)
+        if length > best_len:
+            best_len, best_de, best_dn = length, de, dn
+    if best_len < 1e-6:
+        return lon0, lat0, (1.0, 0.0, 0.0, 1.0), 0.0
+    ax_e, ax_n = best_de / best_len, best_dn / best_len
+    # +y is +x rotated 90° counter-clockwise in the east/north plane.
+    ay_e, ay_n = -ax_n, ax_e
+    angle = math.degrees(math.atan2(ax_n, ax_e))
+    return lon0, lat0, (ax_e, ax_n, ay_e, ay_n), angle
+
+
+def _project_metres(
+    lon: float,
+    lat: float,
+    lon0: float,
+    lat0: float,
+    m_per_lon: float,
+    axes: tuple[float, float, float, float],
+) -> tuple[float, float]:
+    east = (lon - lon0) * m_per_lon
+    north = (lat - lat0) * _METRES_PER_DEG_LAT
+    ax_e, ax_n, ay_e, ay_n = axes
+    return east * ax_e + north * ax_n, east * ay_e + north * ay_n
 
 
 def _place_depots(

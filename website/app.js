@@ -263,6 +263,15 @@
     const schedule = data.schedule_mode
       ? `<div class="metric"><span>Schedule</span><b>${data.schedule_mode}</b></div>`
       : "";
+    const styleName =
+      data.flight_style === "orchard"
+        ? "orchard rows"
+        : data.flight_style === "open-field"
+          ? "open-field sweep"
+          : "";
+    const flightStyle = styleName
+      ? `<div class="metric"><span>Flight style</span><b>${styleName}</b></div>`
+      : "";
     const osm =
       data.osm_buildings == null
         ? ""
@@ -283,6 +292,7 @@
       <div class="metric"><span>Path length</span><b>${Number(data.total_length).toFixed(0)}</b></div>
       ${partition}
       ${schedule}
+      ${flightStyle}
       ${osm}
       ${deconf}
     `;

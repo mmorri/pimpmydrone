@@ -66,6 +66,12 @@
     }
   }
 
+  function styleLabel(style) {
+    if (style === "orchard") return "orchard rows";
+    if (style === "open-field") return "open-field sweep";
+    return "";
+  }
+
   function fieldLabel(field, showCounty) {
     const acres = Number(field.acres);
     const size = Number.isFinite(acres) ? `${acres.toFixed(1)} ac` : field.id;
@@ -75,7 +81,8 @@
 
   function addCrop(parent, crop, showCounty) {
     const cropHead = document.createElement("h3");
-    cropHead.textContent = crop.crop;
+    const style = styleLabel(crop.flight_style);
+    cropHead.textContent = style ? `${crop.crop} · ${style}` : crop.crop;
     cropHead.style.color = colorFor(crop.crop);
     parent.appendChild(cropHead);
     const list = document.createElement("ul");
@@ -238,7 +245,9 @@
           if (!field.ok) return `<li>${field.folder}: ${field.error || "failed"}</li>`;
           const coverage = Number(field.coverage_pct);
           const makespan = Number(field.makespan);
-          return `<li>${field.folder} — ${coverage.toFixed(0)}% — ${makespan.toFixed(0)} s</li>`;
+          const style = styleLabel(field.flight_style);
+          const styleBit = style ? ` · ${style}` : "";
+          return `<li>${field.folder}${styleBit} — ${coverage.toFixed(0)}% — ${makespan.toFixed(0)} s</li>`;
         })
         .join("");
       if (result) {

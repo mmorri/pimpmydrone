@@ -41,6 +41,40 @@ def test_cell_lonlat_roundtrip() -> None:
     assert (x, y) == (3, 5)
 
 
+def test_long_axis_points_along_a_north_south_block(tmp_path: Path) -> None:
+    import json
+
+    # ~180 m east, ~1.1 km north. The long edge is nearly due north.
+    ring = [
+        [-120.0, 36.0],
+        [-119.998, 36.0],
+        [-119.998, 36.01],
+        [-120.0, 36.01],
+        [-120.0, 36.0],
+    ]
+    geojson = {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {"role": "cover"},
+                "geometry": {"type": "Polygon", "coordinates": [ring]},
+            }
+        ],
+    }
+    _map, _params, geo_path, geo = write_site_workspace(
+        tmp_path, geojson, cell_size_m=20.0, align="long-axis", vertical="generic"
+    )
+    assert abs(geo.axis_x_north) > 0.9
+    assert abs(geo.axis_x_east) < 0.2
+    lon, lat = geo.cell_to_lonlat(2, 3)
+    assert geo.lonlat_to_cell(lon, lat) == (2, 3)
+    stored = json.loads(geo_path.read_text(encoding="utf-8"))
+    restored = GeoTransform.from_json(stored)
+    assert abs(restored.axis_x_north) > 0.9
+    assert restored.cell_to_lonlat(2, 3) == geo.cell_to_lonlat(2, 3)
+
+
 def test_simplify_keeps_turns_and_ends() -> None:
     waypoints = [
         {"index": 0, "x": 0, "y": 0, "t": 0},

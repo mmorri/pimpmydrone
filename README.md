@@ -46,6 +46,7 @@ make serve                       # http://127.0.0.1:8000 — disclaimer gate, th
 make site                        # examples/sites/solar_farm.geojson → outputs/site-solar/
 # California crop fields: examples/sites/dwr/2023/<county>/<crop>/<field>.geojson
 # USDA sample (MN, IA, ND, SD): examples/sites/csb/2024/<state>/<crop>/<field>.geojson
+# Orchard crops follow the long axis; row crops keep the east-west auto sweep.
 # Refresh samples (does not download statewide or national files):
 #   python3 tools/fetch_dwr_fields.py
 #   python3 tools/fetch_csb_fields.py

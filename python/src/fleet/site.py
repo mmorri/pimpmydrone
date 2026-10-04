@@ -96,6 +96,8 @@ def plan_site(
     deconflict: bool = True,
     osm_buildings: bool = False,
     simplify_export: bool = True,
+    align: str = "east-west",
+    flight_style: Optional[dict[str, Any]] = None,
     plan_fn=None,
 ) -> SiteMissionResult:
     """Rasterise a site, run the coverage pipeline, and export flyable missions.
@@ -137,7 +139,12 @@ def plan_site(
         takeoff_cost=preset.takeoff_cost,
         landing_cost=preset.landing_cost,
         max_drones=max_drones if max_drones is not None else preset.max_drones,
+        align=align,
     )
+    if flight_style:
+        geo_payload = io.read_json(geo_path)
+        geo_payload["flight_style"] = flight_style
+        io.write_json(geo_path, geo_payload)
 
     params = io.read_json(params_path)
     fleet_size = int(params["max_drones"])
