@@ -1,5 +1,18 @@
 (() => {
   const cfg = window.FLEET_CONFIG || {};
+  // Same stored-XSS guard as app.js: folder names come from disk, bundle
+  // metadata from the API — escape before innerHTML, gate href targets.
+  const esc = (v) =>
+    String(v ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  const safePath = (v, fallback = "#") => {
+    const s = String(v ?? "");
+    return s.startsWith("/") && !s.startsWith("//") ? s : fallback;
+  };
   const gh = document.getElementById("navGithub");
   if (cfg.github_url && gh) gh.href = cfg.github_url;
 
@@ -251,14 +264,14 @@
           const makespan = Number(field.makespan);
           const style = styleLabel(field.flight_style);
           const styleBit = style ? ` · ${style}` : "";
-          return `<li>${field.folder}${styleBit} — ${coverage.toFixed(0)}% — ${makespan.toFixed(0)} s</li>`;
+          return `<li>${esc(field.folder)}${styleBit} — ${coverage.toFixed(0)}% — ${makespan.toFixed(0)} s</li>`;
         })
         .join("");
       if (result) {
         result.hidden = false;
         result.innerHTML = `
           <ul class="ranch-list">${lines}</ul>
-          <p><a class="btn" href="${data.bundle_url}" download="${data.bundle_name || "ranch.zip"}">Download ranch</a></p>
+          <p><a class="btn" href="${safePath(data.bundle_url)}" download="${esc(data.bundle_name || "ranch.zip")}">Download ranch</a></p>
         `;
       }
       if (status) status.textContent = data.ok ? "Ranch planned." : "Ranch planned with a field that did not finish.";

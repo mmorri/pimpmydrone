@@ -67,8 +67,12 @@ DONATE_ALT_URL = os.environ.get("FLEET_DONATE_ALT_URL", "https://ko-fi.com/pimpm
 GITHUB_URL = os.environ.get("FLEET_GITHUB_URL", "https://github.com/mmorri/pimpmydrone")
 JOB_TTL_SECONDS = int(os.environ.get("FLEET_JOB_TTL_SECONDS", str(24 * 3600)))
 RATE_LIMIT_PER_MIN = int(os.environ.get("FLEET_RATE_LIMIT_PER_MIN", "12"))
+# Comma-separated extra origins allowed to call the API. Defaults to
+# same-origin only (the shipped website uses relative /api/... paths), so a
+# random third-party site cannot drive planning endpoints from a visitor's
+# browser. Credentials are only enabled when explicit origins are set.
 _CORS = [
-    o.strip() for o in os.environ.get("FLEET_CORS_ORIGINS", "*").split(",") if o.strip()
+    o.strip() for o in os.environ.get("FLEET_CORS_ORIGINS", "").split(",") if o.strip()
 ]
 SCHEDULE_MODES = ("sortie", "tour", "columns")
 ScheduleMode = Literal["sortie", "tour", "columns"]
@@ -281,7 +285,8 @@ def create_app() -> FastAPI:
     )
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=_CORS or ["*"],
+        allow_origins=_CORS,
+        allow_credentials=bool(_CORS),
         allow_methods=["GET", "POST"],
         allow_headers=["*"],
     )

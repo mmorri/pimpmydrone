@@ -1,5 +1,21 @@
 (() => {
   const cfg = window.FLEET_CONFIG || {};
+  // Escape every server-/OSM-/filesystem-supplied string before it reaches
+  // innerHTML. Warnings carry OpenStreetMap notes and folder names come from
+  // disk, so unescaped interpolation is stored XSS.
+  const esc = (v) =>
+    String(v ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  // Only same-origin app paths may be used as link/image targets — never
+  // javascript: or absolute third-party URLs from API payloads.
+  const safePath = (v, fallback = "#") => {
+    const s = String(v ?? "");
+    return s.startsWith("/") && !s.startsWith("//") ? s : fallback;
+  };
   const donateUrl = cfg.donate_url || "/donate";
   const githubUrl = cfg.github_url || "https://github.com/mmorri/pimpmydrone";
 
@@ -254,14 +270,14 @@
     const scores = data.partition_scores || {};
     const scoreHint = Object.keys(scores).length
       ? ` <small>(${Object.entries(scores)
-          .map(([k, v]) => `${k} ${Number(v).toFixed(0)}`)
+          .map(([k, v]) => `${esc(k)} ${Number(v).toFixed(0)}`)
           .join(" / ")})</small>`
       : "";
     const partition = data.partition_family
-      ? `<div class="metric"><span>Partition</span><b>${data.partition_family}${scoreHint}</b></div>`
+      ? `<div class="metric"><span>Partition</span><b>${esc(data.partition_family)}${scoreHint}</b></div>`
       : "";
     const schedule = data.schedule_mode
-      ? `<div class="metric"><span>Schedule</span><b>${data.schedule_mode}</b></div>`
+      ? `<div class="metric"><span>Schedule</span><b>${esc(data.schedule_mode)}</b></div>`
       : "";
     const styleName =
       data.flight_style === "orchard"
@@ -270,13 +286,13 @@
           ? "open-field sweep"
           : "";
     const flightStyle = styleName
-      ? `<div class="metric"><span>Flight style</span><b>${styleName}</b></div>`
+      ? `<div class="metric"><span>Flight style</span><b>${esc(styleName)}</b></div>`
       : "";
     const osm =
       data.osm_buildings == null
         ? ""
         : `<div class="metric"><span>OSM keep-outs</span><b>${
-            data.osm_ok === false ? "skipped" : data.osm_buildings
+            data.osm_ok === false ? "skipped" : esc(data.osm_buildings)
           }</b></div>`;
     const deconf =
       data.deconflicted == null
@@ -299,22 +315,22 @@
     const warnings = document.getElementById("warnings");
     const list = data.warnings || [];
     warnings.innerHTML = list.length
-      ? `<strong>Before you fly</strong><ul>${list.map((w) => `<li>${w}</li>`).join("")}</ul>`
+      ? `<strong>Before you fly</strong><ul>${list.map((w) => `<li>${esc(w)}</li>`).join("")}</ul>`
       : "";
-    document.getElementById("preview").src = data.png_url + "?t=" + Date.now();
+    document.getElementById("preview").src = safePath(data.png_url) + "?t=" + Date.now();
     const extras = [];
     if (data.coverage_age_url) {
       extras.push(
-        `<a href="${data.coverage_age_url}" target="_blank" rel="noopener">Coverage-age heatmap</a>`
+        `<a href="${safePath(data.coverage_age_url)}" target="_blank" rel="noopener">Coverage-age heatmap</a>`
       );
     }
     if (data.sortie_gantt_url) {
       extras.push(
-        `<a href="${data.sortie_gantt_url}" target="_blank" rel="noopener">Sortie Gantt</a>`
+        `<a href="${safePath(data.sortie_gantt_url)}" target="_blank" rel="noopener">Sortie Gantt</a>`
       );
     }
     if (data.osm_url) {
-      extras.push(`<a href="${data.osm_url}" download>OSM buildings report</a>`);
+      extras.push(`<a href="${safePath(data.osm_url)}" download>OSM buildings report</a>`);
     }
     const select = document.getElementById("exampleSite");
     const fromSelect =
@@ -323,14 +339,14 @@
     const qgc = (data.qgc_urls || [])
       .map(
         (u, i) =>
-          `<a href="${u}" download="${slug}-drone-${i}.plan">QGC plan — drone ${i}</a>`
+          `<a href="${safePath(u)}" download="${esc(slug)}-drone-${i}.plan">QGC plan — drone ${i}</a>`
       )
       .join("");
     document.getElementById("downloads").innerHTML = `
-      <a href="${data.safety_url}" download="${slug}-SAFETY_REPORT.md">SAFETY_REPORT.md (read this)</a>
-      <a href="${data.missions_geojson_url}" download="${slug}-missions.geojson">Missions GeoJSON</a>
-      <a href="${data.waypoints_csv_url}" download="${slug}-waypoints.csv">Waypoints CSV</a>
-      <a href="${data.bundle_url}" download="${slug}-job.zip">Full job zip</a>
+      <a href="${safePath(data.safety_url)}" download="${esc(slug)}-SAFETY_REPORT.md">SAFETY_REPORT.md (read this)</a>
+      <a href="${safePath(data.missions_geojson_url)}" download="${esc(slug)}-missions.geojson">Missions GeoJSON</a>
+      <a href="${safePath(data.waypoints_csv_url)}" download="${esc(slug)}-waypoints.csv">Waypoints CSV</a>
+      <a href="${safePath(data.bundle_url)}" download="${esc(slug)}-job.zip">Full job zip</a>
       ${extras.join("")}
       ${qgc}
     `;
