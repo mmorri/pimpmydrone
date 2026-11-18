@@ -9,7 +9,7 @@ description = "Experimental multi-drone coverage planner — free, donation-fund
 readme = "README.md"
 authors = [{name = "Maurizio Morri", email = "maurizio.morri@protonmail.com"}]
 license = {text = "MIT"}
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
   "numpy>=1.26",
   "shapely>=2.0",
@@ -23,6 +23,10 @@ dependencies = [
   "uvicorn[standard]>=0.30",
   "python-multipart>=0.0.9",
   "httpx>=0.28",
+  # Security floors for flagged transitives (verified clean 2026-11-17).
+  "pillow>=13.0.0",
+  "filelock>=4.2.1",
+  "opentelemetry-api>=1.45.2",
 ]
 
 [project.optional-dependencies]
